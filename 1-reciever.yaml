@@ -1,0 +1,132 @@
+esphome:
+  name: esp32-reciever
+  platform: ESP32
+  board: esp32-c3-devkitm-1 # For ESP32-C3 based boards
+
+logger:
+
+wifi:
+  ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
+  password: !secret WiFi_password # WiFi password from secrets.yaml
+
+api:
+  password: !secret API_password # API password for Home Assistant
+
+ota:
+  - platform: esphome
+    password: !secret OTA_password # OTA password from secrets.yaml
+
+external_components:
+  source:
+    type: git
+    url: https://gitlab.com/ripnetuk-public/espnow/ripnetuk-esphome-easynow.git
+    ref: main
+  refresh: 1min
+
+proxy_receiver:
+  espnow_channel: 11
+  transmitters:
+    - mac_address: !secret transmitter_mac_address # MAC address of the transmitter
+      name: AS7343 Transmitter
+      proxied_sensors:
+        - proxy_id: 'as7343_f1_proxy'
+          name: 'as7343_f1'
+          id: 'as7343_f1'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_f2_proxy'
+          name: 'as7343_f2'
+          id: 'as7343_f2'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_fz_proxy'
+          name: 'as7343_fz'
+          id: 'as7343_fz'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_f3_proxy'
+          name: 'as7343_f3'
+          id: 'as7343_f3'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_f4_proxy'
+          name: 'as7343_f4'
+          id: 'as7343_f4'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_fy_proxy'
+          name: 'as7343_fy'
+          id: 'as7343_fy'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_f5_proxy'
+          name: 'as7343_f5'
+          id: 'as7343_f5'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_fxl_proxy'
+          name: 'as7343_fxl'
+          id: 'as7343_fxl'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_f6_proxy'
+          name: 'as7343_f6'
+          id: 'as7343_f6'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_f7_proxy'
+          name: 'as7343_f7'
+          id: 'as7343_f7'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_f8_proxy'
+          name: 'as7343_f8'
+          id: 'as7343_f8'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_nir_proxy'
+          name: 'as7343_nir'
+          id: 'as7343_nir'
+          unit_of_measurement: '%'
+        - proxy_id: 'as7343_clear_proxy'
+          name: 'as7343_clear'
+          id: 'as7343_clear'
+          unit_of_measurement: '%'
+i2c:
+  sda: GPIO5
+  scl: GPIO6
+  scan: true
+  id: bus_a
+  frequency: 400kHz
+
+# Define the font
+font:
+  - file: 'fonts/Arial.ttf' # Ensure this path is correct and the font file exists
+    id: font_Arial
+    size: 9 # Set the font size
+
+display:
+  - platform: ssd1306_i2c
+    model: 'SSD1306 72x40'
+    flip_x: true
+    flip_y: true
+    address: 0x3C
+    id: mcu_display
+    update_interval: 1s
+    pages:
+      - id: page1
+        lambda: |-
+          it.printf(0, 0, id(font_Arial), TextAlign::TOP_LEFT, "F1: %.1f%%", id(as7343_f1).state);
+          it.printf(0, 10, id(font_Arial), TextAlign::TOP_LEFT, "F2: %.1f%%", id(as7343_f2).state);
+          it.printf(0, 20, id(font_Arial), TextAlign::TOP_LEFT, "FZ: %.1f%%", id(as7343_fz).state);
+          it.printf(0, 30, id(font_Arial), TextAlign::TOP_LEFT, "F3: %.1f%%", id(as7343_f3).state);
+      - id: page2
+        lambda: |-
+          it.printf(0, 0, id(font_Arial), TextAlign::TOP_LEFT, "F4: %.1f%%", id(as7343_f4).state);
+          it.printf(0, 10, id(font_Arial), TextAlign::TOP_LEFT, "FY: %.1f%%", id(as7343_fy).state);
+          it.printf(0, 20, id(font_Arial), TextAlign::TOP_LEFT, "F5: %.1f%%", id(as7343_f5).state);
+          it.printf(0, 30, id(font_Arial), TextAlign::TOP_LEFT, "FXL: %.1f%%", id(as7343_fxl).state);
+      - id: page3
+        lambda: |-
+          it.printf(0, 0, id(font_Arial), TextAlign::TOP_LEFT, "F6: %.1f%%", id(as7343_f6).state);
+          it.printf(0, 10, id(font_Arial), TextAlign::TOP_LEFT, "F7: %.1f%%", id(as7343_f7).state);
+          it.printf(0, 20, id(font_Arial), TextAlign::TOP_LEFT, "F8: %.1f%%", id(as7343_f8).state);
+          it.printf(0, 30, id(font_Arial), TextAlign::TOP_LEFT, "NIR: %.1f%%", id(as7343_nir).state);
+      - id: page4
+        lambda: |-
+          it.printf(0, 0, id(font_Arial), TextAlign::TOP_LEFT, "Clear: %.1f%%", id(as7343_clear).state);
+
+interval:
+  - interval: 5s
+    then:
+      - display.page.show_next: mcu_display
+      - component.update: mcu_display

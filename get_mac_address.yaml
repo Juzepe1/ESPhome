@@ -1,0 +1,18 @@
+esphome:
+  name: esp32-transmitter
+  platform: ESP32
+  board: esp32-c3-devkitm-1
+
+wifi:
+  ssid: !secret WiFi_ssid
+  password: !secret WiFi_password
+
+logger:
+
+# Use an interval component to log the MAC address
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          auto mac = WiFi.macAddress();
+          ESP_LOGD("custom", "MAC Address: %s", mac.c_str());

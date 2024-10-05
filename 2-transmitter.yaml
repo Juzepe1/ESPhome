@@ -1,0 +1,110 @@
+esphome:
+  name: esp32-transmitter
+  platform: ESP32
+  board: esp32-c3-devkitm-1
+
+logger:
+
+wifi: # Used for OTA, if you don't want to put WiFi credential, you can put ssid: 'xxxx' and password: 'xxxxxxxx'
+  ssid: !secret WiFi_ssid
+  password: !secret WiFi_password
+
+ota: #Normally is turned off, from Home Assistant you can turn it on
+  - platform: esphome
+    password: !secret admin
+
+external_components:
+  - source: github://pr#6285
+    components:
+      - as7343
+    refresh: never
+  - source:
+      type: git
+      url: https://gitlab.com/ripnetuk-public/espnow/ripnetuk-esphome-easynow.git
+      ref: main
+    refresh: never
+
+i2c:
+  sda: GPIO5
+  scl: GPIO6
+  scan: true
+  id: bus_a
+
+sensor:
+  - platform: as7343
+    id: 'spectral_sensor'
+    f1:
+      name: '405nm'
+      id: 'f1'
+    f2:
+      name: '425nm'
+      id: 'f2'
+    fz:
+      name: '450nm'
+      id: 'fz'
+    f3:
+      name: '475nm'
+      id: 'f3'
+    f4:
+      name: '515nm'
+      id: 'f4'
+    fy:
+      name: '555nm'
+      id: 'fy'
+    f5:
+      name: '550nm'
+      id: 'f5'
+    fxl:
+      name: '600nm'
+      id: 'fxl'
+    f6:
+      name: '640nm'
+      id: 'f6'
+    f7:
+      name: '690nm'
+      id: 'f7'
+    f8:
+      name: '745nm'
+      id: 'f8'
+    nir:
+      name: 'NIR'
+      id: 'nir'
+    clear:
+      name: 'Clear'
+      id: 'clear'
+    update_interval: 10s
+    #gain: X256
+    #atime: 100
+    #astep: 999
+
+proxy_transmitter:
+  espnow_channel: 11
+  receiver_mac_address: !secret receiver_mac_address
+  deep_sleep_length: 10s
+  sensors:
+    - sensor: 'f1'
+      proxy_id: 'as7343_f1_proxy'
+    - sensor: 'f2'
+      proxy_id: 'as7343_f2_proxy'
+    - sensor: 'fz'
+      proxy_id: 'as7343_fz_proxy'
+    - sensor: 'f3'
+      proxy_id: 'as7343_f3_proxy'
+    - sensor: 'f4'
+      proxy_id: 'as7343_f4_proxy'
+    - sensor: 'fy'
+      proxy_id: 'as7343_fy_proxy'
+    - sensor: 'f5'
+      proxy_id: 'as7343_f5_proxy'
+    - sensor: 'fxl'
+      proxy_id: 'as7343_fxl_proxy'
+    - sensor: 'f6'
+      proxy_id: 'as7343_f6_proxy'
+    - sensor: 'f7'
+      proxy_id: 'as7343_f7_proxy'
+    - sensor: 'f8'
+      proxy_id: 'as7343_f8_proxy'
+    - sensor: 'nir'
+      proxy_id: 'as7343_nir_proxy'
+    - sensor: 'clear'
+      proxy_id: 'as7343_clear_proxy'

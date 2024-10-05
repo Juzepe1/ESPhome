@@ -1,0 +1,62 @@
+esphome:
+  name: esp32_spectral_sensor
+  platform: ESP32
+  board: esp32-c3-devkitm-1 # For ESP32-C3 based boards
+
+logger:
+
+wifi:
+  ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
+  password: !secret WiFi_password # WiFi password from secrets.yaml
+
+api:
+  password: !secret API_password # API password for Home Assistant
+
+ota:
+  - platform: esphome
+    password: !secret OTA_password # OTA password from secrets.yaml
+
+external_components:
+  - source: github://pr#6285
+    refresh: 1s
+    components:
+      - as7343
+
+i2c:
+  sda: GPIO5
+  scl: GPIO6
+  scan: true
+  id: bus_a
+
+sensor:
+  - platform: as7343
+    f1:
+      name: '405nm'
+    f2:
+      name: '425nm'
+    fz:
+      name: '450nm'
+    f3:
+      name: '475nm'
+    f4:
+      name: '515nm'
+    fy:
+      name: '555nm'
+    f5:
+      name: '550nm'
+    fxl:
+      name: '600nm'
+    f6:
+      name: '640nm'
+    f7:
+      name: '690nm'
+    f8:
+      name: '745nm'
+    nir:
+      name: 'NIR'
+    clear:
+      name: 'Clear'
+    update_interval: 10s
+    #gain: X256
+    #atime: 100
+    #astep: 999
