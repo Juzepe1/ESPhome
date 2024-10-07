@@ -60,3 +60,4 @@ sensor:
     #gain: X256
     #atime: 100
     #astep: 999
+    #glass_attenuation_factor: 1.0
