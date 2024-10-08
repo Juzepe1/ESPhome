@@ -56,6 +56,16 @@ sensor:
       name: 'NIR'
     clear:
       name: 'Clear'
+    irradiance:
+      name: 'Irradiance'
+    irradiance_photopic:
+      name: 'irradiance_photopic'
+    ppfd:
+      name: 'Pffd'
+    saturation:
+      name: 'Saturation'
+    
+    #Changeable values
     update_interval: 10s
     #gain: X256
     #atime: 100
