@@ -81,6 +81,23 @@ proxy_receiver:
           name: 'as7343_clear'
           id: 'as7343_clear'
           unit_of_measurement: '%'
+        - proxy_id: 'as7343_irr_proxy'
+          name: 'as7343_irradiance'
+          id: 'as7343_irradiance'
+          unit_of_measurement: 'W/m^2'
+        - proxy_id: 'as7343_irr_p_proxy'
+          name: 'as7343_irradiance_photopic'
+          id: 'as7343_irradiance_photopic'
+          unit_of_measurement: 'W/m^2'
+        - proxy_id: 'as7343_pffd_proxy'
+          name: 'as7343_pffd'
+          id: 'as7343_pffd'
+          unit_of_measurement: 'umol/s*m^2'
+        - proxy_id: 'as7343_sat_proxy'
+          name: 'as7343_saturation'
+          id: 'as7343_saturation'
+          unit_of_measurement: '#'
+
 i2c:
   sda: GPIO5
   scl: GPIO6
@@ -124,6 +141,12 @@ display:
       - id: page4
         lambda: |-
           it.printf(0, 0, id(font_Arial), TextAlign::TOP_LEFT, "Clear: %.1f%%", id(as7343_clear).state);
+          it.printf(0, 10, id(font_Arial), TextAlign::TOP_LEFT, "Irr: %.1f W/m2", id(as7343_irradiance).state);
+          it.printf(0, 20, id(font_Arial), TextAlign::TOP_LEFT, "Irr P: %.1f W/m2", id(as7343_irradiance_photopic).state);
+          it.printf(0, 30, id(font_Arial), TextAlign::TOP_LEFT, "PFFD: %.1f umol/.", id(as7343_pffd).state);
+      - id: page5
+        lambda: |-
+          it.printf(0, 40, id(font_Arial), TextAlign::TOP_LEFT, "Sat: %d", (int) id(as7343_saturation).state);
 
 interval:
   - interval: 5s

@@ -72,6 +72,18 @@ sensor:
     clear:
       name: 'Clear'
       id: 'clear'
+    irradiance:
+      name: 'Irradiance'
+      id: 'irradiance'
+    irradiance_photopic:
+      name: 'irradiance_photopic'
+      id: 'irradiance_photopic'
+    ppfd:
+      name: 'Pffd'
+      id: 'pffd'
+    saturation:
+      name: 'Saturation'
+      id: 'saturation'
     update_interval: 10s
     #gain: X256
     #atime: 100
@@ -108,3 +120,11 @@ proxy_transmitter:
       proxy_id: 'as7343_nir_proxy'
     - sensor: 'clear'
       proxy_id: 'as7343_clear_proxy'
+    - sensor: 'irradiance'
+      proxy_id: 'as7343_irr_proxy'
+    - sensor: 'irradiance_photopic'
+      proxy_id: 'as7343_irr_p_proxy'
+    - sensor: 'pffd'
+      proxy_id: 'as7343_pffd_proxy'
+    - sensor: 'saturation'
+      proxy_id: 'as7343_sat_proxy'
