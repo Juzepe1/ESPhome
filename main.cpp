@@ -7,37 +7,60 @@
 
 // Modbus RTU requests for individual registers (without CRC)
 const byte requests[][6] = {
-  {0x01, 0x03, 0x00, 0x00, 0x00, 0x01},  // Register 0 - Humidity
-  {0x01, 0x03, 0x00, 0x01, 0x00, 0x01},  // Register 1 - Temperature
-  {0x01, 0x03, 0x00, 0x02, 0x00, 0x01},  // Register 2 - Conductivity
-  {0x01, 0x03, 0x00, 0x03, 0x00, 0x01},  // Register 3 - pH
-  {0x01, 0x03, 0x00, 0x04, 0x00, 0x01},  // Register 4 - Nitrogen (N)
-  {0x01, 0x03, 0x00, 0x05, 0x00, 0x01},  // Register 5 - Phosphorus (P)
-  {0x01, 0x03, 0x00, 0x06, 0x00, 0x01},  // Register 6 - Potassium (K)
-  {0x01, 0x03, 0x00, 0x07, 0x00, 0x01}   // Register 7 - Salinity
+  {0x01, 0x03, 0x00, 0x00, 0x00, 0x01},  // Humidity
+  {0x01, 0x03, 0x00, 0x01, 0x00, 0x01},  // Temperature
+  {0x01, 0x03, 0x00, 0x02, 0x00, 0x01},  // Conductivity
+  {0x01, 0x03, 0x00, 0x03, 0x00, 0x01},  // pH
+  {0x01, 0x03, 0x00, 0x04, 0x00, 0x01},  // Nitrogen (N)
+  {0x01, 0x03, 0x00, 0x05, 0x00, 0x01},  // Phosphorus (P)
+  {0x01, 0x03, 0x00, 0x06, 0x00, 0x01},  // Potassium (K)
+  {0x01, 0x03, 0x00, 0x07, 0x00, 0x01},  // Salinity
+  {0x01, 0x03, 0x00, 0x08, 0x00, 0x01},  // TDS
+  {0x01, 0x03, 0x00, 0x22, 0x00, 0x01},  // Conductivity factor
+  {0x01, 0x03, 0x00, 0x23, 0x00, 0x01},  // Salinity factor
+  {0x01, 0x03, 0x00, 0x24, 0x00, 0x01},  // TDS factor
+  {0x01, 0x03, 0x00, 0x50, 0x00, 0x01},  // Temperature offset
+  {0x01, 0x03, 0x00, 0x51, 0x00, 0x01},  // Humidity offset
+  {0x01, 0x03, 0x00, 0x52, 0x00, 0x01},  // Conductivity offset
+  {0x01, 0x03, 0x00, 0x53, 0x00, 0x01},  // pH offset
+  {0x01, 0x03, 0x04, 0xE8, 0x00, 0x01},  // Nitrogen(N) factor high byte
 };
 
 
 
   // Array to store the response (for each register read)
+// mod(rx, tx)
 SoftwareSerial mod(3, 0);
 
 uint16_t calculateCRC(const byte* data, byte length);
 byte readRegister(const byte* request, byte length);
+byte readResponse();
+void writeRequest(const byte* request, byte length);
+void writeHumidityOffset(byte offset);
 
 void setup() {
   Serial.begin(115200);
   mod.begin(4800);
+
+  delay(5000);  // Wait for the sensor to initialize
+  Serial.println("Starting Modbus communication...");
   
   pinMode(RE, OUTPUT);
   pinMode(DE, OUTPUT);
+
   
+
   delay(500);
 }
 
+int once = 0;
 void loop() {
+  if(once == 0){
+    writeHumidityOffset(0);
+    once = 1;
+  }
   // Iterate through registers 0 to 7 and read them one by one
-  for (byte i = 0; i < 8; i++) {
+  for (byte i = 0; i < 18; i++) {
     byte value = readRegister(requests[i], sizeof(requests[i]));
 
     if (value != -1) {  // Check if the reading was valid
@@ -83,6 +106,43 @@ void loop() {
           Serial.print(value);  // mg/L
           Serial.println(" mg/L");
           break;
+        case 8:
+          Serial.print("TDS: ");
+          Serial.print(value);  // ppm
+          Serial.println(" ppm");
+          break;
+        case 9:
+          Serial.print("Conductivity factor: ");
+          Serial.println(value);
+          break;
+        case 10:
+          Serial.print("Salinity factor: ");
+          Serial.println(value);
+          break;
+        case 11:
+          Serial.print("TDS factor: ");
+          Serial.println(value);
+          break;
+        case 12:
+          Serial.print("Temperature offset: ");
+          Serial.println(value/10.0);
+          break;
+        case 13:
+          Serial.print("Humidity offset: ");
+          Serial.println(value/10.0);
+          break;
+        case 14:
+          Serial.print("Conductivity offset: ");
+          Serial.println(value);
+          break;
+        case 15:
+          Serial.print("pH offset: ");
+          Serial.println(value);
+          break;
+        case 16:
+          Serial.print("Nitrogen(N) factor high byte: ");
+          Serial.println(value);
+          break;
       }
     } else {
       Serial.print("Failed to read register ");
@@ -95,9 +155,13 @@ void loop() {
   delay(1000);  // Optional: Add a longer delay before looping back
 }
 
-// Function to send Modbus request, read sensor data, and calculate CRC
 byte readRegister(const byte* request, byte length) {
-  
+  writeRequest(request, length);
+  byte value = readResponse();
+  return value;
+}
+
+void writeRequest(const byte* request, byte length) {
   digitalWrite(DE, HIGH);
   digitalWrite(RE, HIGH);
   delay(10);
@@ -112,11 +176,12 @@ byte readRegister(const byte* request, byte length) {
   
   digitalWrite(DE, LOW);
   digitalWrite(RE, LOW);
-  
   delay(10);  // Wait for response
+}
 
+byte readResponse(){
   unsigned long startTime = millis();
-  while(mod.available() < 7 && millis() - startTime < 1000) {
+  while(mod.available() < 7 && millis() - startTime < 1000){
     delay(1);
   }
   if(mod.available() < 7) {
@@ -144,7 +209,6 @@ byte readRegister(const byte* request, byte length) {
   return (values[3] << 8) | values[4];
 }
 
-// Function to calculate CRC-16 (Modbus)
 uint16_t calculateCRC(const byte* data, byte length) {
   uint16_t crc = 0xFFFF;  // Initialize the CRC value
 
@@ -162,4 +226,11 @@ uint16_t calculateCRC(const byte* data, byte length) {
   }
   
   return crc;  // Return the 16-bit CRC
+}
+
+void writeHumidityOffset(byte value) {
+  byte request[] = {0x01, 0x06, 0x00, 0x51, 0x00, value};
+
+  writeRequest(request, sizeof(request));
+  Serial.println(readResponse());
 }
