@@ -33,66 +33,82 @@ proxy_receiver:
           name: 'as7343_f1'
           id: 'as7343_f1'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_f2_proxy'
           name: 'as7343_f2'
           id: 'as7343_f2'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_fz_proxy'
           name: 'as7343_fz'
           id: 'as7343_fz'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_f3_proxy'
           name: 'as7343_f3'
           id: 'as7343_f3'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_f4_proxy'
           name: 'as7343_f4'
           id: 'as7343_f4'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_fy_proxy'
           name: 'as7343_fy'
           id: 'as7343_fy'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_f5_proxy'
           name: 'as7343_f5'
           id: 'as7343_f5'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_fxl_proxy'
           name: 'as7343_fxl'
           id: 'as7343_fxl'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_f6_proxy'
           name: 'as7343_f6'
           id: 'as7343_f6'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_f7_proxy'
           name: 'as7343_f7'
           id: 'as7343_f7'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_f8_proxy'
           name: 'as7343_f8'
           id: 'as7343_f8'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_nir_proxy'
           name: 'as7343_nir'
           id: 'as7343_nir'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_clear_proxy'
           name: 'as7343_clear'
           id: 'as7343_clear'
           unit_of_measurement: '%'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_irr_proxy'
           name: 'as7343_irradiance'
           id: 'as7343_irradiance'
           unit_of_measurement: 'W/m^2'
+          accuracy_decimals: 3
         - proxy_id: 'as7343_irr_p_proxy'
           name: 'as7343_irradiance_photopic'
           id: 'as7343_irradiance_photopic'
           unit_of_measurement: 'W/m^2'
+          accuracy_decimals: 3
         - proxy_id: 'as7343_pffd_proxy'
           name: 'as7343_pffd'
           id: 'as7343_pffd'
           unit_of_measurement: 'umol/s*m^2'
+          accuracy_decimals: 3
         - proxy_id: 'as7343_sat_proxy'
           name: 'as7343_saturation'
           id: 'as7343_saturation'
@@ -101,18 +117,22 @@ proxy_receiver:
           name: 'as7343_color_temperature'
           id: 'as7343_color_temperature'
           unit_of_measurement: 'K'
+          accuracy_decimals: 2
         - proxy_id: 'as7343_par_proxy'
           name: 'as7343_par'
           id: 'as7343_par'
           unit_of_measurement: 'µmol/m^2/s'
+          accuracy_decimals: 3
         - proxy_id: 'as7343_lux_proxy'
           name: 'as7343_lux'
           id: 'as7343_lux'
           unit_of_measurement: 'lx'
+          accuracy_decimals: 3
         - proxy_id: 'as7343_lux2_proxy'
           name: 'as7343_lux2'
           id: 'as7343_lux2'
           unit_of_measurement: 'lx'
+          accuracy_decimals: 3
 
     - mac_address: !secret transmitter_mac_address_soil # MAC address of the transmitter
       name: Soil Sensor Transmitter
