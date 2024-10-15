@@ -1,0 +1,224 @@
+esphome:
+  name: esp32-reciever
+  platform: ESP32
+  board: esp32-c3-devkitm-1 # For ESP32-C3 based boards
+
+logger:
+
+wifi:
+  ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
+  password: !secret WiFi_password # WiFi password from secrets.yaml
+
+api:
+  password: !secret API_password # API password for Home Assistant
+
+ota:
+  - platform: esphome
+    password: !secret OTA_password # OTA password from secrets.yaml
+
+external_components:
+  source:
+    type: git
+    url: https://gitlab.com/ripnetuk-public/espnow/ripnetuk-esphome-easynow.git
+    ref: main
+  refresh: never
+
+proxy_receiver:
+  espnow_channel: 11
+  transmitters:
+    - mac_address: !secret transmitter_mac_address # MAC address of the transmitter
+      name: AS7343 Transmitter
+      proxied_sensors:
+        - proxy_id: 'as7343_f1_proxy'
+          name: 'as7343_f1'
+          id: 'as7343_f1'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_f2_proxy'
+          name: 'as7343_f2'
+          id: 'as7343_f2'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_fz_proxy'
+          name: 'as7343_fz'
+          id: 'as7343_fz'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_f3_proxy'
+          name: 'as7343_f3'
+          id: 'as7343_f3'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_f4_proxy'
+          name: 'as7343_f4'
+          id: 'as7343_f4'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_fy_proxy'
+          name: 'as7343_fy'
+          id: 'as7343_fy'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_f5_proxy'
+          name: 'as7343_f5'
+          id: 'as7343_f5'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_fxl_proxy'
+          name: 'as7343_fxl'
+          id: 'as7343_fxl'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_f6_proxy'
+          name: 'as7343_f6'
+          id: 'as7343_f6'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_f7_proxy'
+          name: 'as7343_f7'
+          id: 'as7343_f7'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_f8_proxy'
+          name: 'as7343_f8'
+          id: 'as7343_f8'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_nir_proxy'
+          name: 'as7343_nir'
+          id: 'as7343_nir'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_clear_proxy'
+          name: 'as7343_clear'
+          id: 'as7343_clear'
+          unit_of_measurement: '%'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_irr_proxy'
+          name: 'as7343_irradiance'
+          id: 'as7343_irradiance'
+          unit_of_measurement: 'W/m^2'
+          accuracy_decimals: 3
+        - proxy_id: 'as7343_irr_p_proxy'
+          name: 'as7343_irradiance_photopic'
+          id: 'as7343_irradiance_photopic'
+          unit_of_measurement: 'W/m^2'
+          accuracy_decimals: 3
+        - proxy_id: 'as7343_pffd_proxy'
+          name: 'as7343_pffd'
+          id: 'as7343_pffd'
+          unit_of_measurement: 'umol/s*m^2'
+          accuracy_decimals: 3
+        - proxy_id: 'as7343_sat_proxy'
+          name: 'as7343_saturation'
+          id: 'as7343_saturation'
+          unit_of_measurement: '#'
+        - proxy_id: 'as7343_ct_proxy'
+          name: 'as7343_color_temperature'
+          id: 'as7343_color_temperature'
+          unit_of_measurement: 'K'
+          accuracy_decimals: 2
+        - proxy_id: 'as7343_par_proxy'
+          name: 'as7343_par'
+          id: 'as7343_par'
+          unit_of_measurement: 'µmol/m^2/s'
+          accuracy_decimals: 3
+        - proxy_id: 'as7343_lux_proxy'
+          name: 'as7343_lux'
+          id: 'as7343_lux'
+          unit_of_measurement: 'lx'
+          accuracy_decimals: 3
+        - proxy_id: 'as7343_lux2_proxy'
+          name: 'as7343_lux2'
+          id: 'as7343_lux2'
+          unit_of_measurement: 'lx'
+          accuracy_decimals: 3
+
+    - mac_address: !secret transmitter_mac_address_soil # MAC address of the transmitter
+      name: Soil Sensor Transmitter
+      proxied_sensors:
+        - proxy_id: 'soil_hum_proxy'
+          name: 'soil_humidity'
+          id: 'soil_humidity'
+          unit_of_measurement: '%RH'
+        
+        # - proxy_id: 'soil_temp_proxy'
+        #   name: 'soil_temperature'
+        #   id: 'soil_temperature'
+        #   unit_of_measurement: '°C'
+        # - proxy_id: 'soil_cond_proxy'
+        #   name: 'soil_conductivity'
+        #   id: 'soil_conductivity'
+        #   unit_of_measurement: 'µS/cm'
+        # - proxy_id: 'soil_ph_proxy'
+        #   name: 'soil_ph'
+        #   id: 'soil_ph'
+        #   unit_of_measurement: 'pH'
+        # - proxy_id: 'soil_nitrogen_proxy'
+        #   name: 'soil_nitrogen'
+        #   id: 'soil_nitrogen'
+        #   unit_of_measurement: 'mg/kg'
+        # - proxy_id: 'soil_phosphor_proxy'
+        #   name: 'soil_phosphorus'
+        #   id: 'soil_phosphorus'
+        #   unit_of_measurement: 'mg/kg'
+        # - proxy_id: 'soil_potassium_proxy'
+        #   name: 'soil_potassium'
+        #   id: 'soil_potassium'
+        #   unit_of_measurement: 'mg/kg'
+
+
+i2c:
+  sda: GPIO5
+  scl: GPIO6
+  scan: true
+  id: bus_a
+  frequency: 400kHz
+
+font:
+  - file: 'fonts/Arial.ttf' # Ensure this path is correct and the font file exists
+    id: font_Arial
+    size: 9 # Set the font size
+
+# display:
+#   - platform: ssd1306_i2c
+#     model: 'SSD1306 72x40'
+#     flip_x: true
+#     flip_y: true
+#     address: 0x3C
+#     id: mcu_display
+#     update_interval: 1s
+#     pages:
+#       - id: page1
+#         lambda: |-
+#           it.printf(0, 0, id(font_Arial), TextAlign::TOP_LEFT, "F1: %.1f%%", id(as7343_f1).state);
+#           it.printf(0, 10, id(font_Arial), TextAlign::TOP_LEFT, "F2: %.1f%%", id(as7343_f2).state);
+#           it.printf(0, 20, id(font_Arial), TextAlign::TOP_LEFT, "FZ: %.1f%%", id(as7343_fz).state);
+#           it.printf(0, 30, id(font_Arial), TextAlign::TOP_LEFT, "F3: %.1f%%", id(as7343_f3).state);
+#       - id: page2
+#         lambda: |-
+#           it.printf(0, 0, id(font_Arial), TextAlign::TOP_LEFT, "F4: %.1f%%", id(as7343_f4).state);
+#           it.printf(0, 10, id(font_Arial), TextAlign::TOP_LEFT, "FY: %.1f%%", id(as7343_fy).state);
+#           it.printf(0, 20, id(font_Arial), TextAlign::TOP_LEFT, "F5: %.1f%%", id(as7343_f5).state);
+#           it.printf(0, 30, id(font_Arial), TextAlign::TOP_LEFT, "FXL: %.1f%%", id(as7343_fxl).state);
+#       - id: page3
+#         lambda: |-
+#           it.printf(0, 0, id(font_Arial), TextAlign::TOP_LEFT, "F6: %.1f%%", id(as7343_f6).state);
+#           it.printf(0, 10, id(font_Arial), TextAlign::TOP_LEFT, "F7: %.1f%%", id(as7343_f7).state);
+#           it.printf(0, 20, id(font_Arial), TextAlign::TOP_LEFT, "F8: %.1f%%", id(as7343_f8).state);
+#           it.printf(0, 30, id(font_Arial), TextAlign::TOP_LEFT, "NIR: %.1f%%", id(as7343_nir).state);
+#       - id: page4
+#         lambda: |-
+#           it.printf(0, 0, id(font_Arial), TextAlign::TOP_LEFT, "Clear: %.1f%%", id(as7343_clear).state);
+#           it.printf(0, 10, id(font_Arial), TextAlign::TOP_LEFT, "Irr: %.1f W/m2", id(as7343_irradiance).state);
+#           it.printf(0, 20, id(font_Arial), TextAlign::TOP_LEFT, "Irr P: %.1f W/m2", id(as7343_irradiance_photopic).state);
+#           it.printf(0, 30, id(font_Arial), TextAlign::TOP_LEFT, "PFFD: %.1f umol/.", id(as7343_pffd).state);
+#       - id: page5
+#         lambda: |-
+#           it.printf(0, 40, id(font_Arial), TextAlign::TOP_LEFT, "Sat: %d", (int) id(as7343_saturation).state);
+
+# interval:
+#   - interval: 5s
+#     then:
+#       - display.page.show_next: mcu_display
+#       - component.update: mcu_display
