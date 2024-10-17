@@ -8,6 +8,7 @@ logger:
 wifi:
   ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
   password: !secret WiFi_password # WiFi password from secrets.yaml
+  power_save_mode: none
 
 api:
   password: !secret API_password # API password for Home Assistant
@@ -37,6 +38,48 @@ sensor:
     id: humidity
     update_interval: never
     accuracy_decimals: 1
+    unit_of_measurement: "%RH"
+  - platform: template
+    name: "Temperature"
+    id: temperature
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: "°C"
+
+  - platform: template
+    name: "Conductivity"
+    id: conductivity
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: "µS/cm"
+
+  - platform: template
+    name: "pH"
+    id: ph
+    update_interval: never
+    accuracy_decimals: 2
+    unit_of_measurement: "pH"
+
+  - platform: template
+    name: "Nitrogen"
+    id: nitrogen
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: "mg/kg"
+
+  - platform: template
+    name: "Phosphorus"
+    id: phosphorus
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: "mg/kg"
+
+  - platform: template
+    name: "Potassium"
+    id: potassium
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: "mg/kg"
 
 espnow:
   auto_add_peer: true
@@ -44,20 +87,70 @@ espnow:
   peers:
     #- 24:58:7C:91:D1:CC
     - FF:FF:FF:FF:FF:FF
-  
   on_receive:
     then:
       - lambda: |-
           ESP_LOGI("main", "Received data from ESP-NOW");
-          std::string received_string((char*)packet.get_payload(), packet.size);
-          float humidity_value = atof(received_string.c_str());
-          id(humidity).publish_state(humidity_value);
-          id(received_data) = 1;
 
-  # on_new_peer:
-  #   - logger.log:
-  #       format: "Peer %012llx is a new user. It will be added."
-  #       args: [ packet.peer ]
-  #   - espnow.add_peer: packet.peer
+          // Convert the received data to a string
+          std::string received_string((char*)packet.get_payload(), packet.size);
+          
+          // Array to hold parts of the received string
+          char buffer[50];
+          strncpy(buffer, received_string.c_str(), sizeof(buffer));
+
+          // Parse the string using strtok
+          char* id_string = strtok(buffer, ";");
+          char* value_string = strtok(nullptr, ";");
+
+          if (id_string != nullptr && value_string != nullptr) {
+            float value = atof(value_string);
+
+            // Compare id_string with the sensor IDs and publish the state
+            if (strcmp(id_string, "humidity") == 0) {
+              id(humidity).publish_state(value);
+            } else if (strcmp(id_string, "temperature") == 0) {
+              id(temperature).publish_state(value);
+            } else if (strcmp(id_string, "conductivity") == 0) {
+              id(conductivity).publish_state(value);
+            } else if (strcmp(id_string, "ph") == 0) {
+              id(ph).publish_state(value);
+            } else if (strcmp(id_string, "nitrogen") == 0) {
+              id(nitrogen).publish_state(value);
+            } else if (strcmp(id_string, "phosphorus") == 0) {
+              id(phosphorus).publish_state(value);
+            } else if (strcmp(id_string, "potassium") == 0) {
+              id(potassium).publish_state(value);
+            }
+          }
+
+          // Set received_data flag
+          id(received_data) = 1;
+    # - logger.log:
+    #     format: "Received data from ESP-NOW: %s"
+    #     args: [ packet.get_payload() ]
+
+# interval:
+#   - interval: 10s
+#     then:
+#       - wifi.disable:
+#       - lambda: |- 
+#           ESP_LOGI("main", "Disabling WiFi");
+#       - delay: 5s
+#       - lambda: |- 
+#           ESP_LOGI("main", "Waiting for data from ESP-NOW");
+#       - wait_until:
+#           condition:
+#               lambda: |-
+#                 return id(received_data) == 1;
+#       - lambda: |-
+#           ESP_LOGI("main", "Received data from ESP-NOW");     
+#           id(received_data) = 0;   
+#       - delay: 5s
+#       - wifi.enable:
+#       - lambda: |- 
+#           ESP_LOGI("main", "Enabling WiFi");
+#       - delay: 10s
+
 
       
