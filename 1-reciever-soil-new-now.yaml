@@ -85,7 +85,6 @@ espnow:
   auto_add_peer: true
   wifi_channel: "11"
   peers:
-    #- 24:58:7C:91:D1:CC
     - FF:FF:FF:FF:FF:FF
   on_receive:
     then:
