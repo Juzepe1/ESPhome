@@ -55,218 +55,221 @@ sensor:
     unit_of_measurement: '%RH'
     value_type: U_WORD
     id: 'humidity'
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1  # Apply scaling as per the manual
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Temperature"
-  #   register_type: holding
-  #   address: 0x01  # Register for temperature
-  #   unit_of_measurement: "°C"
-  #   value_type: U_WORD
-  #   accuracy_decimals: 1
-  #   filters:
-  #     - multiply: 0.1  # Apply scaling as per the manual
-  #   id: 'temperature'
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Temperature"
+    register_type: holding
+    address: 0x01  # Register for temperature
+    unit_of_measurement: "°C"
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1  # Apply scaling as per the manual
+    id: 'temperature'
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Conductivity"
-  #   register_type: holding
-  #   address: 0x02  # Register for conductivity
-  #   unit_of_measurement: "µS/cm"
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
-  #   filters:
-  #     - multiply: 1.0  # No scaling needed
-  #   id: 'conductivity'
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Conductivity"
+    register_type: holding
+    address: 0x02  # Register for conductivity
+    unit_of_measurement: "µS/cm"
+    value_type: U_WORD
+    accuracy_decimals: 0
+    filters:
+      - multiply: 1.0  # No scaling needed
+    id: 'conductivity'
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "pH"
-  #   register_type: holding
-  #   address: 0x03  # Register for pH
-  #   unit_of_measurement: "pH"
-  #   value_type: U_WORD
-  #   accuracy_decimals: 1
-  #   filters:
-  #     - multiply: 0.1  # Scaling factor for pH
-  #   id: 'ph'
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "pH"
+    register_type: holding
+    address: 0x03  # Register for pH
+    unit_of_measurement: "pH"
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1  # Scaling factor for pH
+    id: 'ph'
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Nitrogen (N)"
-  #   register_type: holding
-  #   address: 0x04  # Register for Nitrogen
-  #   unit_of_measurement: "mg/kg"
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
-  #   filters:
-  #     - multiply: 1.0  # No scaling needed
-  #   id: 'nitrogen'
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Nitrogen (N)"
+    register_type: holding
+    address: 0x04  # Register for Nitrogen
+    unit_of_measurement: "mg/kg"
+    value_type: U_WORD
+    accuracy_decimals: 0
+    filters:
+      - multiply: 1.0  # No scaling needed
+    id: 'nitrogen'
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Phosphorus (P)"
-  #   register_type: holding
-  #   address: 0x05  # Register for Phosphorus
-  #   unit_of_measurement: "mg/kg"
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
-  #   filters:
-  #     - multiply: 1.0  # No scaling needed
-  #   id: 'phosphorus'
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Phosphorus (P)"
+    register_type: holding
+    address: 0x05  # Register for Phosphorus
+    unit_of_measurement: "mg/kg"
+    value_type: U_WORD
+    accuracy_decimals: 0
+    filters:
+      - multiply: 1.0  # No scaling needed
+    id: 'phosphorus'
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Potassium (K)"
-  #   register_type: holding
-  #   address: 0x06  # Register for Potassium
-  #   unit_of_measurement: "mg/kg"
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
-  #   filters:
-  #     - multiply: 1.0  # No scaling needed
-  #   id: 'potassium'
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Potassium (K)"
+    register_type: holding
+    address: 0x06  # Register for Potassium
+    unit_of_measurement: "mg/kg"
+    value_type: U_WORD
+    accuracy_decimals: 0
+    filters:
+      - multiply: 1.0  # No scaling needed
+    id: 'potassium'
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Conductivity Factor"
-  #   register_type: holding
-  #   address: 0x22  # Register for conductivity factor
-  #   unit_of_measurement: "x"
-  #   value_type: U_WORD
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Conductivity Factor"
+    register_type: holding
+    address: 0x22  # Register for conductivity factor
+    unit_of_measurement: "x"
+    value_type: U_WORD
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Salinity Factor"
-  #   register_type: holding
-  #   address: 0x23  # Register for salinity factor
-  #   unit_of_measurement: "x"
-  #   value_type: U_WORD
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Salinity Factor"
+    register_type: holding
+    address: 0x23  # Register for salinity factor
+    unit_of_measurement: "x"
+    value_type: U_WORD
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "TDS Factor"
-  #   register_type: holding
-  #   address: 0x24  # Register for TDS factor
-  #   unit_of_measurement: "x"
-  #   value_type: U_WORD
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "TDS Factor"
+    register_type: holding
+    address: 0x24  # Register for TDS factor
+    unit_of_measurement: "x"
+    value_type: U_WORD
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Temperature Offset"
-  #   register_type: holding
-  #   address: 0x50  # Register for temperature offset
-  #   unit_of_measurement: "°C"
-  #   value_type: U_WORD
-  #   accuracy_decimals: 1
-  #   filters:
-  #     - multiply: 0.1  # Scaling factor for offset
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Temperature Offset"
+    register_type: holding
+    address: 0x50  # Register for temperature offset
+    unit_of_measurement: "°C"
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1  # Scaling factor for offset
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Humidity Offset"
-  #   register_type: holding
-  #   address: 0x51  # Register for humidity offset
-  #   unit_of_measurement: "%RH"
-  #   value_type: U_WORD
-  #   accuracy_decimals: 1
-  #   filters:
-  #     - multiply: 0.1  # Scaling factor for offset
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Humidity Offset"
+    register_type: holding
+    address: 0x51  # Register for humidity offset
+    unit_of_measurement: "%RH"
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1  # Scaling factor for offset
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Conductivity Offset"
-  #   register_type: holding
-  #   address: 0x52  # Register for conductivity offset
-  #   unit_of_measurement: "µS/cm"
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
-  #   filters:
-  #     - multiply: 1.0  # No scaling needed
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Conductivity Offset"
+    register_type: holding
+    address: 0x52  # Register for conductivity offset
+    unit_of_measurement: "µS/cm"
+    value_type: U_WORD
+    accuracy_decimals: 0
+    filters:
+      - multiply: 1.0  # No scaling needed
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "pH Offset"
-  #   register_type: holding
-  #   address: 0x53  # Register for pH offset
-  #   unit_of_measurement: "pH"
-  #   value_type: U_WORD
-  #   accuracy_decimals: 1
-  #   filters:
-  #     - multiply: 0.1  # Scaling factor for pH offset
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "pH Offset"
+    register_type: holding
+    address: 0x53  # Register for pH offset
+    unit_of_measurement: "pH"
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1  # Scaling factor for pH offset
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Nitrogen Factor High"
-  #   register_type: holding
-  #   address: 0x4E8  # Nitrogen factor high byte
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Nitrogen Factor High"
+    register_type: holding
+    address: 0x4E8  # Nitrogen factor high byte
+    value_type: U_WORD
+    accuracy_decimals: 0
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Nitrogen Factor Low"
-  #   register_type: holding
-  #   address: 0x4E9  # Nitrogen factor low byte
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Nitrogen Factor Low"
+    register_type: holding
+    address: 0x4E9  # Nitrogen factor low byte
+    value_type: U_WORD
+    accuracy_decimals: 0
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Nitrogen Offset"
-  #   register_type: holding
-  #   address: 0x4EA  # Nitrogen offset
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Nitrogen Offset"
+    register_type: holding
+    address: 0x4EA  # Nitrogen offset
+    value_type: U_WORD
+    accuracy_decimals: 0
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Phosphorus Factor High"
-  #   register_type: holding
-  #   address: 0x4F2  # Phosphorus factor high byte
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Phosphorus Factor High"
+    register_type: holding
+    address: 0x4F2  # Phosphorus factor high byte
+    value_type: U_WORD
+    accuracy_decimals: 0
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Phosphorus Factor Low"
-  #   register_type: holding
-  #   address: 0x4F3  # Phosphorus factor low byte
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Phosphorus Factor Low"
+    register_type: holding
+    address: 0x4F3  # Phosphorus factor low byte
+    value_type: U_WORD
+    accuracy_decimals: 0
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Phosphorus Offset"
-  #   register_type: holding
-  #   address: 0x4F4  # Phosphorus offset
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Phosphorus Offset"
+    register_type: holding
+    address: 0x4F4  # Phosphorus offset
+    value_type: U_WORD
+    accuracy_decimals: 0
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Potassium Factor High"
-  #   register_type: holding
-  #   address: 0x4FC  # Potassium factor high byte
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Potassium Factor High"
+    register_type: holding
+    address: 0x4FC  # Potassium factor high byte
+    value_type: U_WORD
+    accuracy_decimals: 0
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Potassium Factor Low"
-  #   register_type: holding
-  #   address: 0x4FD  # Potassium factor low byte
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Potassium Factor Low"
+    register_type: holding
+    address: 0x4FD  # Potassium factor low byte
+    value_type: U_WORD
+    accuracy_decimals: 0
 
-  # - platform: modbus_controller
-  #   modbus_controller_id: modbus_device
-  #   name: "Potassium Offset"
-  #   register_type: holding
-  #   address: 0x4FE  # Potassium offset
-  #   value_type: U_WORD
-  #   accuracy_decimals: 0
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Potassium Offset"
+    register_type: holding
+    address: 0x4FE  # Potassium offset
+    value_type: U_WORD
+    accuracy_decimals: 0
 
 # number:
 #   - platform: modbus_controller
