@@ -5,23 +5,23 @@ esphome:
 
 logger:
 
-wifi:
-  ssid: !secret WiFi_ssid
-  password: !secret WiFi_password
+# wifi:
+#   ssid: !secret WiFi_ssid
+#   password: !secret WiFi_password
 
 external_components:
   - source:
       type: git
-      url: https://gitlab.com/mathgaming/ripnetuk-esphome-easynow.git
-      ref: main
-    refresh: never
+      url: https://github.com/nielsnl68/esphome
+      ref: "nvds-new-espnow"
+    components: [ espnow ]
 
-api:
-  password: !secret API_password
+# api:
+#   password: !secret API_password
 
-ota:
-  - platform: esphome
-    password: !secret OTA_password
+# ota:
+#   - platform: esphome
+#     password: !secret OTA_password
 
 uart:
   - id: intmodbus
@@ -54,22 +54,25 @@ sensor:
     unit_of_measurement: '%RH'
     value_type: U_WORD
     id: 'humidity'
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
 
-#When commented out, the sensor works fine
-proxy_transmitter:
-  id: my_proxy_transmitter
-  espnow_channel: 11
-  receiver_mac_address: !secret receiver_mac_address
-  sensors:
-    - sensor: 'humidity'
-      proxy_id: 'soil_hum_proxy'
+
+espnow:
+  auto_add_peer: true
+  wifi_channel: "11"
+  peers:
+    - 70:04:1D:93:0B:78
+    - FF:FF:FF:FF:FF:FF
 
 interval:
-  - interval: 10s
+  - interval: 1s
     then:
       - component.update: modbus_device
-      - delay: 5s
-      - lambda: |-
-          ESP_LOGI("main", "Sending sensor data");
-          ESP_LOGI("main", "Humidity: %f %%RH", id(humidity).state);
-      - proxy_transmitter.send  # When commented out, the sensor works fine
+      - delay: 1s
+      - espnow.send:
+          data: !lambda |-
+            char buffer[10];
+            snprintf(buffer, sizeof(buffer), "%.1f", id(humidity).state);
+            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
