@@ -1,0 +1,63 @@
+esphome:
+  name: esp32-reciever
+  platform: ESP32
+  board: esp32-c3-devkitm-1 # For ESP32-C3 based boards
+
+logger:
+
+wifi:
+  ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
+  password: !secret WiFi_password # WiFi password from secrets.yaml
+
+api:
+  password: !secret API_password # API password for Home Assistant
+
+ota:
+  - platform: esphome
+    password: !secret OTA_password # OTA password from secrets.yaml
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: "nvds-new-espnow"
+    components: [ espnow ]
+
+
+
+globals:
+  - id: received_data
+    type: int
+    restore_value: no
+    initial_value: '0'
+    
+sensor:
+  - platform: template
+    name: "Humidity"
+    id: humidity
+    update_interval: never
+    accuracy_decimals: 1
+
+espnow:
+  auto_add_peer: true
+  wifi_channel: "11"
+  peers:
+    #- 24:58:7C:91:D1:CC
+    - FF:FF:FF:FF:FF:FF
+  
+  on_receive:
+    then:
+      - lambda: |-
+          ESP_LOGI("main", "Received data from ESP-NOW");
+          std::string received_string((char*)packet.get_payload(), packet.size);
+          float humidity_value = atof(received_string.c_str());
+          id(humidity).publish_state(humidity_value);
+          id(received_data) = 1;
+
+  # on_new_peer:
+  #   - logger.log:
+  #       format: "Peer %012llx is a new user. It will be added."
+  #       args: [ packet.peer ]
+  #   - espnow.add_peer: packet.peer
+
+      
