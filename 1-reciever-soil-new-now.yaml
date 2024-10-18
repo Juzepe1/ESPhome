@@ -24,62 +24,72 @@ external_components:
       ref: "nvds-new-espnow"
     components: [ espnow ]
 
+substitutions:
+  soil_moisture_device_id: "01"
 
-
-globals:
-  - id: received_data
-    type: int
-    restore_value: no
-    initial_value: '0'
-    
 sensor:
   - platform: template
-    name: "Humidity"
-    id: humidity
+    name: "Humidity ${soil_moisture_device_id}"
+    id: 'humidity_${soil_moisture_device_id}'
     update_interval: never
     accuracy_decimals: 1
     unit_of_measurement: "%RH"
+
   - platform: template
-    name: "Temperature"
-    id: temperature
+    name: "Temperature ${soil_moisture_device_id}"
+    id: temperature_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
     unit_of_measurement: "°C"
 
   - platform: template
-    name: "Conductivity"
-    id: conductivity
+    name: "Conductivity_${soil_moisture_device_id}"
+    id: conductivity_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
     unit_of_measurement: "µS/cm"
 
   - platform: template
-    name: "pH"
-    id: ph
+    name: "pH_${soil_moisture_device_id}"
+    id: ph_${soil_moisture_device_id}
     update_interval: never
-    accuracy_decimals: 2
+    accuracy_decimals: 1
     unit_of_measurement: "pH"
 
   - platform: template
-    name: "Nitrogen"
-    id: nitrogen
+    name: "Nitrogen_${soil_moisture_device_id}"
+    id: nitrogen_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
     unit_of_measurement: "mg/kg"
 
   - platform: template
-    name: "Phosphorus"
-    id: phosphorus
+    name: "Phosphorus_${soil_moisture_device_id}"
+    id: phosphorus_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
     unit_of_measurement: "mg/kg"
 
   - platform: template
-    name: "Potassium"
-    id: potassium
+    name: "Potassium_${soil_moisture_device_id}"
+    id: potassium_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
     unit_of_measurement: "mg/kg"
+
+  - platform: template
+    name: "Salinity_${soil_moisture_device_id}"
+    id: salinity_${soil_moisture_device_id}
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: "mg/L"
+
+  - platform: template
+    name: "TDS_${soil_moisture_device_id}"
+    id: tds_${soil_moisture_device_id}
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: "mg/L"
 
 espnow:
   auto_add_peer: true
@@ -88,68 +98,48 @@ espnow:
     - FF:FF:FF:FF:FF:FF
   on_receive:
     then:
-      - lambda: |-
-          ESP_LOGI("main", "Received data from ESP-NOW");
+    - lambda: |-
+        ESP_LOGI("main", "Received data from ESP-NOW");
 
-          // Convert the received data to a string
-          std::string received_string((char*)packet.get_payload(), packet.size);
-          
-          // Array to hold parts of the received string
-          char buffer[50];
-          strncpy(buffer, received_string.c_str(), sizeof(buffer));
+        // Convert the received data to a string
+        std::string received_string((char*)packet.get_payload(), packet.size);
+        
+        // Array to hold parts of the received string
+        char buffer[50];
+        strncpy(buffer, received_string.c_str(), sizeof(buffer));
 
-          // Parse the string using strtok
-          char* id_string = strtok(buffer, ";");
-          char* value_string = strtok(nullptr, ";");
+        // Parse the string using strtok
+        char* device_id = strtok(buffer, ";");
+        char* sensor_name = strtok(nullptr, ";");
+        char* value_string = strtok(nullptr, ";");
 
-          if (id_string != nullptr && value_string != nullptr) {
-            float value = atof(value_string);
+        if (device_id != nullptr && sensor_name != nullptr && value_string != nullptr) {
+          float value = atof(value_string);
 
-            // Compare id_string with the sensor IDs and publish the state
-            if (strcmp(id_string, "humidity") == 0) {
-              id(humidity).publish_state(value);
-            } else if (strcmp(id_string, "temperature") == 0) {
-              id(temperature).publish_state(value);
-            } else if (strcmp(id_string, "conductivity") == 0) {
-              id(conductivity).publish_state(value);
-            } else if (strcmp(id_string, "ph") == 0) {
-              id(ph).publish_state(value);
-            } else if (strcmp(id_string, "nitrogen") == 0) {
-              id(nitrogen).publish_state(value);
-            } else if (strcmp(id_string, "phosphorus") == 0) {
-              id(phosphorus).publish_state(value);
-            } else if (strcmp(id_string, "potassium") == 0) {
-              id(potassium).publish_state(value);
+          // Check if the device_id is "01"
+          if (strcmp(device_id, "01") == 0) {
+            // Compare sensor_name with the sensor IDs and publish the state
+            if (strcmp(sensor_name, "humidity") == 0) {
+              id(humidity_01).publish_state(value);
+            } else if (strcmp(sensor_name, "temperature") == 0) {
+              id(temperature_01).publish_state(value);
+            } else if (strcmp(sensor_name, "conductivity") == 0) {
+              id(conductivity_01).publish_state(value);
+            } else if (strcmp(sensor_name, "ph") == 0) {
+              id(ph_01).publish_state(value);
+            } else if (strcmp(sensor_name, "nitrogen") == 0) {
+              id(nitrogen_01).publish_state(value);
+            } else if (strcmp(sensor_name, "phosphorus") == 0) {
+              id(phosphorus_01).publish_state(value);
+            } else if (strcmp(sensor_name, "potassium") == 0) {
+              id(potassium_01).publish_state(value);
+            } else if (strcmp(sensor_name, "salinity") == 0) {
+              id(salinity_01).publish_state(value);
+            } else if (strcmp(sensor_name, "tds") == 0) {
+              id(tds_01).publish_state(value);
             }
           }
-
-          // Set received_data flag
-          id(received_data) = 1;
-    # - logger.log:
-    #     format: "Received data from ESP-NOW: %s"
-    #     args: [ packet.get_payload() ]
-
-# interval:
-#   - interval: 10s
-#     then:
-#       - wifi.disable:
-#       - lambda: |- 
-#           ESP_LOGI("main", "Disabling WiFi");
-#       - delay: 5s
-#       - lambda: |- 
-#           ESP_LOGI("main", "Waiting for data from ESP-NOW");
-#       - wait_until:
-#           condition:
-#               lambda: |-
-#                 return id(received_data) == 1;
-#       - lambda: |-
-#           ESP_LOGI("main", "Received data from ESP-NOW");     
-#           id(received_data) = 0;   
-#       - delay: 5s
-#       - wifi.enable:
-#       - lambda: |- 
-#           ESP_LOGI("main", "Enabling WiFi");
-#       - delay: 10s
-
-
-      
+        }
+  # - logger.log:
+  #     format: "Received data from ESP-NOW: %s"
+  #     args: [ packet.get_payload() ]
