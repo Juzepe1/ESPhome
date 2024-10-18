@@ -94,26 +94,137 @@ sensor:
     update_interval: never
     accuracy_decimals: 1
     unit_of_measurement: "mg/L"
-
-# number:
-#   - platform: template
-#     name: "Conductivity Factor ${soil_moisture_device_id}" 
-#     id: conductivity_factor_${soil_moisture_device_id}
-#     entity_category: config
-#     unit_of_measurement: "x"
-#     max_value: 100
-#     min_value: 0
-#     step: 0.1
-#     initial_value: 0.0
-#     optimistic: True
-#     restore_value: True
   
-# interval:
-#   - interval: 1s
-#     then:
-#       - lambda: |-
-#           ESP_LOGI("main", "Conductivity Factor: %f", id(conductivity_factor_01).state);
 
+number:
+  - platform: template
+    name: "Conductivity Factor"
+    id: cond_f_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 100.0
+    step: 0.1
+    optimistic: true
+    
+  - platform: template
+    name: "Salinity Factor"
+    id: sal_f_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 100.0
+    step: 0.1
+    optimistic: true
+    
+  - platform: template
+    name: "TDS Factor"
+    id: tds_f_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 100.0
+    step: 0.1
+    optimistic: true
+    
+  - platform: template
+    name: "Temperature Offset"
+    id: temp_offset_${soil_moisture_device_id}
+    min_value: -10.0
+    max_value: 10.0
+    step: 0.1
+    optimistic: true
+    
+  - platform: template
+    name: "Humidity Offset"
+    id: hum_offset_${soil_moisture_device_id}
+    min_value: -10.0
+    max_value: 10.0
+    step: 0.1
+    optimistic: true
+    
+  - platform: template
+    name: "Conductivity Offset"
+    id: cond_offset_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    
+  - platform: template
+    name: "pH Offset"
+    id: ph_offset_${soil_moisture_device_id}
+    min_value: -10.0
+    max_value: 10.0
+    step: 0.1
+    optimistic: true
+    
+  - platform: template
+    name: "Nitrogen Factor High"
+    id: n_f_high_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    
+  - platform: template
+    name: "Nitrogen Factor Low"
+    id: n_f_low_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    
+  - platform: template
+    name: "Nitrogen Offset"
+    id: n_offset_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    
+  - platform: template
+    name: "Phosphorus Factor High"
+    id: p_f_high_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    
+  - platform: template
+    name: "Phosphorus Factor Low"
+    id: p_f_low_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    
+  - platform: template
+    name: "Phosphorus Offset"
+    id: p_offset_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    
+  - platform: template
+    name: "Potassium Factor High"
+    id: k_f_high_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    
+  - platform: template
+    name: "Potassium Factor Low"
+    id: k_f_low_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    
+  - platform: template
+    name: "Potassium Offset"
+    id: k_offset_${soil_moisture_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    
 
 button:
   - platform: template
@@ -173,6 +284,72 @@ espnow:
             } else if (strcmp(sensor_name, "tds") == 0) {
               id(tds_01).publish_state(value);
             }
+            else if (strcmp(sensor_name, "cond_f") == 0) {
+              auto call = id(cond_f_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "sal_f") == 0) {
+              auto call = id(sal_f_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "tds_f") == 0) {
+              auto call = id(tds_f_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "temp_offset") == 0) {
+              auto call = id(temp_offset_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "hum_offset") == 0) {
+              auto call = id(hum_offset_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "cond_offset") == 0) {
+              auto call = id(cond_offset_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "ph_offset") == 0) {
+              auto call = id(ph_offset_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "n_f_high") == 0) {
+              auto call = id(n_f_high_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "n_f_low") == 0) {
+              auto call = id(n_f_low_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "n_offset") == 0) {
+              auto call = id(n_offset_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "p_f_high") == 0) {
+              auto call = id(p_f_high_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "p_f_low") == 0) {
+              auto call = id(p_f_low_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "p_offset") == 0) {
+              auto call = id(p_offset_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "k_f_high") == 0) {
+              auto call = id(k_f_high_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "k_f_low") == 0) {
+              auto call = id(k_f_low_01).make_call();
+              call.set_value(value);
+              call.perform();
+            } else if (strcmp(sensor_name, "k_offset") == 0) {
+              auto call = id(k_offset_01).make_call();
+              call.set_value(value);
+              call.perform();
+            }
+            
             else {
               ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
               ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
