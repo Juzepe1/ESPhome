@@ -330,18 +330,102 @@ espnow:
             lambda: 'return id(get_calibration);'  
           then:
             - component.update: modbus_device
-            - delay: 1s
+            - delay: 5s
             - espnow.send:
                 data: !lambda |-
-                  char buffer[256];
-                  snprintf(buffer, sizeof(buffer), 
-                    "%s;calibration_data;temp_offset;%.1f;hum_offset;%.1f;cond_offset;%.0f;ph_offset;%.1f;n_f_high;%.0f;n_f_low;%.0f;n_offset;%.0f;p_f_high;%.0f;p_f_low;%.0f;p_offset;%.0f;k_f_high;%.0f;k_f_low;%.0f;k_offset;%.0f",
-                    id(device_id).c_str(), id(temp_offset).state, id(hum_offset).state, id(cond_offset).state, id(ph_offset).state,
-                    id(n_f_high).state, id(n_f_low).state, id(n_offset).state,
-                    id(p_f_high).state, id(p_f_low).state, id(p_offset).state,
-                    id(k_f_high).state, id(k_f_low).state, id(k_offset).state);
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;cond_f;%.0f", id(device_id).c_str(), id(cond_f).state);
                   return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
             - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;sal_f;%.0f", id(device_id).c_str(), id(sal_f).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;tds_f;%.0f", id(device_id).c_str(), id(tds_f).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;temp_offset;%.1f", id(device_id).c_str(), id(temp_offset).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;hum_offset;%.1f", id(device_id).c_str(), id(hum_offset).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;cond_offset;%.0f", id(device_id).c_str(), id(cond_offset).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;ph_offset;%.1f", id(device_id).c_str(), id(ph_offset).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;n_f_high;%.0f", id(device_id).c_str(), id(n_f_high).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;n_f_low;%.0f", id(device_id).c_str(), id(n_f_low).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;n_offset;%.0f", id(device_id).c_str(), id(n_offset).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;p_f_high;%.0f", id(device_id).c_str(), id(p_f_high).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;p_f_low;%.0f", id(device_id).c_str(), id(p_f_low).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;p_offset;%.0f", id(device_id).c_str(), id(p_offset).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;k_f_high;%.0f", id(device_id).c_str(), id(k_f_high).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;k_f_low;%.0f", id(device_id).c_str(), id(k_f_low).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[30];
+                  snprintf(buffer, sizeof(buffer), "%s;k_offset;%.0f", id(device_id).c_str(), id(k_offset).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
             - lambda: |- 
                 ESP_LOGI("main", "Calibration data sent");
                 id(get_calibration) = false;
@@ -361,7 +445,10 @@ interval:
   - interval: 10s
     then:
       - component.update: modbus_device
-      - delay: 5000ms
+      - delay: 5s
+      - wait_until:
+          condition:
+            lambda: 'return !id(get_calibration);'
       - espnow.send:
           data: !lambda |-
             char buffer[30];
