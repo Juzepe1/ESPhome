@@ -2,19 +2,14 @@ esphome:
   name: esp32-modbus
   platform: ESP32
   board: esp32-c3-devkitm-1
-
+  
 logger:
+
+
 
 # wifi:
 #   ssid: !secret WiFi_ssid
 #   password: !secret WiFi_password
-
-external_components:
-  - source:
-      type: git
-      url: https://github.com/nielsnl68/esphome
-      ref: "nvds-new-espnow"
-    components: [ espnow ]
 
 # api:
 #   password: !secret API_password
@@ -22,6 +17,14 @@ external_components:
 # ota:
 #   - platform: esphome
 #     password: !secret OTA_password
+
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: "nvds-new-espnow"
+    components: [ espnow ]
 
 uart:
   - id: intmodbus
@@ -129,6 +132,26 @@ sensor:
     filters:
       - multiply: 1.0  # No scaling needed
     id: 'potassium'
+
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "Salinity"
+    register_type: holding
+    address: 0x07  # Register for salinity
+    unit_of_measurement: "mg/L"
+    value_type: U_WORD
+    accuracy_decimals: 0
+    id: 'salinity'
+
+  - platform: modbus_controller
+    modbus_controller_id: modbus_device
+    name: "TDS"
+    register_type: holding
+    address: 0x08  # Register for TDS
+    unit_of_measurement: "mg/L"
+    value_type: U_WORD
+    accuracy_decimals: 0
+    id: 'tds'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -277,50 +300,67 @@ espnow:
   peers:
     - FF:FF:FF:FF:FF:FF
 
+globals:
+  - id: device_id
+    type: std::string
+    initial_value: '"01"'
+
 interval:
-  - interval: 10s
+  - interval: 30s
     then:
       - component.update: modbus_device
       - delay: 1s
       - espnow.send:
           data: !lambda |-
             char buffer[30];
-            snprintf(buffer, sizeof(buffer), "humidity;%.1f", id(humidity).state);
+            snprintf(buffer, sizeof(buffer), "%s;humidity;%.1f", id(device_id).c_str(), id(humidity).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
       - delay: 1s
       - espnow.send:
           data: !lambda |-
             char buffer[30];
-            snprintf(buffer, sizeof(buffer), "temperature;%.1f", id(temperature).state);
+            snprintf(buffer, sizeof(buffer), "%s;temperature;%.1f", id(device_id).c_str(), id(temperature).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
       - delay: 1s
       - espnow.send:
           data: !lambda |-
             char buffer[30];
-            snprintf(buffer, sizeof(buffer), "conductivity;%.0f", id(conductivity).state);
+            snprintf(buffer, sizeof(buffer), "%s;conductivity;%.0f", id(device_id).c_str(), id(conductivity).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
       - delay: 1s
       - espnow.send:
           data: !lambda |-
             char buffer[30];
-            snprintf(buffer, sizeof(buffer), "ph;%.1f", id(ph).state);
+            snprintf(buffer, sizeof(buffer), "%s;ph;%.1f", id(device_id).c_str(), id(ph).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
       - delay: 1s
       - espnow.send:
           data: !lambda |-
             char buffer[30];
-            snprintf(buffer, sizeof(buffer), "nitrogen;%.0f", id(nitrogen).state);
+            snprintf(buffer, sizeof(buffer), "%s;nitrogen;%.0f", id(device_id).c_str(), id(nitrogen).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
       - delay: 1s
       - espnow.send:
           data: !lambda |-
             char buffer[30];
-            snprintf(buffer, sizeof(buffer), "phosphorus;%.0f", id(phosphorus).state);
+            snprintf(buffer, sizeof(buffer), "%s;phosphorus;%.0f", id(device_id).c_str(), id(phosphorus).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
       - delay: 1s
       - espnow.send:
           data: !lambda |-
             char buffer[30];
-            snprintf(buffer, sizeof(buffer), "potassium;%.0f", id(potassium).state);
+            snprintf(buffer, sizeof(buffer), "%s;potassium;%.0f", id(device_id).c_str(), id(potassium).state);
+            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+      - delay: 1s
+      - espnow.send:
+          data: !lambda |-
+            char buffer[30];
+            snprintf(buffer, sizeof(buffer), "%s;salinity;%.1f", id(device_id).c_str(), id(salinity).state);
+            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+      - delay: 1s
+      - espnow.send:
+          data: !lambda |-
+            char buffer[30];
+            snprintf(buffer, sizeof(buffer), "%s;tds;%.1f", id(device_id).c_str(), id(tds).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
       - delay: 1s
