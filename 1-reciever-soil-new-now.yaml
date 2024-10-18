@@ -3,6 +3,9 @@ esphome:
   platform: ESP32
   board: esp32-c3-devkitm-1 # For ESP32-C3 based boards
 
+  
+      
+
 logger:
 
 wifi:
@@ -26,6 +29,7 @@ external_components:
 
 substitutions:
   soil_moisture_device_id: "01"
+
 
 sensor:
   - platform: template
@@ -91,6 +95,37 @@ sensor:
     accuracy_decimals: 1
     unit_of_measurement: "mg/L"
 
+# number:
+#   - platform: template
+#     name: "Conductivity Factor ${soil_moisture_device_id}" 
+#     id: conductivity_factor_${soil_moisture_device_id}
+#     entity_category: config
+#     unit_of_measurement: "x"
+#     max_value: 100
+#     min_value: 0
+#     step: 0.1
+#     initial_value: 0.0
+#     optimistic: True
+#     restore_value: True
+  
+# interval:
+#   - interval: 1s
+#     then:
+#       - lambda: |-
+#           ESP_LOGI("main", "Conductivity Factor: %f", id(conductivity_factor_01).state);
+
+
+button:
+  - platform: template
+    name: "Get calibration data"
+    on_press:
+      then:
+        - espnow.send:
+            data: !lambda |-
+              std::string data = "getcalibration";
+              return std::vector<uint8_t>(data.begin(), data.end());
+
+
 espnow:
   auto_add_peer: true
   wifi_channel: "11"
@@ -138,7 +173,18 @@ espnow:
             } else if (strcmp(sensor_name, "tds") == 0) {
               id(tds_01).publish_state(value);
             }
+            else {
+              ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
+              ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
+            }
           }
+          else {
+            ESP_LOGW("main", "Unknown device ID: %s", device_id);
+            ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
+          }
+        }
+        else {
+          ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
         }
   # - logger.log:
   #     format: "Received data from ESP-NOW: %s"

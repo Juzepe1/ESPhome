@@ -5,8 +5,6 @@ esphome:
   
 logger:
 
-
-
 # wifi:
 #   ssid: !secret WiFi_ssid
 #   password: !secret WiFi_password
@@ -17,7 +15,6 @@ logger:
 # ota:
 #   - platform: esphome
 #     password: !secret OTA_password
-
 
 external_components:
   - source:
@@ -160,6 +157,7 @@ sensor:
     address: 0x22  # Register for conductivity factor
     unit_of_measurement: "x"
     value_type: U_WORD
+    id: 'cond_f'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -168,6 +166,7 @@ sensor:
     address: 0x23  # Register for salinity factor
     unit_of_measurement: "x"
     value_type: U_WORD
+    id: 'sal_f'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -176,6 +175,7 @@ sensor:
     address: 0x24  # Register for TDS factor
     unit_of_measurement: "x"
     value_type: U_WORD
+    id: 'tds_f'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -187,6 +187,7 @@ sensor:
     accuracy_decimals: 1
     filters:
       - multiply: 0.1  # Scaling factor for offset
+    id: 'temp_offset'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -198,6 +199,7 @@ sensor:
     accuracy_decimals: 1
     filters:
       - multiply: 0.1  # Scaling factor for offset
+    id: 'hum_offset'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -209,6 +211,7 @@ sensor:
     accuracy_decimals: 0
     filters:
       - multiply: 1.0  # No scaling needed
+    id: 'cond_offset'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -220,6 +223,7 @@ sensor:
     accuracy_decimals: 1
     filters:
       - multiply: 0.1  # Scaling factor for pH offset
+    id: 'ph_offset'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -228,6 +232,7 @@ sensor:
     address: 0x4E8  # Nitrogen factor high byte
     value_type: U_WORD
     accuracy_decimals: 0
+    id: 'n_f_high'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -236,6 +241,7 @@ sensor:
     address: 0x4E9  # Nitrogen factor low byte
     value_type: U_WORD
     accuracy_decimals: 0
+    id: 'n_f_low'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -244,6 +250,7 @@ sensor:
     address: 0x4EA  # Nitrogen offset
     value_type: U_WORD
     accuracy_decimals: 0
+    id: 'n_offset'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -252,6 +259,7 @@ sensor:
     address: 0x4F2  # Phosphorus factor high byte
     value_type: U_WORD
     accuracy_decimals: 0
+    id: 'p_f_high'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -260,6 +268,7 @@ sensor:
     address: 0x4F3  # Phosphorus factor low byte
     value_type: U_WORD
     accuracy_decimals: 0
+    id: 'p_f_low'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -268,6 +277,7 @@ sensor:
     address: 0x4F4  # Phosphorus offset
     value_type: U_WORD
     accuracy_decimals: 0
+    id: 'p_offset'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -276,6 +286,7 @@ sensor:
     address: 0x4FC  # Potassium factor high byte
     value_type: U_WORD
     accuracy_decimals: 0
+    id: 'k_f_high'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -284,6 +295,7 @@ sensor:
     address: 0x4FD  # Potassium factor low byte
     value_type: U_WORD
     accuracy_decimals: 0
+    id: 'k_f_low'
 
   - platform: modbus_controller
     modbus_controller_id: modbus_device
@@ -292,75 +304,117 @@ sensor:
     address: 0x4FE  # Potassium offset
     value_type: U_WORD
     accuracy_decimals: 0
-
+    id: 'k_offset'
 
 espnow:
   auto_add_peer: true
   wifi_channel: "11"
   peers:
     - FF:FF:FF:FF:FF:FF
+  on_receive:
+    then:
+      - lambda: |-
+          ESP_LOGI("main", "Received data from ESP-NOW");
+
+          // Convert the received data to a string
+          std::string received_string((char*)packet.get_payload(), packet.size);
+          
+          ESP_LOGI("main", "Received data: %s", received_string.c_str());
+
+          if (received_string == "getcalibration") {
+            ESP_LOGI("main", "Calibration data requested");
+            id(get_calibration) = true;
+          }
+      - if:
+          condition:
+            lambda: 'return id(get_calibration);'  
+          then:
+            - component.update: modbus_device
+            - delay: 1s
+            - espnow.send:
+                data: !lambda |-
+                  char buffer[256];
+                  snprintf(buffer, sizeof(buffer), 
+                    "%s;calibration_data;temp_offset;%.1f;hum_offset;%.1f;cond_offset;%.0f;ph_offset;%.1f;n_f_high;%.0f;n_f_low;%.0f;n_offset;%.0f;p_f_high;%.0f;p_f_low;%.0f;p_offset;%.0f;k_f_high;%.0f;k_f_low;%.0f;k_offset;%.0f",
+                    id(device_id).c_str(), id(temp_offset).state, id(hum_offset).state, id(cond_offset).state, id(ph_offset).state,
+                    id(n_f_high).state, id(n_f_low).state, id(n_offset).state,
+                    id(p_f_high).state, id(p_f_low).state, id(p_offset).state,
+                    id(k_f_high).state, id(k_f_low).state, id(k_offset).state);
+                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            - delay: 500ms
+            - lambda: |- 
+                ESP_LOGI("main", "Calibration data sent");
+                id(get_calibration) = false;
+          else:
+            - lambda: |-
+                ESP_LOGI("main", "Calibration data not requested");
 
 globals:
   - id: device_id
     type: std::string
     initial_value: '"01"'
+  - id: get_calibration
+    type: bool
+    initial_value: 'false'
 
 interval:
-  - interval: 30s
+  - interval: 10s
     then:
       - component.update: modbus_device
-      - delay: 1s
+      - delay: 5000ms
       - espnow.send:
           data: !lambda |-
             char buffer[30];
             snprintf(buffer, sizeof(buffer), "%s;humidity;%.1f", id(device_id).c_str(), id(humidity).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
-      - delay: 1s
+      - delay: 500ms
       - espnow.send:
           data: !lambda |-
             char buffer[30];
             snprintf(buffer, sizeof(buffer), "%s;temperature;%.1f", id(device_id).c_str(), id(temperature).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
-      - delay: 1s
+      - delay: 500ms
       - espnow.send:
           data: !lambda |-
             char buffer[30];
             snprintf(buffer, sizeof(buffer), "%s;conductivity;%.0f", id(device_id).c_str(), id(conductivity).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
-      - delay: 1s
+      - delay: 500ms
       - espnow.send:
           data: !lambda |-
             char buffer[30];
             snprintf(buffer, sizeof(buffer), "%s;ph;%.1f", id(device_id).c_str(), id(ph).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
-      - delay: 1s
+      - delay: 500ms
       - espnow.send:
           data: !lambda |-
             char buffer[30];
             snprintf(buffer, sizeof(buffer), "%s;nitrogen;%.0f", id(device_id).c_str(), id(nitrogen).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
-      - delay: 1s
+      - delay: 500ms
       - espnow.send:
           data: !lambda |-
             char buffer[30];
             snprintf(buffer, sizeof(buffer), "%s;phosphorus;%.0f", id(device_id).c_str(), id(phosphorus).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
-      - delay: 1s
+      - delay: 500ms
       - espnow.send:
           data: !lambda |-
             char buffer[30];
             snprintf(buffer, sizeof(buffer), "%s;potassium;%.0f", id(device_id).c_str(), id(potassium).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
-      - delay: 1s
+      - delay: 500ms
       - espnow.send:
           data: !lambda |-
             char buffer[30];
             snprintf(buffer, sizeof(buffer), "%s;salinity;%.1f", id(device_id).c_str(), id(salinity).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
-      - delay: 1s
+      - delay: 500ms
       - espnow.send:
           data: !lambda |-
             char buffer[30];
             snprintf(buffer, sizeof(buffer), "%s;tds;%.1f", id(device_id).c_str(), id(tds).state);
             return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
-      - delay: 1s
+      # - delay: 500ms
+      # - lambda: !lambda |-
+      #     ESP_LOGI("main", "Humidity: %.1f %%, Temperature: %.1f °C, Conductivity: %.0f µS/cm, pH: %.1f, Nitrogen: %.0f mg/kg, Phosphorus: %.0f mg/kg, Potassium: %.0f mg/kg, Salinity: %.1f mg/L, TDS: %.1f mg/L", id(humidity).state, id(temperature).state, id(conductivity).state, id(ph).state, id(nitrogen).state, id(phosphorus).state, id(potassium).state, id(salinity).state, id(tds).state);
