@@ -10,3 +10,12 @@ K posílání dat není potřeba psaní žádný MAC adress jelikož "peer" se a
 ```yaml
 auto_add_peer: true
 ```
+Kanál na přes které komunikuje espnow musí být stejný jako wifi kanál:
+```yaml
+espnow:
+  wifi_channel: "11"
+```
+Kanál WiFi zjistíme po nahrátí kodů v logu zpráv:
+```yaml
+[C][wifi:447]:   Channel: 11
+```
