@@ -38,6 +38,7 @@ sensor:
     update_interval: never
     accuracy_decimals: 1
     unit_of_measurement: "%RH"
+    device_class: humidity
 
   - platform: template
     name: "Temperature ${soil_moisture_device_id}"
@@ -45,6 +46,7 @@ sensor:
     update_interval: never
     accuracy_decimals: 1
     unit_of_measurement: "°C"
+    device_class: temperature
 
   - platform: template
     name: "Conductivity_${soil_moisture_device_id}"
@@ -382,12 +384,16 @@ espnow:
               call.set_value(value);
               call.perform();
             } else if (strcmp(sensor_name, "temp_offset") == 0) {
-              value = value - 6554; // 65536 / 10 rounded to the nearest integer
+              if(value > 6554){
+                value = value - 6554; // 65536 / 10 rounded to the nearest integer
+              }
               auto call = id(temp_offset_01).make_call();
               call.set_value(value);
               call.perform();
             } else if (strcmp(sensor_name, "hum_offset") == 0) {
-              value = value - 6554;
+              if(value > 6554){
+                value = value - 6554; // 65536 / 10 rounded to the nearest integer
+              }
               auto call = id(hum_offset_01).make_call();
               call.set_value(value);
               call.perform();
@@ -396,7 +402,9 @@ espnow:
               call.set_value(value);
               call.perform();
             } else if (strcmp(sensor_name, "ph_offset") == 0) {
-              value = value - 6554;
+              if(value > 6554){
+                value = value - 6554; // 65536 / 10 rounded to the nearest integer
+              }
               auto call = id(ph_offset_01).make_call();
               call.set_value(value);
               call.perform();
