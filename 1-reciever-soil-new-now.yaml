@@ -2,9 +2,9 @@ esphome:
   name: esp32-reciever
   platform: ESP32
   board: esp32-c3-devkitm-1 # For ESP32-C3 based boards
-
-  
-      
+  includes:
+    - components/espnow_send_custom_data/espnow_send_custom_data.h
+    - components/espnow_send_custom_data/espnow_send_custom_data.cpp
 
 logger:
 
@@ -102,24 +102,27 @@ number:
     id: cond_f_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 100.0
-    step: 0.1
+    step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Salinity Factor"
     id: sal_f_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 100.0
-    step: 0.1
+    step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "TDS Factor"
     id: tds_f_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 100.0
-    step: 0.1
+    step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Temperature Offset"
@@ -128,7 +131,8 @@ number:
     max_value: 10.0
     step: 0.1
     optimistic: true
-    
+    entity_category: config
+
   - platform: template
     name: "Humidity Offset"
     id: hum_offset_${soil_moisture_device_id}
@@ -136,6 +140,7 @@ number:
     max_value: 10.0
     step: 0.1
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Conductivity Offset"
@@ -144,6 +149,7 @@ number:
     max_value: 1000.0
     step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "pH Offset"
@@ -152,6 +158,7 @@ number:
     max_value: 10.0
     step: 0.1
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Nitrogen Factor High"
@@ -160,6 +167,7 @@ number:
     max_value: 1000.0
     step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Nitrogen Factor Low"
@@ -168,6 +176,7 @@ number:
     max_value: 1000.0
     step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Nitrogen Offset"
@@ -176,6 +185,7 @@ number:
     max_value: 1000.0
     step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Phosphorus Factor High"
@@ -184,6 +194,7 @@ number:
     max_value: 1000.0
     step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Phosphorus Factor Low"
@@ -192,6 +203,7 @@ number:
     max_value: 1000.0
     step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Phosphorus Offset"
@@ -200,6 +212,7 @@ number:
     max_value: 1000.0
     step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Potassium Factor High"
@@ -208,6 +221,7 @@ number:
     max_value: 1000.0
     step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Potassium Factor Low"
@@ -216,6 +230,7 @@ number:
     max_value: 1000.0
     step: 1.0
     optimistic: true
+    entity_category: config
     
   - platform: template
     name: "Potassium Offset"
@@ -224,18 +239,29 @@ number:
     max_value: 1000.0
     step: 1.0
     optimistic: true
+    entity_category: config
     
 
 button:
   - platform: template
     name: "Get calibration data"
+    entity_category: config
     on_press:
       then:
         - espnow.send:
             data: !lambda |-
-              std::string data = "getcalibration";
+              std::string data = "01;getcalibration";
               return std::vector<uint8_t>(data.begin(), data.end());
 
+  - platform: template
+    name: "Send calibration data"
+    entity_category: config
+    on_press:
+      then:
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "cond_f", id(cond_f_01).state);
+        - delay: 500ms
 
 espnow:
   auto_add_peer: true
@@ -363,6 +389,3 @@ espnow:
         else {
           ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
         }
-  # - logger.log:
-  #     format: "Received data from ESP-NOW: %s"
-  #     args: [ packet.get_payload() ]

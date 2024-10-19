@@ -2,7 +2,12 @@ esphome:
   name: esp32-modbus
   platform: ESP32
   board: esp32-c3-devkitm-1
-  
+
+  includes:
+    - components/espnow_send_custom_data/espnow_send_custom_data.h
+    - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+
+
 logger:
 
 # wifi:
@@ -44,6 +49,18 @@ modbus_controller:
     modbus_id: modbus1
     setup_priority: -10
     update_interval: never  # Do not poll sensor automatically
+
+
+globals:
+  - id: device_id
+    type: std::string
+    initial_value: '"01"'
+  - id: get_calibration
+    type: bool
+    initial_value: 'false'
+  - id: calibrating
+    type: bool
+    initial_value: 'false'
 
 sensor:
   - platform: modbus_controller
@@ -158,7 +175,7 @@ sensor:
     unit_of_measurement: "x"
     value_type: U_WORD
     id: 'cond_f'
-
+  
   - platform: modbus_controller
     modbus_controller_id: modbus_device
     name: "Salinity Factor"
@@ -318,131 +335,126 @@ espnow:
 
           // Convert the received data to a string
           std::string received_string((char*)packet.get_payload(), packet.size);
-          
-          ESP_LOGI("main", "Received data: %s", received_string.c_str());
 
-          if (received_string == "getcalibration") {
-            ESP_LOGI("main", "Calibration data requested");
-            id(get_calibration) = true;
+          ESP_LOGI("main", "Received data: %s", received_string.c_str());
+          
+          // Array to hold parts of the received string
+          char buffer[50];
+          strncpy(buffer, received_string.c_str(), sizeof(buffer));
+
+          // Parse the string using strtok
+          char* cal_device_id = strtok(buffer, ";");
+          char* cal_sensor_name = strtok(nullptr, ";");
+          char* cal_value_string = strtok(nullptr, ";");
+          
+          if(cal_device_id != nullptr && strcmp(cal_device_id, id(device_id).c_str()) == 0){
+            if (cal_sensor_name != nullptr){
+              if (strcmp(cal_sensor_name, "getcalibration") == 0) {
+                id(get_calibration) = true;
+              }
+              else if(cal_value_string != nullptr){
+                float value = atof(cal_value_string);
+                ESP_LOGI("main", "Received sensor data: %s = %f", cal_sensor_name, value);
+                if (strcmp(cal_sensor_name, "cond_f") == 0) {
+                  ESP_LOGI("main", "Received conductivity factor: %f", value);
+                  ESP_LOGD("main", "Sending value to Modbus register 0x22: %f", value);
+
+                  // uint16_t new_value = static_cast<uint16_t>(value);
+                  // std::vector<uint16_t> payload = {new_value};
+                  // esphome::modbus_controller::ModbusController *controller = id(modbus_device);
+                  // esphome::modbus_controller::ModbusCommandItem command =
+                  //     esphome::modbus_controller::ModbusCommandItem::create_write_multiple_command(controller, 0x22, payload.size(), payload);
+                  // controller->queue_command(command);
+                  ESP_LOGI("main", "Value sent to Modbus register 0x22");
+                  // id(calibrating) = true;
+                  // auto call = id(cond_f_set).make_call();
+                  // call.set_value(value);
+                  // call.perform();
+                  // id(calibrating) = false;
+                  
+                }
+                // Add more sensor handling here if needed
+              }
+            }
+          }
+          else {
+            ESP_LOGI("main", "Received data not for this device");
           }
       - if:
           condition:
-            lambda: 'return id(get_calibration);'  
+            lambda: 'return id(get_calibration);'
           then:
             - component.update: modbus_device
             - delay: 5s
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;cond_f;%.0f", id(device_id).c_str(), id(cond_f).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "cond_f", id(cond_f).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;sal_f;%.0f", id(device_id).c_str(), id(sal_f).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "sal_f", id(sal_f).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;tds_f;%.0f", id(device_id).c_str(), id(tds_f).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "tds_f", id(tds_f).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;temp_offset;%.1f", id(device_id).c_str(), id(temp_offset).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "temp_offset", id(temp_offset).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;hum_offset;%.1f", id(device_id).c_str(), id(hum_offset).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "hum_offset", id(hum_offset).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;cond_offset;%.0f", id(device_id).c_str(), id(cond_offset).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "cond_offset", id(cond_offset).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;ph_offset;%.1f", id(device_id).c_str(), id(ph_offset).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "ph_offset", id(ph_offset).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;n_f_high;%.0f", id(device_id).c_str(), id(n_f_high).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "n_f_high", id(n_f_high).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;n_f_low;%.0f", id(device_id).c_str(), id(n_f_low).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "n_f_low", id(n_f_low).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;n_offset;%.0f", id(device_id).c_str(), id(n_offset).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "n_offset", id(n_offset).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;p_f_high;%.0f", id(device_id).c_str(), id(p_f_high).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "p_f_high", id(p_f_high).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;p_f_low;%.0f", id(device_id).c_str(), id(p_f_low).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "p_f_low", id(p_f_low).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;p_offset;%.0f", id(device_id).c_str(), id(p_offset).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "p_offset", id(p_offset).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;k_f_high;%.0f", id(device_id).c_str(), id(k_f_high).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "k_f_high", id(k_f_high).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;k_f_low;%.0f", id(device_id).c_str(), id(k_f_low).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "k_f_low", id(k_f_low).state);
             - delay: 500ms
             - espnow.send:
                 data: !lambda |-
-                  char buffer[30];
-                  snprintf(buffer, sizeof(buffer), "%s;k_offset;%.0f", id(device_id).c_str(), id(k_offset).state);
-                  return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                  return format_espnow_data(id(device_id).c_str(), "k_offset", id(k_offset).state);
             - lambda: |- 
                 ESP_LOGI("main", "Calibration data sent");
                 id(get_calibration) = false;
-          else:
-            - lambda: |-
-                ESP_LOGI("main", "Calibration data not requested");
-
-globals:
-  - id: device_id
-    type: std::string
-    initial_value: '"01"'
-  - id: get_calibration
-    type: bool
-    initial_value: 'false'
-
+        
 interval:
-  - interval: 10s
+  - interval: 60s
     then:
       - component.update: modbus_device
       - delay: 5s
@@ -451,57 +463,36 @@ interval:
             lambda: 'return !id(get_calibration);'
       - espnow.send:
           data: !lambda |-
-            char buffer[30];
-            snprintf(buffer, sizeof(buffer), "%s;humidity;%.1f", id(device_id).c_str(), id(humidity).state);
-            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            return format_espnow_data(id(device_id).c_str(), "humidity", id(humidity).state);
       - delay: 500ms
       - espnow.send:
           data: !lambda |-
-            char buffer[30];
-            snprintf(buffer, sizeof(buffer), "%s;temperature;%.1f", id(device_id).c_str(), id(temperature).state);
-            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            return format_espnow_data(id(device_id).c_str(), "temperature", id(temperature).state);
       - delay: 500ms
       - espnow.send:
           data: !lambda |-
-            char buffer[30];
-            snprintf(buffer, sizeof(buffer), "%s;conductivity;%.0f", id(device_id).c_str(), id(conductivity).state);
-            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            return format_espnow_data(id(device_id).c_str(), "conductivity", id(conductivity).state);
       - delay: 500ms
       - espnow.send:
           data: !lambda |-
-            char buffer[30];
-            snprintf(buffer, sizeof(buffer), "%s;ph;%.1f", id(device_id).c_str(), id(ph).state);
-            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            return format_espnow_data(id(device_id).c_str(), "ph", id(ph).state);
       - delay: 500ms
       - espnow.send:
           data: !lambda |-
-            char buffer[30];
-            snprintf(buffer, sizeof(buffer), "%s;nitrogen;%.0f", id(device_id).c_str(), id(nitrogen).state);
-            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            return format_espnow_data(id(device_id).c_str(), "nitrogen", id(nitrogen).state);
       - delay: 500ms
       - espnow.send:
           data: !lambda |-
-            char buffer[30];
-            snprintf(buffer, sizeof(buffer), "%s;phosphorus;%.0f", id(device_id).c_str(), id(phosphorus).state);
-            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            return format_espnow_data(id(device_id).c_str(), "phosphorus", id(phosphorus).state);
       - delay: 500ms
       - espnow.send:
           data: !lambda |-
-            char buffer[30];
-            snprintf(buffer, sizeof(buffer), "%s;potassium;%.0f", id(device_id).c_str(), id(potassium).state);
-            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            return format_espnow_data(id(device_id).c_str(), "potassium", id(potassium).state);
       - delay: 500ms
       - espnow.send:
           data: !lambda |-
-            char buffer[30];
-            snprintf(buffer, sizeof(buffer), "%s;salinity;%.1f", id(device_id).c_str(), id(salinity).state);
-            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+            return format_espnow_data(id(device_id).c_str(), "salinity", id(salinity).state);
       - delay: 500ms
       - espnow.send:
           data: !lambda |-
-            char buffer[30];
-            snprintf(buffer, sizeof(buffer), "%s;tds;%.1f", id(device_id).c_str(), id(tds).state);
-            return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
-      # - delay: 500ms
-      # - lambda: !lambda |-
-      #     ESP_LOGI("main", "Humidity: %.1f %%, Temperature: %.1f °C, Conductivity: %.0f µS/cm, pH: %.1f, Nitrogen: %.0f mg/kg, Phosphorus: %.0f mg/kg, Potassium: %.0f mg/kg, Salinity: %.1f mg/L, TDS: %.1f mg/L", id(humidity).state, id(temperature).state, id(conductivity).state, id(ph).state, id(nitrogen).state, id(phosphorus).state, id(potassium).state, id(salinity).state, id(tds).state);
+            return format_espnow_data(id(device_id).c_str(), "tds", id(tds).state);
