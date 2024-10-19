@@ -6,6 +6,8 @@ esphome:
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+    - components/write_to_modbus_device/write_to_modbus_device.h
+    - components/write_to_modbus_device/write_to_modbus_device.cpp
 
 
 logger:
@@ -356,23 +358,43 @@ espnow:
                 float value = atof(cal_value_string);
                 ESP_LOGI("main", "Received sensor data: %s = %f", cal_sensor_name, value);
                 if (strcmp(cal_sensor_name, "cond_f") == 0) {
-                  ESP_LOGI("main", "Received conductivity factor: %f", value);
-                  ESP_LOGD("main", "Sending value to Modbus register 0x22: %f", value);
-
-                  // uint16_t new_value = static_cast<uint16_t>(value);
-                  // std::vector<uint16_t> payload = {new_value};
-                  // esphome::modbus_controller::ModbusController *controller = id(modbus_device);
-                  // esphome::modbus_controller::ModbusCommandItem command =
-                  //     esphome::modbus_controller::ModbusCommandItem::create_write_multiple_command(controller, 0x22, payload.size(), payload);
-                  // controller->queue_command(command);
-                  ESP_LOGI("main", "Value sent to Modbus register 0x22");
-                  // id(calibrating) = true;
-                  // auto call = id(cond_f_set).make_call();
-                  // call.set_value(value);
-                  // call.perform();
-                  // id(calibrating) = false;
-                  
+                  write_to_modbus_device(id(modbus_device), 0x22, value);
+                } else if (strcmp(cal_sensor_name, "sal_f") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x23, value);
+                } else if (strcmp(cal_sensor_name, "tds_f") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x24, value);
+                } else if (strcmp(cal_sensor_name, "temp_offset") == 0) {
+                  if (value < 0) {value = 65536 + value;}
+                  write_to_modbus_device(id(modbus_device), 0x50, value);
+                } else if (strcmp(cal_sensor_name, "hum_offset") == 0) {
+                  if (value < 0) {value = 65536 + value;}
+                  write_to_modbus_device(id(modbus_device), 0x51, value);
+                } else if (strcmp(cal_sensor_name, "cond_offset") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x52, value);
+                } else if (strcmp(cal_sensor_name, "ph_offset") == 0) {
+                  if (value < 0) {value = 65536 + value;}
+                  write_to_modbus_device(id(modbus_device), 0x53, value);
+                } else if (strcmp(cal_sensor_name, "n_f_high") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x4E8, value);
+                } else if (strcmp(cal_sensor_name, "n_f_low") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x4E9, value);
+                } else if (strcmp(cal_sensor_name, "n_offset") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x4EA, value);
+                } else if (strcmp(cal_sensor_name, "p_f_high") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x4F2, value);
+                } else if (strcmp(cal_sensor_name, "p_f_low") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x4F3, value);
+                } else if (strcmp(cal_sensor_name, "p_offset") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x4F4, value);
+                } else if (strcmp(cal_sensor_name, "k_f_high") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x4FC, value);
+                } else if (strcmp(cal_sensor_name, "k_f_low") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x4FD, value);
+                } else if (strcmp(cal_sensor_name, "k_offset") == 0) {
+                  write_to_modbus_device(id(modbus_device), 0x4FE, value);
                 }
+
+
                 // Add more sensor handling here if needed
               }
             }
