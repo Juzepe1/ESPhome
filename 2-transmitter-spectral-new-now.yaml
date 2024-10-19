@@ -1,0 +1,217 @@
+esphome:
+  name: esp32-transmitter
+  platform: ESP32
+  board: esp32-c3-devkitm-1
+
+  includes:
+    - components/espnow_send_custom_data/espnow_send_custom_data.h
+    - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+
+logger:
+
+# wifi: # Used for OTA, if you don't want to put WiFi credential, you can put ssid: 'xxxx' and password: 'xxxxxxxx'
+#   ssid: !secret WiFi_ssid
+#   password: !secret WiFi_password
+
+# ota: #Normally is turned off, from Home Assistant you can turn it on
+#   - platform: esphome
+#     password: !secret admin
+
+# api:
+#   password: !secret API_password # API password for Home Assistant
+
+external_components:
+  - source: components
+    components:
+      - as7343
+    refresh: never
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: "nvds-new-espnow"
+    components: [ espnow ]
+    refresh: never
+
+i2c:
+  sda: GPIO5
+  scl: GPIO6
+  scan: true
+  id: bus_a
+
+globals:
+  - id: device_id
+    type: std::string
+    initial_value: '"02"'
+  - id: get_calibration
+    type: bool
+    initial_value: 'false'
+
+sensor:
+  - platform: as7343
+    id: 'spectral_sensor'
+    f1:
+      name: '405nm'
+      id: 'f1'
+    f2:
+      name: '425nm'
+      id: 'f2'
+    fz:
+      name: '450nm'
+      id: 'fz'
+    f3:
+      name: '475nm'
+      id: 'f3'
+    f4:
+      name: '515nm'
+      id: 'f4'
+    fy:
+      name: '555nm'
+      id: 'fy'
+    f5:
+      name: '550nm'
+      id: 'f5'
+    fxl:
+      name: '600nm'
+      id: 'fxl'
+    f6:
+      name: '640nm'
+      id: 'f6'
+    f7:
+      name: '690nm'
+      id: 'f7'
+    f8:
+      name: '745nm'
+      id: 'f8'
+    nir:
+      name: 'NIR'
+      id: 'nir'
+    clear:
+      name: 'Clear'
+      id: 'clear'
+    irradiance:
+      name: 'Irradiance'
+      id: 'irradiance'
+    irradiance_photopic:
+      name: 'Irradiance_photopic'
+      id: 'irradiance_photopic'
+    ppfd:
+      name: 'Pffd'
+      id: 'pffd'
+    saturation:
+      name: 'Saturation'
+      id: 'saturation'
+    color_temperature:
+      name: 'Color Temperature'
+      id: 'color_temperature'
+    par:
+      name: 'PAR'
+      id: 'par'
+    lux:
+      name: 'Lux'
+      id: 'lux'
+    lux2:
+      name: 'Lux2'
+      id: 'lux2'
+    
+    #gain: X256
+    #atime: 100
+    #astep: 999
+    update_interval: never
+
+espnow:
+  auto_add_peer: true
+  wifi_channel: "11"
+  peers:
+    - FF:FF:FF:FF:FF:FF
+interval:
+  - interval: 60s
+    then:
+      - component.update: spectral_sensor
+      - delay: 5s
+      - wait_until:
+          condition:
+            lambda: 'return !id(get_calibration);'
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data(id(device_id).c_str(), "f1", id(f1).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "f2", id(f2).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "fz", id(fz).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "f3", id(f3).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "f4", id(f4).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "fy", id(fy).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "f5", id(f5).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "fxl", id(fxl).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "f6", id(f6).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "f7", id(f7).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "f8", id(f8).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "nir", id(nir).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "clear", id(clear).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "irradiance", id(irradiance).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "irradiance_photopic", id(irradiance_photopic).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "pffd", id(pffd).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "saturation", id(saturation).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "color_temperature", id(color_temperature).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "par", id(par).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "lux", id(lux).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+           return format_espnow_data(id(device_id).c_str(), "lux2", id(lux2).state*1000000);
+    
