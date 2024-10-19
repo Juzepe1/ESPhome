@@ -60,9 +60,6 @@ globals:
   - id: get_calibration
     type: bool
     initial_value: 'false'
-  - id: calibrating
-    type: bool
-    initial_value: 'false'
 
 sensor:
   - platform: modbus_controller

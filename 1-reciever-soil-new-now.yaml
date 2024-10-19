@@ -29,6 +29,7 @@ external_components:
 
 substitutions:
   soil_moisture_device_id: "01"
+  spectral_sensor_device_id: "02"
 
 
 sensor:
@@ -97,6 +98,194 @@ sensor:
     accuracy_decimals: 1
     unit_of_measurement: "mg/L"
   
+  - platform: template
+    name: "405nm ${spectral_sensor_device_id}"
+    id: f1_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "425nm ${spectral_sensor_device_id}"
+    id: f2_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "450nm ${spectral_sensor_device_id}"
+    id: fz_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "475nm ${spectral_sensor_device_id}"
+    id: f3_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "515nm ${spectral_sensor_device_id}"
+    id: f4_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "555nm ${spectral_sensor_device_id}"
+    id: fy_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+      
+  - platform: template
+    name: "550nm ${spectral_sensor_device_id}"
+    id: f5_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "600nm ${spectral_sensor_device_id}"
+    id: fxl_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "640nm ${spectral_sensor_device_id}"
+    id: f6_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "690nm ${spectral_sensor_device_id}"
+    id: f7_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "745nm ${spectral_sensor_device_id}"
+    id: f8_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "NIR ${spectral_sensor_device_id}"
+    id: nir_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "Clear ${spectral_sensor_device_id}"
+    id: clear_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: "Irradiance ${spectral_sensor_device_id}"
+    id: irradiance_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: "W/m²"
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: "Irradiance Photopic ${spectral_sensor_device_id}"
+    id: irradiance_photopic_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: "lm/m²"
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: "PFFD ${spectral_sensor_device_id}"
+    id: pffd_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: "µmol/m²/s"
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: "Saturation ${spectral_sensor_device_id}"
+    id: saturation_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: "%"
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: "Color Temperature ${spectral_sensor_device_id}"
+    id: color_temperature_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: "K"
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: "PAR ${spectral_sensor_device_id}"
+    id: par_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: "µmol/m²/s"
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: "Lux ${spectral_sensor_device_id}"
+    id: lux_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: "lx"
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: "Lux2 ${spectral_sensor_device_id}"
+    id: lux2_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: "lx"
+    filters:
+      - multiply: 0.000001
 
 number:
   - platform: template
@@ -243,7 +432,6 @@ number:
     optimistic: true
     entity_category: config
     
-
 button:
   - platform: template
     name: "Get calibration data"
@@ -446,6 +634,56 @@ espnow:
               call.perform();
             }
             
+            else {
+              ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
+              ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
+            }
+          }
+          else if (strcmp(device_id, "02") == 0) {
+            // Compare sensor_name with the sensor IDs and publish the state
+            if (strcmp(sensor_name, "f1") == 0) {
+              id(f1_02).publish_state(value);
+            } else if (strcmp(sensor_name, "f2") == 0) {
+              id(f2_02).publish_state(value);
+            } else if (strcmp(sensor_name, "fz") == 0) {
+              id(fz_02).publish_state(value);
+            } else if (strcmp(sensor_name, "f3") == 0) {
+              id(f3_02).publish_state(value);
+            } else if (strcmp(sensor_name, "f4") == 0) {
+              id(f4_02).publish_state(value);
+            } else if (strcmp(sensor_name, "fy") == 0) {
+              id(fy_02).publish_state(value);
+            } else if (strcmp(sensor_name, "f5") == 0) {
+              id(f5_02).publish_state(value);
+            } else if (strcmp(sensor_name, "fxl") == 0) {
+              id(fxl_02).publish_state(value);
+            } else if (strcmp(sensor_name, "f6") == 0) {
+              id(f6_02).publish_state(value);
+            } else if (strcmp(sensor_name, "f7") == 0) {
+              id(f7_02).publish_state(value);
+            } else if (strcmp(sensor_name, "f8") == 0) {
+              id(f8_02).publish_state(value);
+            } else if (strcmp(sensor_name, "nir") == 0) {
+              id(nir_02).publish_state(value);
+            } else if (strcmp(sensor_name, "clear") == 0) {
+              id(clear_02).publish_state(value);
+            } else if (strcmp(sensor_name, "irradiance") == 0) {
+              id(irradiance_02).publish_state(value);
+            } else if (strcmp(sensor_name, "irradiance_photopic") == 0) {
+              id(irradiance_photopic_02).publish_state(value);
+            } else if (strcmp(sensor_name, "pffd") == 0) {
+              id(pffd_02).publish_state(value);
+            } else if (strcmp(sensor_name, "saturation") == 0) {
+              id(saturation_02).publish_state(value);
+            } else if (strcmp(sensor_name, "color_temperature") == 0) {
+              id(color_temperature_02).publish_state(value);
+            } else if (strcmp(sensor_name, "par") == 0) {
+              id(par_02).publish_state(value);
+            } else if (strcmp(sensor_name, "lux") == 0) {
+              id(lux_02).publish_state(value);
+            } else if (strcmp(sensor_name, "lux2") == 0) {
+              id(lux2_02).publish_state(value);
+            }
             else {
               ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
               ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
