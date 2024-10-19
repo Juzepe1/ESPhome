@@ -1,9 +1,9 @@
 ## Schéma
-<img src="images/schematic.png" width=20% height=20%>
+<img src="images/schematic.png" width=40% height=40%>
 
 ## Home Assitant
 ### Výstup hodnot
-<img src="images/home_assistant_output.png" width=20% height=20%>
+<img src="images/home_assistant_output.png" width=40% height=40%>
 
 ### Poslání kalibračních hodnot
 1. 2x se zmáčkne tlačítko `Get calibration data`
