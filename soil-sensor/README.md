@@ -1,2 +1,2 @@
 ## Schéma
-![Schema][images/schematic.png]
+![plot][images/schematic.png]
