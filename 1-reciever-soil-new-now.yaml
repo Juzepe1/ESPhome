@@ -262,6 +262,65 @@ button:
             data: !lambda |-
               return format_espnow_data("01", "cond_f", id(cond_f_01).state);
         - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "sal_f", id(sal_f_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "tds_f", id(tds_f_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "temp_offset", id(temp_offset_01).state * 10);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "hum_offset", id(hum_offset_01).state * 10);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "cond_offset", id(cond_offset_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "ph_offset", id(ph_offset_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "n_f_high", id(n_f_high_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "n_f_low", id(n_f_low_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "n_offset", id(n_offset_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "p_f_high", id(p_f_high_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "p_f_low", id(p_f_low_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "p_offset", id(p_offset_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "k_f_high", id(k_f_high_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "k_f_low", id(k_f_low_01).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("01", "k_offset", id(k_offset_01).state);
 
 espnow:
   auto_add_peer: true
@@ -323,10 +382,12 @@ espnow:
               call.set_value(value);
               call.perform();
             } else if (strcmp(sensor_name, "temp_offset") == 0) {
+              value = value - 6554; // 65536 / 10 rounded to the nearest integer
               auto call = id(temp_offset_01).make_call();
               call.set_value(value);
               call.perform();
             } else if (strcmp(sensor_name, "hum_offset") == 0) {
+              value = value - 6554;
               auto call = id(hum_offset_01).make_call();
               call.set_value(value);
               call.perform();
@@ -335,6 +396,7 @@ espnow:
               call.set_value(value);
               call.perform();
             } else if (strcmp(sensor_name, "ph_offset") == 0) {
+              value = value - 6554;
               auto call = id(ph_offset_01).make_call();
               call.set_value(value);
               call.perform();
