@@ -24,299 +24,298 @@ external_components:
   - source:
       type: git
       url: https://github.com/nielsnl68/esphome
-      ref: "nvds-new-espnow"
-    components: [ espnow ]
+      ref: 'nvds-new-espnow'
+    components: [espnow]
 
 substitutions:
-  soil_moisture_device_id: "01"
-  spectral_sensor_device_id: "02"
-
+  soil_moisture_device_id: '01'
+  spectral_sensor_device_id: '02'
 
 sensor:
   - platform: template
-    name: "Humidity ${soil_moisture_device_id}"
+    name: 'Humidity ${soil_moisture_device_id}'
     id: 'humidity_${soil_moisture_device_id}'
     update_interval: never
     accuracy_decimals: 1
-    unit_of_measurement: "%RH"
+    unit_of_measurement: '%RH'
     device_class: humidity
 
   - platform: template
-    name: "Temperature ${soil_moisture_device_id}"
+    name: 'Temperature ${soil_moisture_device_id}'
     id: temperature_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
-    unit_of_measurement: "°C"
+    unit_of_measurement: '°C'
     device_class: temperature
 
   - platform: template
-    name: "Conductivity_${soil_moisture_device_id}"
+    name: 'Conductivity_${soil_moisture_device_id}'
     id: conductivity_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
-    unit_of_measurement: "µS/cm"
+    unit_of_measurement: 'µS/cm'
 
   - platform: template
-    name: "pH_${soil_moisture_device_id}"
+    name: 'pH_${soil_moisture_device_id}'
     id: ph_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
-    unit_of_measurement: "pH"
+    unit_of_measurement: 'pH'
 
   - platform: template
-    name: "Nitrogen_${soil_moisture_device_id}"
+    name: 'Nitrogen_${soil_moisture_device_id}'
     id: nitrogen_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
-    unit_of_measurement: "mg/kg"
+    unit_of_measurement: 'mg/kg'
 
   - platform: template
-    name: "Phosphorus_${soil_moisture_device_id}"
+    name: 'Phosphorus_${soil_moisture_device_id}'
     id: phosphorus_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
-    unit_of_measurement: "mg/kg"
+    unit_of_measurement: 'mg/kg'
 
   - platform: template
-    name: "Potassium_${soil_moisture_device_id}"
+    name: 'Potassium_${soil_moisture_device_id}'
     id: potassium_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
-    unit_of_measurement: "mg/kg"
+    unit_of_measurement: 'mg/kg'
 
   - platform: template
-    name: "Salinity_${soil_moisture_device_id}"
+    name: 'Salinity_${soil_moisture_device_id}'
     id: salinity_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
-    unit_of_measurement: "mg/L"
+    unit_of_measurement: 'mg/L'
 
   - platform: template
-    name: "TDS_${soil_moisture_device_id}"
+    name: 'TDS_${soil_moisture_device_id}'
     id: tds_${soil_moisture_device_id}
     update_interval: never
     accuracy_decimals: 1
-    unit_of_measurement: "mg/L"
-  
+    unit_of_measurement: 'mg/L'
+
   - platform: template
-    name: "405nm ${spectral_sensor_device_id}"
+    name: '405nm ${spectral_sensor_device_id}'
     id: f1_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "425nm ${spectral_sensor_device_id}"
+    name: '425nm ${spectral_sensor_device_id}'
     id: f2_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "450nm ${spectral_sensor_device_id}"
+    name: '450nm ${spectral_sensor_device_id}'
     id: fz_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "475nm ${spectral_sensor_device_id}"
+    name: '475nm ${spectral_sensor_device_id}'
     id: f3_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "515nm ${spectral_sensor_device_id}"
+    name: '515nm ${spectral_sensor_device_id}'
     id: f4_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "555nm ${spectral_sensor_device_id}"
+    name: '555nm ${spectral_sensor_device_id}'
     id: fy_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
-      
+
   - platform: template
-    name: "550nm ${spectral_sensor_device_id}"
+    name: '550nm ${spectral_sensor_device_id}'
     id: f5_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "600nm ${spectral_sensor_device_id}"
+    name: '600nm ${spectral_sensor_device_id}'
     id: fxl_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "640nm ${spectral_sensor_device_id}"
+    name: '640nm ${spectral_sensor_device_id}'
     id: f6_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "690nm ${spectral_sensor_device_id}"
+    name: '690nm ${spectral_sensor_device_id}'
     id: f7_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "745nm ${spectral_sensor_device_id}"
+    name: '745nm ${spectral_sensor_device_id}'
     id: f8_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "NIR ${spectral_sensor_device_id}"
+    name: 'NIR ${spectral_sensor_device_id}'
     id: nir_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "Clear ${spectral_sensor_device_id}"
+    name: 'Clear ${spectral_sensor_device_id}'
     id: clear_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 5
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.00001
 
   - platform: template
-    name: "Irradiance ${spectral_sensor_device_id}"
+    name: 'Irradiance ${spectral_sensor_device_id}'
     id: irradiance_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 6
-    unit_of_measurement: "W/m²"
+    unit_of_measurement: 'W/m²'
     filters:
       - multiply: 0.000001
 
   - platform: template
-    name: "Irradiance Photopic ${spectral_sensor_device_id}"
+    name: 'Irradiance Photopic ${spectral_sensor_device_id}'
     id: irradiance_photopic_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 6
-    unit_of_measurement: "lm/m²"
+    unit_of_measurement: 'lm/m²'
     filters:
       - multiply: 0.000001
 
   - platform: template
-    name: "PFFD ${spectral_sensor_device_id}"
+    name: 'PFFD ${spectral_sensor_device_id}'
     id: pffd_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 6
-    unit_of_measurement: "µmol/m²/s"
+    unit_of_measurement: 'µmol/m²/s'
     filters:
       - multiply: 0.000001
 
   - platform: template
-    name: "Saturation ${spectral_sensor_device_id}"
+    name: 'Saturation ${spectral_sensor_device_id}'
     id: saturation_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 6
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     filters:
       - multiply: 0.000001
 
   - platform: template
-    name: "Color Temperature ${spectral_sensor_device_id}"
+    name: 'Color Temperature ${spectral_sensor_device_id}'
     id: color_temperature_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 6
-    unit_of_measurement: "K"
+    unit_of_measurement: 'K'
     filters:
       - multiply: 0.000001
 
   - platform: template
-    name: "PAR ${spectral_sensor_device_id}"
+    name: 'PAR ${spectral_sensor_device_id}'
     id: par_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 6
-    unit_of_measurement: "µmol/m²/s"
+    unit_of_measurement: 'µmol/m²/s'
     filters:
       - multiply: 0.000001
 
   - platform: template
-    name: "Lux ${spectral_sensor_device_id}"
+    name: 'Lux ${spectral_sensor_device_id}'
     id: lux_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 6
-    unit_of_measurement: "lx"
+    unit_of_measurement: 'lx'
     filters:
       - multiply: 0.000001
 
   - platform: template
-    name: "Lux2 ${spectral_sensor_device_id}"
+    name: 'Lux2 ${spectral_sensor_device_id}'
     id: lux2_${spectral_sensor_device_id}
     update_interval: never
     accuracy_decimals: 6
-    unit_of_measurement: "lx"
+    unit_of_measurement: 'lx'
     filters:
       - multiply: 0.000001
 
 number:
   - platform: template
-    name: "Conductivity Factor"
+    name: 'Conductivity Factor'
     id: cond_f_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 100.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Salinity Factor"
+    name: 'Salinity Factor'
     id: sal_f_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 100.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "TDS Factor"
+    name: 'TDS Factor'
     id: tds_f_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 100.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Temperature Offset"
+    name: 'Temperature Offset'
     id: temp_offset_${soil_moisture_device_id}
     min_value: -10.0
     max_value: 10.0
@@ -325,116 +324,143 @@ number:
     entity_category: config
 
   - platform: template
-    name: "Humidity Offset"
+    name: 'Humidity Offset'
     id: hum_offset_${soil_moisture_device_id}
     min_value: -10.0
     max_value: 10.0
     step: 0.1
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Conductivity Offset"
+    name: 'Conductivity Offset'
     id: cond_offset_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 1000.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "pH Offset"
+    name: 'pH Offset'
     id: ph_offset_${soil_moisture_device_id}
     min_value: -10.0
     max_value: 10.0
     step: 0.1
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Nitrogen Factor High"
+    name: 'Nitrogen Factor High'
     id: n_f_high_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 1000.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Nitrogen Factor Low"
+    name: 'Nitrogen Factor Low'
     id: n_f_low_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 1000.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Nitrogen Offset"
+    name: 'Nitrogen Offset'
     id: n_offset_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 1000.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Phosphorus Factor High"
+    name: 'Phosphorus Factor High'
     id: p_f_high_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 1000.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Phosphorus Factor Low"
+    name: 'Phosphorus Factor Low'
     id: p_f_low_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 1000.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Phosphorus Offset"
+    name: 'Phosphorus Offset'
     id: p_offset_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 1000.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Potassium Factor High"
+    name: 'Potassium Factor High'
     id: k_f_high_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 1000.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Potassium Factor Low"
+    name: 'Potassium Factor Low'
     id: k_f_low_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 1000.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
   - platform: template
-    name: "Potassium Offset"
+    name: 'Potassium Offset'
     id: k_offset_${soil_moisture_device_id}
     min_value: 0.0
     max_value: 1000.0
     step: 1.0
     optimistic: true
     entity_category: config
-    
+
+  - platform: template
+    name: 'ATime'
+    id: atime_${spectral_sensor_device_id}
+    min_value: 0.0
+    max_value: 255
+    step: 1.0
+    optimistic: true
+    entity_category: config
+
+  - platform: template
+    name: 'AStep'
+    id: astep_${spectral_sensor_device_id}
+    min_value: 0.0
+    max_value: 65534
+    step: 1.0
+    optimistic: true
+    entity_category: config
+
+  - platform: template
+    name: 'Gain'
+    id: gain_${spectral_sensor_device_id}
+    min_value: 0.0
+    max_value: 12.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+
 button:
   - platform: template
-    name: "Get calibration data"
+    name: 'Get calibration data (soil sensor)'
     entity_category: config
     on_press:
       then:
@@ -444,7 +470,17 @@ button:
               return std::vector<uint8_t>(data.begin(), data.end());
 
   - platform: template
-    name: "Send calibration data"
+    name: 'Get calibration data (spectral sensor)'
+    entity_category: config
+    on_press:
+      then:
+        - espnow.send:
+            data: !lambda |-
+              std::string data = "02;getcalibration";
+              return std::vector<uint8_t>(data.begin(), data.end());
+
+  - platform: template
+    name: 'Send calibration data (soil sensor)'
     entity_category: config
     on_press:
       then:
@@ -512,188 +548,221 @@ button:
             data: !lambda |-
               return format_espnow_data("01", "k_offset", id(k_offset_01).state);
 
+  - platform: template
+    name: 'Send calibration data (spectral sensor)'
+    entity_category: config
+    on_press:
+      then:
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("02", "flash", id(flash).state);
+        - delay: 1000ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("02", "atime", id(atime_02).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("02", "astep", id(astep_02).state);
+        - delay: 500ms
+        - espnow.send:
+            data: !lambda |-
+              return format_espnow_data("02", "gain", id(gain_02).state);
+
+switch:
+  - platform: template
+    name: 'Write cal. dat to flash'
+    id: flash
+    restore_mode: ALWAYS_OFF # Start in the OFF state
+    optimistic: true # Optional: update state immediately
 espnow:
   auto_add_peer: true
-  wifi_channel: "11"
+  wifi_channel: '11'
   peers:
     - FF:FF:FF:FF:FF:FF
   on_receive:
     then:
-    - lambda: |-
-        ESP_LOGI("main", "Received data from ESP-NOW");
+      - lambda: |-
+          ESP_LOGI("main", "Received data from ESP-NOW");
 
-        // Convert the received data to a string
-        std::string received_string((char*)packet.get_payload(), packet.size);
-        
-        // Array to hold parts of the received string
-        char buffer[50];
-        strncpy(buffer, received_string.c_str(), sizeof(buffer));
+          // Convert the received data to a string
+          std::string received_string((char*)packet.get_payload(), packet.size);
 
-        // Parse the string using strtok
-        char* device_id = strtok(buffer, ";");
-        char* sensor_name = strtok(nullptr, ";");
-        char* value_string = strtok(nullptr, ";");
+          // Array to hold parts of the received string
+          char buffer[50];
+          strncpy(buffer, received_string.c_str(), sizeof(buffer));
 
-        if (device_id != nullptr && sensor_name != nullptr && value_string != nullptr) {
-          float value = atof(value_string);
+          // Parse the string using strtok
+          char* device_id = strtok(buffer, ";");
+          char* sensor_name = strtok(nullptr, ";");
+          char* value_string = strtok(nullptr, ";");
 
-          // Check if the device_id is "01"
-          if (strcmp(device_id, "01") == 0) {
-            // Compare sensor_name with the sensor IDs and publish the state
-            if (strcmp(sensor_name, "humidity") == 0) {
-              id(humidity_01).publish_state(value);
-            } else if (strcmp(sensor_name, "temperature") == 0) {
-              id(temperature_01).publish_state(value);
-            } else if (strcmp(sensor_name, "conductivity") == 0) {
-              id(conductivity_01).publish_state(value);
-            } else if (strcmp(sensor_name, "ph") == 0) {
-              id(ph_01).publish_state(value);
-            } else if (strcmp(sensor_name, "nitrogen") == 0) {
-              id(nitrogen_01).publish_state(value);
-            } else if (strcmp(sensor_name, "phosphorus") == 0) {
-              id(phosphorus_01).publish_state(value);
-            } else if (strcmp(sensor_name, "potassium") == 0) {
-              id(potassium_01).publish_state(value);
-            } else if (strcmp(sensor_name, "salinity") == 0) {
-              id(salinity_01).publish_state(value);
-            } else if (strcmp(sensor_name, "tds") == 0) {
-              id(tds_01).publish_state(value);
+          if (device_id != nullptr && sensor_name != nullptr && value_string != nullptr) {
+            float value = atof(value_string);
+
+            // Check if the device_id is "01"
+            if (strcmp(device_id, "01") == 0) {
+              // Compare sensor_name with the sensor IDs and publish the state
+              if (strcmp(sensor_name, "humidity") == 0) {
+                id(humidity_01).publish_state(value);
+              } else if (strcmp(sensor_name, "temperature") == 0) {
+                id(temperature_01).publish_state(value);
+              } else if (strcmp(sensor_name, "conductivity") == 0) {
+                id(conductivity_01).publish_state(value);
+              } else if (strcmp(sensor_name, "ph") == 0) {
+                id(ph_01).publish_state(value);
+              } else if (strcmp(sensor_name, "nitrogen") == 0) {
+                id(nitrogen_01).publish_state(value);
+              } else if (strcmp(sensor_name, "phosphorus") == 0) {
+                id(phosphorus_01).publish_state(value);
+              } else if (strcmp(sensor_name, "potassium") == 0) {
+                id(potassium_01).publish_state(value);
+              } else if (strcmp(sensor_name, "salinity") == 0) {
+                id(salinity_01).publish_state(value);
+              } else if (strcmp(sensor_name, "tds") == 0) {
+                id(tds_01).publish_state(value);
+              }
+              else if (strcmp(sensor_name, "cond_f") == 0) {
+                auto call = id(cond_f_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "sal_f") == 0) {
+                auto call = id(sal_f_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "tds_f") == 0) {
+                auto call = id(tds_f_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "temp_offset") == 0) {
+                if(value > 6554){
+                  value = value - 6554; // 65536 / 10 rounded to the nearest integer
+                }
+                auto call = id(temp_offset_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "hum_offset") == 0) {
+                if(value > 6554){
+                  value = value - 6554; // 65536 / 10 rounded to the nearest integer
+                }
+                auto call = id(hum_offset_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "cond_offset") == 0) {
+                auto call = id(cond_offset_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "ph_offset") == 0) {
+                if(value > 6554){
+                  value = value - 6554; // 65536 / 10 rounded to the nearest integer
+                }
+                auto call = id(ph_offset_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "n_f_high") == 0) {
+                auto call = id(n_f_high_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "n_f_low") == 0) {
+                auto call = id(n_f_low_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "n_offset") == 0) {
+                auto call = id(n_offset_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "p_f_high") == 0) {
+                auto call = id(p_f_high_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "p_f_low") == 0) {
+                auto call = id(p_f_low_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "p_offset") == 0) {
+                auto call = id(p_offset_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "k_f_high") == 0) {
+                auto call = id(k_f_high_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "k_f_low") == 0) {
+                auto call = id(k_f_low_01).make_call();
+                call.set_value(value);
+                call.perform();
+              } else if (strcmp(sensor_name, "k_offset") == 0) {
+                auto call = id(k_offset_01).make_call();
+                call.set_value(value);
+                call.perform();
+              }
+              
+              else {
+                ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
+                ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
+              }
             }
-            else if (strcmp(sensor_name, "cond_f") == 0) {
-              auto call = id(cond_f_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "sal_f") == 0) {
-              auto call = id(sal_f_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "tds_f") == 0) {
-              auto call = id(tds_f_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "temp_offset") == 0) {
-              if(value > 6554){
-                value = value - 6554; // 65536 / 10 rounded to the nearest integer
+            else if (strcmp(device_id, "02") == 0) {
+              // Compare sensor_name with the sensor IDs and publish the state
+              if (strcmp(sensor_name, "f1") == 0) {
+                id(f1_02).publish_state(value);
+              } else if (strcmp(sensor_name, "f2") == 0) {
+                id(f2_02).publish_state(value);
+              } else if (strcmp(sensor_name, "fz") == 0) {
+                id(fz_02).publish_state(value);
+              } else if (strcmp(sensor_name, "f3") == 0) {
+                id(f3_02).publish_state(value);
+              } else if (strcmp(sensor_name, "f4") == 0) {
+                id(f4_02).publish_state(value);
+              } else if (strcmp(sensor_name, "fy") == 0) {
+                id(fy_02).publish_state(value);
+              } else if (strcmp(sensor_name, "f5") == 0) {
+                id(f5_02).publish_state(value);
+              } else if (strcmp(sensor_name, "fxl") == 0) {
+                id(fxl_02).publish_state(value);
+              } else if (strcmp(sensor_name, "f6") == 0) {
+                id(f6_02).publish_state(value);
+              } else if (strcmp(sensor_name, "f7") == 0) {
+                id(f7_02).publish_state(value);
+              } else if (strcmp(sensor_name, "f8") == 0) {
+                id(f8_02).publish_state(value);
+              } else if (strcmp(sensor_name, "nir") == 0) {
+                id(nir_02).publish_state(value);
+              } else if (strcmp(sensor_name, "clear") == 0) {
+                id(clear_02).publish_state(value);
+              } else if (strcmp(sensor_name, "irradiance") == 0) {
+                id(irradiance_02).publish_state(value);
+              } else if (strcmp(sensor_name, "irradiance_photopic") == 0) {
+                id(irradiance_photopic_02).publish_state(value);
+              } else if (strcmp(sensor_name, "pffd") == 0) {
+                id(pffd_02).publish_state(value);
+              } else if (strcmp(sensor_name, "saturation") == 0) {
+                id(saturation_02).publish_state(value);
+              } else if (strcmp(sensor_name, "color_temperature") == 0) {
+                id(color_temperature_02).publish_state(value);
+              } else if (strcmp(sensor_name, "par") == 0) {
+                id(par_02).publish_state(value);
+              } else if (strcmp(sensor_name, "lux") == 0) {
+                id(lux_02).publish_state(value);
+              } else if (strcmp(sensor_name, "lux2") == 0) {
+                id(lux2_02).publish_state(value);
+              } else if (strcmp(sensor_name, "atime") == 0) {
+              id(atime_02).publish_state(value);
+              } else if (strcmp(sensor_name, "astep") == 0) {
+              id(astep_02).publish_state(value);
+              } else if (strcmp(sensor_name, "gain") == 0) {
+              id(gain_02).publish_state(value);
               }
-              auto call = id(temp_offset_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "hum_offset") == 0) {
-              if(value > 6554){
-                value = value - 6554; // 65536 / 10 rounded to the nearest integer
+              else {
+                ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
+                ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
               }
-              auto call = id(hum_offset_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "cond_offset") == 0) {
-              auto call = id(cond_offset_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "ph_offset") == 0) {
-              if(value > 6554){
-                value = value - 6554; // 65536 / 10 rounded to the nearest integer
-              }
-              auto call = id(ph_offset_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "n_f_high") == 0) {
-              auto call = id(n_f_high_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "n_f_low") == 0) {
-              auto call = id(n_f_low_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "n_offset") == 0) {
-              auto call = id(n_offset_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "p_f_high") == 0) {
-              auto call = id(p_f_high_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "p_f_low") == 0) {
-              auto call = id(p_f_low_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "p_offset") == 0) {
-              auto call = id(p_offset_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "k_f_high") == 0) {
-              auto call = id(k_f_high_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "k_f_low") == 0) {
-              auto call = id(k_f_low_01).make_call();
-              call.set_value(value);
-              call.perform();
-            } else if (strcmp(sensor_name, "k_offset") == 0) {
-              auto call = id(k_offset_01).make_call();
-              call.set_value(value);
-              call.perform();
             }
-            
             else {
-              ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
-              ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
-            }
-          }
-          else if (strcmp(device_id, "02") == 0) {
-            // Compare sensor_name with the sensor IDs and publish the state
-            if (strcmp(sensor_name, "f1") == 0) {
-              id(f1_02).publish_state(value);
-            } else if (strcmp(sensor_name, "f2") == 0) {
-              id(f2_02).publish_state(value);
-            } else if (strcmp(sensor_name, "fz") == 0) {
-              id(fz_02).publish_state(value);
-            } else if (strcmp(sensor_name, "f3") == 0) {
-              id(f3_02).publish_state(value);
-            } else if (strcmp(sensor_name, "f4") == 0) {
-              id(f4_02).publish_state(value);
-            } else if (strcmp(sensor_name, "fy") == 0) {
-              id(fy_02).publish_state(value);
-            } else if (strcmp(sensor_name, "f5") == 0) {
-              id(f5_02).publish_state(value);
-            } else if (strcmp(sensor_name, "fxl") == 0) {
-              id(fxl_02).publish_state(value);
-            } else if (strcmp(sensor_name, "f6") == 0) {
-              id(f6_02).publish_state(value);
-            } else if (strcmp(sensor_name, "f7") == 0) {
-              id(f7_02).publish_state(value);
-            } else if (strcmp(sensor_name, "f8") == 0) {
-              id(f8_02).publish_state(value);
-            } else if (strcmp(sensor_name, "nir") == 0) {
-              id(nir_02).publish_state(value);
-            } else if (strcmp(sensor_name, "clear") == 0) {
-              id(clear_02).publish_state(value);
-            } else if (strcmp(sensor_name, "irradiance") == 0) {
-              id(irradiance_02).publish_state(value);
-            } else if (strcmp(sensor_name, "irradiance_photopic") == 0) {
-              id(irradiance_photopic_02).publish_state(value);
-            } else if (strcmp(sensor_name, "pffd") == 0) {
-              id(pffd_02).publish_state(value);
-            } else if (strcmp(sensor_name, "saturation") == 0) {
-              id(saturation_02).publish_state(value);
-            } else if (strcmp(sensor_name, "color_temperature") == 0) {
-              id(color_temperature_02).publish_state(value);
-            } else if (strcmp(sensor_name, "par") == 0) {
-              id(par_02).publish_state(value);
-            } else if (strcmp(sensor_name, "lux") == 0) {
-              id(lux_02).publish_state(value);
-            } else if (strcmp(sensor_name, "lux2") == 0) {
-              id(lux2_02).publish_state(value);
-            }
-            else {
-              ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
+              ESP_LOGW("main", "Unknown device ID: %s", device_id);
               ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
             }
           }
           else {
-            ESP_LOGW("main", "Unknown device ID: %s", device_id);
             ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
           }
-        }
-        else {
-          ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
-        }
