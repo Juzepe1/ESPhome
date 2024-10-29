@@ -54,6 +54,11 @@ globals:
   - id: get_calibration
     type: bool
     initial_value: 'false'
+
+  - id: request_cal
+    type: bool
+    initial_value: 'false'
+
   - id: atime
     type: uint8_t
     initial_value: '100'
@@ -184,14 +189,18 @@ espnow:
           char* cal_value_string = strtok(nullptr, ";");
 
           if(cal_device_id != nullptr && strcmp(cal_device_id, id(device_id).c_str()) == 0){
-            if (cal_sensor_name != nullptr){
-              if (strcmp(cal_sensor_name, "getcalibration") == 0) {
-                id(get_calibration) = true;
-                ESP_LOGI("main", "Received getcalibration command");
-              }
-            else if(cal_value_string != nullptr){
+            
+              
+            if(cal_value_string != nullptr){
               int value = atoi(cal_value_string);
-              if (strcmp(cal_sensor_name, "flash") == 0) {
+              if (strcmp(cal_sensor_name, "getcalibration") == 0) {
+                if(value == 1){
+                  id(get_calibration) = true;
+                  ESP_LOGI("main", "Received getcalibration: %d", value);
+                }
+                id(request_cal) = true;
+              }
+              else if (strcmp(cal_sensor_name, "flash") == 0) {
                 id(flash) = value;
                 ESP_LOGI("main", "Received flash: %d", value);
               }
@@ -234,7 +243,7 @@ espnow:
             }
               
             }
-          }
+
           else {
             ESP_LOGI("main", "Received data not for this device");
           }
@@ -242,8 +251,6 @@ espnow:
           condition:
             lambda: 'return id(get_calibration);'
           then:
-            - component.update: spectral_sensor
-            - delay: 5s
             - espnow.send:
                 data: !lambda |-
                   return format_espnow_data(id(device_id).c_str(), "atime", id(spectral_sensor).get_atime());
@@ -263,11 +270,25 @@ espnow:
 interval:
   - interval: 60s
     then:
+      - logger.log: 'Updating sensor data'
       - component.update: spectral_sensor
       - delay: 5s
+      - logger.log: 'Sensor data updated'
+      - espnow.send:
+          data: !lambda |-
+            std::string data = id(device_id) + ";requestCal";
+            return std::vector<uint8_t>(data.begin(), data.end());
+      - logger.log: 'Wating for response'
       - wait_until:
           condition:
-            lambda: 'return !id(get_calibration);'
+            lambda: 'return id(request_cal);'
+          timeout: 10s
+      - logger.log: 'Response received'
+      - wait_until:
+          condition:
+            lambda: 'return id(get_calibration);'
+          timeout: 10s
+      - logger.log: 'Calibration data sent'
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f1", id(f1).state*100000);

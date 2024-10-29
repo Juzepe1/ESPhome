@@ -31,6 +31,14 @@ substitutions:
   soil_moisture_device_id: '01'
   spectral_sensor_device_id: '02'
 
+globals:
+  - id: requestCal_${soil_moisture_device_id}
+    type: bool
+    initial_value: 'false'
+  - id: requestCal_${spectral_sensor_device_id}
+    type: bool
+    initial_value: 'false'
+
 sensor:
   - platform: template
     name: 'Humidity ${soil_moisture_device_id}'
@@ -575,6 +583,19 @@ switch:
     id: flash
     restore_mode: ALWAYS_OFF # Start in the OFF state
     optimistic: true # Optional: update state immediately
+
+  - platform: template
+    name: 'Request Calibration Data Soil Sensor'
+    id: requestCalSwitch_${soil_moisture_device_id}
+    restore_mode: ALWAYS_OFF # Start in the OFF state
+    optimistic: true # Optional: update state immediately
+
+  - platform: template
+    name: 'Request Calibration Data Spectral Sensor'
+    id: requestCalSwitch_${spectral_sensor_device_id}
+    restore_mode: ALWAYS_OFF # Start in the OFF state
+    optimistic: true # Optional: update state immediately
+
 espnow:
   auto_add_peer: true
   wifi_channel: '11'
@@ -588,6 +609,7 @@ espnow:
           // Convert the received data to a string
           std::string received_string((char*)packet.get_payload(), packet.size);
 
+          ESP_LOGI("main", "Received data: %s", received_string.c_str());
           // Array to hold parts of the received string
           char buffer[50];
           strncpy(buffer, received_string.c_str(), sizeof(buffer));
@@ -597,172 +619,192 @@ espnow:
           char* sensor_name = strtok(nullptr, ";");
           char* value_string = strtok(nullptr, ";");
 
-          if (device_id != nullptr && sensor_name != nullptr && value_string != nullptr) {
-            float value = atof(value_string);
+          if (device_id != nullptr && sensor_name != nullptr) {
+            if(strcmp(sensor_name, "requestCal") == 0){
+              if(strcmp(device_id, "01") == 0){
+                id(requestCal_01) = true;
+              }
+              else if(strcmp(device_id, "02") == 0){
+                id(requestCal_02) = true;
+              }
+            }
 
             // Check if the device_id is "01"
-            if (strcmp(device_id, "01") == 0) {
-              // Compare sensor_name with the sensor IDs and publish the state
-              if (strcmp(sensor_name, "humidity") == 0) {
-                id(humidity_01).publish_state(value);
-              } else if (strcmp(sensor_name, "temperature") == 0) {
-                id(temperature_01).publish_state(value);
-              } else if (strcmp(sensor_name, "conductivity") == 0) {
-                id(conductivity_01).publish_state(value);
-              } else if (strcmp(sensor_name, "ph") == 0) {
-                id(ph_01).publish_state(value);
-              } else if (strcmp(sensor_name, "nitrogen") == 0) {
-                id(nitrogen_01).publish_state(value);
-              } else if (strcmp(sensor_name, "phosphorus") == 0) {
-                id(phosphorus_01).publish_state(value);
-              } else if (strcmp(sensor_name, "potassium") == 0) {
-                id(potassium_01).publish_state(value);
-              } else if (strcmp(sensor_name, "salinity") == 0) {
-                id(salinity_01).publish_state(value);
-              } else if (strcmp(sensor_name, "tds") == 0) {
-                id(tds_01).publish_state(value);
+            else if(value_string != nullptr){
+              float value = atof(value_string);
+            
+              if (strcmp(device_id, "01") == 0) {
+                // Compare sensor_name with the sensor IDs and publish the state
+                if (strcmp(sensor_name, "humidity") == 0) {
+                  id(humidity_01).publish_state(value);
+                } else if (strcmp(sensor_name, "temperature") == 0) {
+                  id(temperature_01).publish_state(value);
+                } else if (strcmp(sensor_name, "conductivity") == 0) {
+                  id(conductivity_01).publish_state(value);
+                } else if (strcmp(sensor_name, "ph") == 0) {
+                  id(ph_01).publish_state(value);
+                } else if (strcmp(sensor_name, "nitrogen") == 0) {
+                  id(nitrogen_01).publish_state(value);
+                } else if (strcmp(sensor_name, "phosphorus") == 0) {
+                  id(phosphorus_01).publish_state(value);
+                } else if (strcmp(sensor_name, "potassium") == 0) {
+                  id(potassium_01).publish_state(value);
+                } else if (strcmp(sensor_name, "salinity") == 0) {
+                  id(salinity_01).publish_state(value);
+                } else if (strcmp(sensor_name, "tds") == 0) {
+                  id(tds_01).publish_state(value);
+                }
+                else if (strcmp(sensor_name, "cond_f") == 0) {
+                  auto call = id(cond_f_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "sal_f") == 0) {
+                  auto call = id(sal_f_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "tds_f") == 0) {
+                  auto call = id(tds_f_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "temp_offset") == 0) {
+                  if(value > 6554){
+                    value = value - 6554; // 65536 / 10 rounded to the nearest integer
+                  }
+                  auto call = id(temp_offset_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "hum_offset") == 0) {
+                  if(value > 6554){
+                    value = value - 6554; // 65536 / 10 rounded to the nearest integer
+                  }
+                  auto call = id(hum_offset_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "cond_offset") == 0) {
+                  auto call = id(cond_offset_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "ph_offset") == 0) {
+                  if(value > 6554){
+                    value = value - 6554; // 65536 / 10 rounded to the nearest integer
+                  }
+                  auto call = id(ph_offset_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "n_f_high") == 0) {
+                  auto call = id(n_f_high_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "n_f_low") == 0) {
+                  auto call = id(n_f_low_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "n_offset") == 0) {
+                  auto call = id(n_offset_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "p_f_high") == 0) {
+                  auto call = id(p_f_high_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "p_f_low") == 0) {
+                  auto call = id(p_f_low_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "p_offset") == 0) {
+                  auto call = id(p_offset_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "k_f_high") == 0) {
+                  auto call = id(k_f_high_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "k_f_low") == 0) {
+                  auto call = id(k_f_low_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                } else if (strcmp(sensor_name, "k_offset") == 0) {
+                  auto call = id(k_offset_01).make_call();
+                  call.set_value(value);
+                  call.perform();
+                }
+                
+                else {
+                  ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
+                  ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
+                }
               }
-              else if (strcmp(sensor_name, "cond_f") == 0) {
-                auto call = id(cond_f_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "sal_f") == 0) {
-                auto call = id(sal_f_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "tds_f") == 0) {
-                auto call = id(tds_f_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "temp_offset") == 0) {
-                if(value > 6554){
-                  value = value - 6554; // 65536 / 10 rounded to the nearest integer
+              else if (strcmp(device_id, "02") == 0) {
+                // Compare sensor_name with the sensor IDs and publish the state
+                if (strcmp(sensor_name, "f1") == 0) {
+                  id(f1_02).publish_state(value);
+                } else if (strcmp(sensor_name, "f2") == 0) {
+                  id(f2_02).publish_state(value);
+                } else if (strcmp(sensor_name, "fz") == 0) {
+                  id(fz_02).publish_state(value);
+                } else if (strcmp(sensor_name, "f3") == 0) {
+                  id(f3_02).publish_state(value);
+                } else if (strcmp(sensor_name, "f4") == 0) {
+                  id(f4_02).publish_state(value);
+                } else if (strcmp(sensor_name, "fy") == 0) {
+                  id(fy_02).publish_state(value);
+                } else if (strcmp(sensor_name, "f5") == 0) {
+                  id(f5_02).publish_state(value);
+                } else if (strcmp(sensor_name, "fxl") == 0) {
+                  id(fxl_02).publish_state(value);
+                } else if (strcmp(sensor_name, "f6") == 0) {
+                  id(f6_02).publish_state(value);
+                } else if (strcmp(sensor_name, "f7") == 0) {
+                  id(f7_02).publish_state(value);
+                } else if (strcmp(sensor_name, "f8") == 0) {
+                  id(f8_02).publish_state(value);
+                } else if (strcmp(sensor_name, "nir") == 0) {
+                  id(nir_02).publish_state(value);
+                } else if (strcmp(sensor_name, "clear") == 0) {
+                  id(clear_02).publish_state(value);
+                } else if (strcmp(sensor_name, "irradiance") == 0) {
+                  id(irradiance_02).publish_state(value);
+                } else if (strcmp(sensor_name, "irradiance_photopic") == 0) {
+                  id(irradiance_photopic_02).publish_state(value);
+                } else if (strcmp(sensor_name, "pffd") == 0) {
+                  id(pffd_02).publish_state(value);
+                } else if (strcmp(sensor_name, "saturation") == 0) {
+                  id(saturation_02).publish_state(value);
+                } else if (strcmp(sensor_name, "color_temperature") == 0) {
+                  id(color_temperature_02).publish_state(value);
+                } else if (strcmp(sensor_name, "par") == 0) {
+                  id(par_02).publish_state(value);
+                } else if (strcmp(sensor_name, "lux") == 0) {
+                  id(lux_02).publish_state(value);
+                } else if (strcmp(sensor_name, "lux2") == 0) {
+                  id(lux2_02).publish_state(value);
+                } else if (strcmp(sensor_name, "atime") == 0) {
+                id(atime_02).publish_state(value);
+                } else if (strcmp(sensor_name, "astep") == 0) {
+                id(astep_02).publish_state(value);
+                } else if (strcmp(sensor_name, "gain") == 0) {
+                id(gain_02).publish_state(value);
                 }
-                auto call = id(temp_offset_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "hum_offset") == 0) {
-                if(value > 6554){
-                  value = value - 6554; // 65536 / 10 rounded to the nearest integer
+                else {
+                  ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
+                  ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
                 }
-                auto call = id(hum_offset_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "cond_offset") == 0) {
-                auto call = id(cond_offset_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "ph_offset") == 0) {
-                if(value > 6554){
-                  value = value - 6554; // 65536 / 10 rounded to the nearest integer
-                }
-                auto call = id(ph_offset_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "n_f_high") == 0) {
-                auto call = id(n_f_high_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "n_f_low") == 0) {
-                auto call = id(n_f_low_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "n_offset") == 0) {
-                auto call = id(n_offset_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "p_f_high") == 0) {
-                auto call = id(p_f_high_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "p_f_low") == 0) {
-                auto call = id(p_f_low_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "p_offset") == 0) {
-                auto call = id(p_offset_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "k_f_high") == 0) {
-                auto call = id(k_f_high_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "k_f_low") == 0) {
-                auto call = id(k_f_low_01).make_call();
-                call.set_value(value);
-                call.perform();
-              } else if (strcmp(sensor_name, "k_offset") == 0) {
-                auto call = id(k_offset_01).make_call();
-                call.set_value(value);
-                call.perform();
               }
-              
               else {
-                ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
+                ESP_LOGW("main", "Unknown device ID: %s", device_id);
                 ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
               }
-            }
-            else if (strcmp(device_id, "02") == 0) {
-              // Compare sensor_name with the sensor IDs and publish the state
-              if (strcmp(sensor_name, "f1") == 0) {
-                id(f1_02).publish_state(value);
-              } else if (strcmp(sensor_name, "f2") == 0) {
-                id(f2_02).publish_state(value);
-              } else if (strcmp(sensor_name, "fz") == 0) {
-                id(fz_02).publish_state(value);
-              } else if (strcmp(sensor_name, "f3") == 0) {
-                id(f3_02).publish_state(value);
-              } else if (strcmp(sensor_name, "f4") == 0) {
-                id(f4_02).publish_state(value);
-              } else if (strcmp(sensor_name, "fy") == 0) {
-                id(fy_02).publish_state(value);
-              } else if (strcmp(sensor_name, "f5") == 0) {
-                id(f5_02).publish_state(value);
-              } else if (strcmp(sensor_name, "fxl") == 0) {
-                id(fxl_02).publish_state(value);
-              } else if (strcmp(sensor_name, "f6") == 0) {
-                id(f6_02).publish_state(value);
-              } else if (strcmp(sensor_name, "f7") == 0) {
-                id(f7_02).publish_state(value);
-              } else if (strcmp(sensor_name, "f8") == 0) {
-                id(f8_02).publish_state(value);
-              } else if (strcmp(sensor_name, "nir") == 0) {
-                id(nir_02).publish_state(value);
-              } else if (strcmp(sensor_name, "clear") == 0) {
-                id(clear_02).publish_state(value);
-              } else if (strcmp(sensor_name, "irradiance") == 0) {
-                id(irradiance_02).publish_state(value);
-              } else if (strcmp(sensor_name, "irradiance_photopic") == 0) {
-                id(irradiance_photopic_02).publish_state(value);
-              } else if (strcmp(sensor_name, "pffd") == 0) {
-                id(pffd_02).publish_state(value);
-              } else if (strcmp(sensor_name, "saturation") == 0) {
-                id(saturation_02).publish_state(value);
-              } else if (strcmp(sensor_name, "color_temperature") == 0) {
-                id(color_temperature_02).publish_state(value);
-              } else if (strcmp(sensor_name, "par") == 0) {
-                id(par_02).publish_state(value);
-              } else if (strcmp(sensor_name, "lux") == 0) {
-                id(lux_02).publish_state(value);
-              } else if (strcmp(sensor_name, "lux2") == 0) {
-                id(lux2_02).publish_state(value);
-              } else if (strcmp(sensor_name, "atime") == 0) {
-              id(atime_02).publish_state(value);
-              } else if (strcmp(sensor_name, "astep") == 0) {
-              id(astep_02).publish_state(value);
-              } else if (strcmp(sensor_name, "gain") == 0) {
-              id(gain_02).publish_state(value);
-              }
-              else {
-                ESP_LOGW("main", "Unknown sensor name: %s", sensor_name);
-                ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
-              }
-            }
-            else {
-              ESP_LOGW("main", "Unknown device ID: %s", device_id);
-              ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
             }
           }
           else {
             ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
           }
+      - if:
+          condition:
+            lambda: 'return id(requestCal_02);'
+          then:
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data("02", "getcalibration", id(requestCalSwitch_02).state);
+            - lambda: |-
+                id(requestCal_02) = false;
