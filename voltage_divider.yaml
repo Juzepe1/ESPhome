@@ -1,0 +1,21 @@
+esphome:
+  name: esp32-voltage-divider
+  platform: ESP32
+  board: esp32-c3-devkitm-1
+
+logger:
+
+sensor:
+  - platform: adc
+    pin: GPIO0
+    name: 'Voltage Divider'
+    id: voltage_divider
+    update_interval: never
+    accuracy_decimals: 3
+    filters:
+      - lambda: return (x * (100420+10022)/(10022));
+
+interval:
+  - interval: 1s
+    then:
+      - component.update: voltage_divider
