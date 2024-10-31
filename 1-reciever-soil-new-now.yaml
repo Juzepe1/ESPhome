@@ -5,6 +5,8 @@ esphome:
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+  platformio_options:
+    board_build.flash_mode: dio
 
 logger:
 
@@ -556,27 +558,6 @@ button:
             data: !lambda |-
               return format_espnow_data("01", "k_offset", id(k_offset_01).state);
 
-  - platform: template
-    name: 'Send calibration data (spectral sensor)'
-    entity_category: config
-    on_press:
-      then:
-        - espnow.send:
-            data: !lambda |-
-              return format_espnow_data("02", "flash", id(flash).state);
-        - delay: 1000ms
-        - espnow.send:
-            data: !lambda |-
-              return format_espnow_data("02", "atime", id(atime_02).state);
-        - delay: 500ms
-        - espnow.send:
-            data: !lambda |-
-              return format_espnow_data("02", "astep", id(astep_02).state);
-        - delay: 500ms
-        - espnow.send:
-            data: !lambda |-
-              return format_espnow_data("02", "gain", id(gain_02).state);
-
 switch:
   - platform: template
     name: 'Write cal. dat to flash'
@@ -593,6 +574,12 @@ switch:
   - platform: template
     name: 'Request Calibration Data Spectral Sensor'
     id: requestCalSwitch_${spectral_sensor_device_id}
+    restore_mode: ALWAYS_OFF # Start in the OFF state
+    optimistic: true # Optional: update state immediately
+
+  - platform: template
+    name: 'Send calibration data (spectral sensor)'
+    id: sendCalDataSwitch_${spectral_sensor_device_id}
     restore_mode: ALWAYS_OFF # Start in the OFF state
     optimistic: true # Optional: update state immediately
 
@@ -801,6 +788,28 @@ espnow:
           }
       - if:
           condition:
+            lambda: 'return id(requestCal_02) && id(sendCalDataSwitch_02).state;'
+          then:
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data("02", "flash", id(flash).state);
+            - delay: 1000ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data("02", "atime", id(atime_02).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data("02", "astep", id(astep_02).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data("02", "gain", id(gain_02).state);
+            - delay: 500ms
+            - lambda: |-
+                id(sendCalDataSwitch_02).publish_state(false);
+      - if:
+          condition:
             lambda: 'return id(requestCal_02);'
           then:
             - espnow.send:
@@ -808,3 +817,4 @@ espnow:
                   return format_espnow_data("02", "getcalibration", id(requestCalSwitch_02).state);
             - lambda: |-
                 id(requestCal_02) = false;
+                id(requestCalSwitch_02).publish_state(false);

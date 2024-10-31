@@ -61,11 +61,11 @@ globals:
 
   - id: atime
     type: uint8_t
-    initial_value: '100'
+    initial_value: '29'
     restore_value: 'yes'
   - id: astep
     type: uint16_t
-    initial_value: '999'
+    initial_value: '599'
     restore_value: 'yes'
   - id: gain
     type: int
@@ -270,10 +270,6 @@ espnow:
 interval:
   - interval: 60s
     then:
-      - logger.log: 'Updating sensor data'
-      - component.update: spectral_sensor
-      - delay: 5s
-      - logger.log: 'Sensor data updated'
       - espnow.send:
           data: !lambda |-
             std::string data = id(device_id) + ";requestCal";
@@ -282,13 +278,19 @@ interval:
       - wait_until:
           condition:
             lambda: 'return id(request_cal);'
-          timeout: 10s
+          timeout: 15s
       - logger.log: 'Response received'
+      - lambda: |-
+          id(request_cal) = false;
       - wait_until:
           condition:
-            lambda: 'return id(get_calibration);'
-          timeout: 10s
+            lambda: 'return !id(get_calibration);'
+          timeout: 15s
       - logger.log: 'Calibration data sent'
+      - logger.log: 'Updating sensor data'
+      - component.update: spectral_sensor
+      - delay: 5s
+      - logger.log: 'Sensor data updated'
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f1", id(f1).state*100000);
