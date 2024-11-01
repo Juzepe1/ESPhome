@@ -585,7 +585,7 @@ switch:
 
 espnow:
   auto_add_peer: true
-  wifi_channel: '11'
+  wifi_channel: !secret espnow_channel
   peers:
     - FF:FF:FF:FF:FF:FF
   on_receive:
