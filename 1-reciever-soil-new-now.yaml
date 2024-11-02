@@ -790,6 +790,7 @@ espnow:
           condition:
             lambda: 'return id(requestCal_02) && id(sendCalDataSwitch_02).state;'
           then:
+            - delay: 500ms
             - espnow.send:
                 data: !lambda |-
                   return format_espnow_data("02", "flash", id(flash).state);
@@ -805,13 +806,13 @@ espnow:
             - espnow.send:
                 data: !lambda |-
                   return format_espnow_data("02", "gain", id(gain_02).state);
-            - delay: 500ms
             - lambda: |-
                 id(sendCalDataSwitch_02).publish_state(false);
       - if:
           condition:
             lambda: 'return id(requestCal_02);'
           then:
+            - delay: 500ms
             - espnow.send:
                 data: !lambda |-
                   return format_espnow_data("02", "getcalibration", id(requestCalSwitch_02).state);

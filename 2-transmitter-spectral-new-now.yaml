@@ -8,13 +8,15 @@ esphome:
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
 
   on_boot:
-    priority: 10
+    priority: -1000
     then:
       - lambda: |-
           // Set calibration data to spectral sensor
           id(spectral_sensor).setup_atime(id(atime));
           id(spectral_sensor).setup_astep(id(astep));
           id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
+      - delay: 1s
+      - script.execute: espnow_communication
 
 logger:
 
@@ -29,10 +31,10 @@ logger:
 # api:
 #   password: !secret API_password # API password for Home Assistant
 
-deep_sleep:
-  id: deep_sleep_1
-  run_duration: 60s # Time for the ESP32 to run before entering sleep mode
-  sleep_duration: 1min # Change this to your desired sleep time
+# deep_sleep:
+#   id: deep_sleep_1
+#   run_duration: 60s # Time for the ESP32 to run before entering sleep mode
+#   sleep_duration: 1min # Change this to your desired sleep time
 
 external_components:
   - source: components
@@ -267,11 +269,6 @@ espnow:
             - lambda: |-
                 ESP_LOGI("main", "Calibration data sent");
                 id(get_calibration) = false;
-
-interval:
-  - interval: 1s
-    then:
-      - script.execute: espnow_communication
 
 script:
   - id: espnow_communication
