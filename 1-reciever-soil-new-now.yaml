@@ -591,8 +591,6 @@ espnow:
   on_receive:
     then:
       - lambda: |-
-          ESP_LOGI("main", "Received data from ESP-NOW");
-
           // Convert the received data to a string
           std::string received_string((char*)packet.get_payload(), packet.size);
 
@@ -786,6 +784,15 @@ espnow:
           else {
             ESP_LOGW("main", "Invalid data received: %s", received_string.c_str());
           }
+      # This piece of code is to solve unknow error of transmitter, when booting after deep sleep first esp now message is ignored
+      - if:
+          condition:
+            lambda: 'return id(requestCal_02) or id(sendCalDataSwitch_02).state;'
+          then:
+            - espnow.send:
+                data: !lambda |-
+                  std::string data = "hub;isGoingToSendMessage";
+                  return std::vector<uint8_t>(data.begin(), data.end());
       - if:
           condition:
             lambda: 'return id(requestCal_02) && id(sendCalDataSwitch_02).state;'

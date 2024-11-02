@@ -31,10 +31,10 @@ logger:
 # api:
 #   password: !secret API_password # API password for Home Assistant
 
-# deep_sleep:
-#   id: deep_sleep_1
-#   run_duration: 60s # Time for the ESP32 to run before entering sleep mode
-#   sleep_duration: 1min # Change this to your desired sleep time
+deep_sleep:
+  id: deep_sleep_1
+  run_duration: 60s # Time for the ESP32 to run before entering sleep mode
+  sleep_duration: 15min # Change this to your desired sleep time
 
 external_components:
   - source: components
