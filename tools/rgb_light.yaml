@@ -1,0 +1,25 @@
+interval:
+  interval: 3s
+  then:
+    - lambda: |-
+        auto call = id(light_1).turn_on();
+        call.set_transition_length(1000);      // Transition time in ms
+        call.set_brightness(0.5);              // Full brightness
+        call.set_rgb(1, 0, 0);          // Purple color
+        call.perform();
+    - delay: 1s
+    - lambda: |-
+        auto call = id(light_1).turn_on();
+        call.set_transition_length(1000);      // Transition time in ms
+        call.set_brightness(0.5);              // Full brightness
+        call.set_rgb(0, 0, 1);          // Purple color
+        call.perform();
+
+light:
+  - platform: neopixelbus
+    type: GRB
+    variant: 800KBPS
+    pin: GPIO02
+    num_leds: 1
+    name: 'NeoPixel Light'
+    id: light_1
