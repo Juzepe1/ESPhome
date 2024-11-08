@@ -1,0 +1,41 @@
+esphome:
+  name: esp32-api
+  platform: ESP32
+  board: esp32-c3-devkitm-1
+
+# Enable logging
+logger:
+
+# Enable API with password (if desired)
+
+web_server:
+  port: 80
+  auth:
+    username: admin
+    password: password
+  version: 2
+
+wifi:
+  ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
+  password: !secret WiFi_password # WiFi password from secrets.yaml
+  power_save_mode: none
+
+api:
+  password: 'admin'
+
+# Define a global variable `atime`
+globals:
+  - id: atime
+    type: int
+    restore_value: true
+    initial_value: '0'
+
+number:
+  - platform: template
+    name: 'ATime'
+    id: atimeNumber
+    min_value: 0.0
+    max_value: 255
+    step: 1.0
+    optimistic: true
+    entity_category: config

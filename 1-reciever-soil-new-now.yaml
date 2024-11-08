@@ -1,5 +1,5 @@
 esphome:
-  name: esp32-reciever
+  name: esp32-receiver
   platform: ESP32
   board: esp32-c3-devkitm-1 # For ESP32-C3 based boards
   includes:
@@ -10,17 +10,32 @@ esphome:
 
 logger:
 
+web_server:
+  port: 80
+  auth:
+    username: admin
+    password: password
+  version: 3
+  sorting_groups:
+    - id: sorting_group_spectral_settings
+      name: 'Spectral Settings'
+      sorting_weight: 10
+
 wifi:
   ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
   password: !secret WiFi_password # WiFi password from secrets.yaml
   power_save_mode: none
+  on_connect:
+    then:
+      lambda: |-
+        ESP_LOGI("main", "Current WiFi channel: %d", WiFi.channel());
 
-api:
-  password: !secret API_password # API password for Home Assistant
+# api:
+#   password: !secret API_password # API password for Home Assistant
 
-ota:
-  - platform: esphome
-    password: !secret OTA_password # OTA password from secrets.yaml
+# ota:
+#   - platform: esphome
+#     password: !secret OTA_password # OTA password from secrets.yaml
 
 external_components:
   - source:
@@ -448,7 +463,9 @@ number:
     max_value: 255
     step: 1.0
     optimistic: true
-    entity_category: config
+    web_server:
+      sorting_group_id: sorting_group_spectral_settings
+      sorting_weight: 2
 
   - platform: template
     name: 'AStep'
@@ -458,6 +475,9 @@ number:
     step: 1.0
     optimistic: true
     entity_category: config
+    web_server:
+      sorting_group_id: sorting_group_spectral_settings
+      sorting_weight: 3
 
   - platform: template
     name: 'Gain'
@@ -467,6 +487,9 @@ number:
     step: 1.0
     optimistic: true
     entity_category: config
+    web_server:
+      sorting_group_id: sorting_group_spectral_settings
+      sorting_weight: 4
 
 button:
   - platform: template
@@ -477,16 +500,6 @@ button:
         - espnow.send:
             data: !lambda |-
               std::string data = "01;getcalibration";
-              return std::vector<uint8_t>(data.begin(), data.end());
-
-  - platform: template
-    name: 'Get calibration data (spectral sensor)'
-    entity_category: config
-    on_press:
-      then:
-        - espnow.send:
-            data: !lambda |-
-              std::string data = "02;getcalibration";
               return std::vector<uint8_t>(data.begin(), data.end());
 
   - platform: template
@@ -558,12 +571,25 @@ button:
             data: !lambda |-
               return format_espnow_data("01", "k_offset", id(k_offset_01).state);
 
+  - platform: template
+    name: 'Get calibration data (spectral sensor)'
+    entity_category: config
+    on_press:
+      then:
+        - espnow.send:
+            data: !lambda |-
+              std::string data = "02;getcalibration;01";
+              return std::vector<uint8_t>(data.begin(), data.end());
+
 switch:
   - platform: template
     name: 'Write cal. dat to flash'
     id: flash
     restore_mode: ALWAYS_OFF # Start in the OFF state
     optimistic: true # Optional: update state immediately
+    web_server:
+      sorting_group_id: sorting_group_spectral_settings
+      sorting_weight: 5
 
   - platform: template
     name: 'Request Calibration Data Soil Sensor'
@@ -576,12 +602,18 @@ switch:
     id: requestCalSwitch_${spectral_sensor_device_id}
     restore_mode: ALWAYS_OFF # Start in the OFF state
     optimistic: true # Optional: update state immediately
+    web_server:
+      sorting_group_id: sorting_group_spectral_settings
+      sorting_weight: 1
 
   - platform: template
     name: 'Send calibration data (spectral sensor)'
     id: sendCalDataSwitch_${spectral_sensor_device_id}
     restore_mode: ALWAYS_OFF # Start in the OFF state
     optimistic: true # Optional: update state immediately
+    web_server:
+      sorting_group_id: sorting_group_spectral_settings
+      sorting_weight: 6
 
 espnow:
   auto_add_peer: true

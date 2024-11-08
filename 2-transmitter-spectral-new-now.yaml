@@ -16,25 +16,24 @@ esphome:
           id(spectral_sensor).setup_astep(id(astep));
           id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
       - delay: 1s
-      - script.execute: espnow_communication
+      - if:
+          condition:
+            lambda: 'return id(deep_sleep_button).state;'
+          then:
+            - deep_sleep.prevent: deep_sleep_1
+          else:
+            - script.execute: espnow_communication
 
 logger:
-
-# wifi: # Used for OTA, if you don't want to put WiFi credential, you can put ssid: 'xxxx' and password: 'xxxxxxxx'
-#   ssid: !secret WiFi_ssid
-#   password: !secret WiFi_password
-
-# ota: #Normally is turned off, from Home Assistant you can turn it on
-#   - platform: esphome
-#     password: !secret admin
-
-# api:
-#   password: !secret API_password # API password for Home Assistant
 
 deep_sleep:
   id: deep_sleep_1
   run_duration: 60s # Time for the ESP32 to run before entering sleep mode
-  sleep_duration: 15min # Change this to your desired sleep time
+  sleep_duration: 60s # Change this to your desired sleep time
+  wakeup_pin:
+    number: GPIO3
+    allow_other_uses: true
+  wakeup_pin_mode: IGNORE
 
 external_components:
   - source: components
@@ -167,6 +166,22 @@ sensor:
       id: 'lux2'
     update_interval: never
 
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO3
+      allow_other_uses: true
+    name: 'Button'
+    id: 'deep_sleep_button'
+    on_state:
+      then:
+        - if:
+            condition:
+              lambda: 'return !x;'
+            then:
+              - logger.log: 'Button pressed'
+              - deep_sleep.enter: deep_sleep_1
+
 espnow:
   auto_add_peer: true
   wifi_channel: !secret espnow_channel
@@ -254,18 +269,18 @@ espnow:
           condition:
             lambda: 'return id(get_calibration);'
           then:
+            - delay: 10ms
             - espnow.send:
                 data: !lambda |-
                   return format_espnow_data(id(device_id).c_str(), "atime", id(spectral_sensor).get_atime());
-            - delay: 500ms
+            - delay: 10ms
             - espnow.send:
                 data: !lambda |-
                   return format_espnow_data(id(device_id).c_str(), "astep", id(spectral_sensor).get_astep());
-            - delay: 500ms
+            - delay: 10ms
             - espnow.send:
                 data: !lambda |-
                   return format_espnow_data(id(device_id).c_str(), "gain", id(spectral_sensor).get_gain());
-            - delay: 500ms
             - lambda: |-
                 ESP_LOGI("main", "Calibration data sent");
                 id(get_calibration) = false;
@@ -292,89 +307,88 @@ script:
       - logger.log: 'Calibration data sent'
       - logger.log: 'Updating sensor data'
       - component.update: spectral_sensor
-      - delay: 5s
+      - delay: 3s
       - logger.log: 'Sensor data updated'
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f1", id(f1).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f2", id(f2).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "fz", id(fz).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f3", id(f3).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f4", id(f4).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "fy", id(fy).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f5", id(f5).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "fxl", id(fxl).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f6", id(f6).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f7", id(f7).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f8", id(f8).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "nir", id(nir).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "clear", id(clear).state*100000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "irradiance", id(irradiance).state*1000000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "irradiance_photopic", id(irradiance_photopic).state*1000000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "pffd", id(pffd).state*1000000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "saturation", id(saturation).state*1000000);
-      - delay: 500ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "color_temperature", id(color_temperature).state*1000000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "par", id(par).state*1000000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "lux", id(lux).state*1000000);
-      - delay: 500ms
+      - delay: 10ms
       - espnow.send:
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "lux2", id(lux2).state*1000000);
-      - delay: 500ms

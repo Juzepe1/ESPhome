@@ -16,3 +16,13 @@ interval:
       - lambda: |-
           auto mac = WiFi.macAddress();
           ESP_LOGD("custom", "MAC Address: %s", mac.c_str());
+
+#Without WiFi component
+# - lambda: |-
+#     uint8_t base_mac[6];
+#     esp_efuse_mac_get_default(base_mac);
+#     char mac_str[18];
+#     snprintf(mac_str, sizeof(mac_str), "%02X:%02X:%02X:%02X:%02X:%02X",
+#             base_mac[0], base_mac[1], base_mac[2], base_mac[3], base_mac[4], base_mac[5]);
+#     ESP_LOGD("main", "ESP32 MAC Address: %s", mac_str);
+# - script.execute: espnow_communication
