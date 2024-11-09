@@ -1,0 +1,44 @@
+esphome:
+  name: esp32-slave-2
+  platform: ESP32
+  board: esp32-c3-devkitm-1
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: 'nvds-new-espnow'
+    components: [espnow]
+
+logger:
+
+globals:
+  - id: pinged
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+espnow:
+  auto_add_peer: true
+  wifi_channel: !secret espnow_channel
+  peers:
+    - FF:FF:FF:FF:FF:FF
+  on_receive:
+    then:
+      - lambda: |-
+          std::string received_string((char*)packet.get_payload(), packet.size);
+
+          ESP_LOGI("main", "Received data: %s", received_string.c_str());
+
+          if(received_string == "ping") {
+            ESP_LOGI("main", "Received ping from hub");
+            id(pinged) = true;
+          }
+      - if:
+          condition:
+            lambda: 'return id(pinged);'
+          then:
+            - espnow.send:
+                data: 'pong;22;'
+            - lambda: |-
+                id(pinged) = false;

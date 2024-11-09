@@ -4,3 +4,5 @@
 /.esphome/
 /secrets.yaml
 **/__pycache__/
+/components/espnow/
+**/.esphome/

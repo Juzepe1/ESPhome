@@ -1,0 +1,103 @@
+esphome:
+  name: esp32-hub
+  platform: ESP32
+  board: esp32-c3-devkitm-1
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: 'nvds-new-espnow'
+    components: [espnow]
+
+logger:
+
+wifi:
+  ssid: !secret WiFi_ssid
+  password: !secret WiFi_password
+  power_save_mode: none
+
+web_server:
+  port: 80
+
+globals:
+  - id: peer_addresses
+    type: uint64_t[8]
+    initial_value: '{0, 0, 0, 0, 0, 0, 0, 0}'
+  - id: peer_names
+    type: uint8_t[8]
+    initial_value: '{0, 0, 0, 0, 0, 0, 0, 0}'
+
+button:
+  - platform: template
+    name: 'Ping Devices'
+    entity_category: config
+    on_press:
+      then:
+        - espnow.send:
+            data: 'ping'
+
+espnow:
+  auto_add_peer: true
+  wifi_channel: !secret espnow_channel
+  peers:
+    - FF:FF:FF:FF:FF:FF
+  on_receive:
+    then:
+      - lambda: |-
+          ESP_LOGI("main", "Peer: 0x%12llx, Header: %c%c%c, Protocol:%c%c%c-%02x, Sequents: %d.%d, Size: %d, Valid: %s", packet.peer, packet.get_byte_at(0), packet.get_byte_at(1), packet.get_byte_at(2),packet.get_byte_at(3), packet.get_byte_at(4), packet.get_byte_at(5), packet.get_byte_at(6),packet.get_byte_at(7), packet.attempts, packet.content_size(), packet.is_valid() ? "Yes" : "No");
+
+          if (packet.is_valid()) {
+            // Convert the received data to a string
+            std::string received_string((char*)packet.get_payload(), packet.size);
+            
+            ESP_LOGI("main", "Received data: %s", received_string.c_str());
+            
+            // Peer
+            uint64_t peer = packet.peer;
+            ESP_LOGI("main", "Peer: 0x%12llx", peer);
+
+            char buffer[250];
+            strncpy(buffer, received_string.c_str(), sizeof(buffer));
+
+            char* topic = strtok(buffer, ";");
+            char* value = strtok(nullptr, ";");
+            char* end = strtok(nullptr, ";");
+
+            if (topic != nullptr && value != nullptr) {
+              ESP_LOGI("main", "Topic: %s, Value: %s", topic, value);
+              if (strcmp(topic, "pong") == 0) {
+                // Add peer name to the global variable map
+                for (int i = 0; i < 8; i++) {
+                  if (id(peer_addresses)[i] == 0) {
+                    id(peer_addresses)[i] = peer;
+                    id(peer_names)[i] = atoi(value);
+                    break;
+                  }
+                }
+
+                ESP_LOGI("main", "Response: Peer: 0x%12llx Name: %s", peer, value);
+              }
+              else {
+                ESP_LOGW("main", "Unknown topic");
+              }
+            }
+            else {
+              ESP_LOGW("main", "Received data is not recognized");
+            }
+          }
+          else {
+            ESP_LOGW("main", "Received data is not valid");
+          }
+
+          // // Check if the peer exists in the list and print its name
+          // if (id(peer_names).find(peer) != id(peer_names).end()) {
+          //   ESP_LOGI("main", "Message received from peer 0x%12llx with name: %s", peer, id(peer_names)[peer].c_str());
+          // } else {
+          //   ESP_LOGW("main", "Message received from unknown peer: 0x%12llx", peer);
+          // }
+          for (int i = 0; i < 8; i++) {
+            if (id(peer_addresses)[i] != 0) {
+              ESP_LOGI("main", "Index %d Peer: 0x%12llx Name: %d",i, id(peer_addresses)[i], id(peer_names)[i]);
+            }
+          }
