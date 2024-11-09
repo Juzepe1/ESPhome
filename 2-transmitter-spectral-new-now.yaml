@@ -183,10 +183,10 @@ binary_sensor:
               - deep_sleep.enter: deep_sleep_1
 
 espnow:
-  auto_add_peer: true
+  auto_add_peer: false
   wifi_channel: !secret espnow_channel
   peers:
-    - FF:FF:FF:FF:FF:FF
+    - !secret hub_mac_address
   on_receive:
     then:
       - lambda: |-
@@ -269,16 +269,20 @@ espnow:
           condition:
             lambda: 'return id(get_calibration);'
           then:
-            - delay: 10ms
+            - component.update: spectral_sensor
+            - delay: 500ms
             - espnow.send:
+                peer: !secret hub_mac_address
                 data: !lambda |-
                   return format_espnow_data(id(device_id).c_str(), "atime", id(spectral_sensor).get_atime());
-            - delay: 10ms
+            - delay: 500ms
             - espnow.send:
+                peer: !secret hub_mac_address
                 data: !lambda |-
                   return format_espnow_data(id(device_id).c_str(), "astep", id(spectral_sensor).get_astep());
-            - delay: 10ms
+            - delay: 500ms
             - espnow.send:
+                peer: !secret hub_mac_address
                 data: !lambda |-
                   return format_espnow_data(id(device_id).c_str(), "gain", id(spectral_sensor).get_gain());
             - lambda: |-
@@ -288,10 +292,13 @@ espnow:
 script:
   - id: espnow_communication
     then:
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             std::string data = id(device_id) + ";requestCal";
             return std::vector<uint8_t>(data.begin(), data.end());
+
       - logger.log: 'Wating for response'
       - wait_until:
           condition:
@@ -309,86 +316,108 @@ script:
       - component.update: spectral_sensor
       - delay: 3s
       - logger.log: 'Sensor data updated'
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f1", id(f1).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f2", id(f2).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "fz", id(fz).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f3", id(f3).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f4", id(f4).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "fy", id(fy).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f5", id(f5).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "fxl", id(fxl).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f6", id(f6).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f7", id(f7).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "f8", id(f8).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "nir", id(nir).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "clear", id(clear).state*100000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "irradiance", id(irradiance).state*1000000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "irradiance_photopic", id(irradiance_photopic).state*1000000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "pffd", id(pffd).state*1000000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "saturation", id(saturation).state*1000000);
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "color_temperature", id(color_temperature).state*1000000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "par", id(par).state*1000000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "lux", id(lux).state*1000000);
-      - delay: 10ms
+      - delay: 500ms
       - espnow.send:
+          peer: !secret hub_mac_address
           data: !lambda |-
             return format_espnow_data(id(device_id).c_str(), "lux2", id(lux2).state*1000000);

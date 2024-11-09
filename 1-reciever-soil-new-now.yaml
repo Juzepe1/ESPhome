@@ -465,7 +465,7 @@ number:
     optimistic: true
     web_server:
       sorting_group_id: sorting_group_spectral_settings
-      sorting_weight: 2
+      sorting_weight: 3
 
   - platform: template
     name: 'AStep'
@@ -477,7 +477,7 @@ number:
     entity_category: config
     web_server:
       sorting_group_id: sorting_group_spectral_settings
-      sorting_weight: 3
+      sorting_weight: 4
 
   - platform: template
     name: 'Gain'
@@ -489,7 +489,7 @@ number:
     entity_category: config
     web_server:
       sorting_group_id: sorting_group_spectral_settings
-      sorting_weight: 4
+      sorting_weight: 5
 
 button:
   - platform: template
@@ -577,9 +577,23 @@ button:
     on_press:
       then:
         - espnow.send:
+            peer: !secret slave2_mac_address
             data: !lambda |-
               std::string data = "02;getcalibration;01";
               return std::vector<uint8_t>(data.begin(), data.end());
+    web_server:
+      sorting_group_id: sorting_group_spectral_settings
+      sorting_weight: 1
+
+  - platform: template
+    name: 'Send calibration data (spectral sensor)'
+    entity_category: config
+    on_press:
+      then:
+        script.execute: send_calibration_data_slave2
+    web_server:
+      sorting_group_id: sorting_group_spectral_settings
+      sorting_weight: 8
 
 switch:
   - platform: template
@@ -589,7 +603,7 @@ switch:
     optimistic: true # Optional: update state immediately
     web_server:
       sorting_group_id: sorting_group_spectral_settings
-      sorting_weight: 5
+      sorting_weight: 6
 
   - platform: template
     name: 'Request Calibration Data Soil Sensor'
@@ -604,7 +618,7 @@ switch:
     optimistic: true # Optional: update state immediately
     web_server:
       sorting_group_id: sorting_group_spectral_settings
-      sorting_weight: 1
+      sorting_weight: 2
 
   - platform: template
     name: 'Send calibration data (spectral sensor)'
@@ -613,13 +627,13 @@ switch:
     optimistic: true # Optional: update state immediately
     web_server:
       sorting_group_id: sorting_group_spectral_settings
-      sorting_weight: 6
+      sorting_weight: 7
 
 espnow:
   auto_add_peer: true
   wifi_channel: !secret espnow_channel
   peers:
-    - FF:FF:FF:FF:FF:FF
+    - !secret slave2_mac_address
   on_receive:
     then:
       - lambda: |-
@@ -829,22 +843,7 @@ espnow:
           condition:
             lambda: 'return id(requestCal_02) && id(sendCalDataSwitch_02).state;'
           then:
-            - delay: 500ms
-            - espnow.send:
-                data: !lambda |-
-                  return format_espnow_data("02", "flash", id(flash).state);
-            - delay: 1000ms
-            - espnow.send:
-                data: !lambda |-
-                  return format_espnow_data("02", "atime", id(atime_02).state);
-            - delay: 500ms
-            - espnow.send:
-                data: !lambda |-
-                  return format_espnow_data("02", "astep", id(astep_02).state);
-            - delay: 500ms
-            - espnow.send:
-                data: !lambda |-
-                  return format_espnow_data("02", "gain", id(gain_02).state);
+            - script.execute: send_calibration_data_slave2
             - lambda: |-
                 id(sendCalDataSwitch_02).publish_state(false);
       - if:
@@ -853,8 +852,33 @@ espnow:
           then:
             - delay: 500ms
             - espnow.send:
+                peer: !secret slave2_mac_address
                 data: !lambda |-
                   return format_espnow_data("02", "getcalibration", id(requestCalSwitch_02).state);
             - lambda: |-
                 id(requestCal_02) = false;
                 id(requestCalSwitch_02).publish_state(false);
+
+script:
+  - id: send_calibration_data_slave2
+    then:
+      - delay: 500ms
+      - espnow.send:
+          peer: !secret slave2_mac_address
+          data: !lambda |-
+            return format_espnow_data("02", "flash", id(flash).state);
+      - delay: 1000ms
+      - espnow.send:
+          peer: !secret slave2_mac_address
+          data: !lambda |-
+            return format_espnow_data("02", "atime", id(atime_02).state);
+      - delay: 500ms
+      - espnow.send:
+          peer: !secret slave2_mac_address
+          data: !lambda |-
+            return format_espnow_data("02", "astep", id(astep_02).state);
+      - delay: 500ms
+      - espnow.send:
+          peer: !secret slave2_mac_address
+          data: !lambda |-
+            return format_espnow_data("02", "gain", id(gain_02).state);
