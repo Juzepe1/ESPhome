@@ -633,6 +633,7 @@ espnow:
   auto_add_peer: true
   wifi_channel: !secret espnow_channel
   peers:
+    - FF:FF:FF:FF:FF:FF
     - !secret slave2_mac_address
   on_receive:
     then:
