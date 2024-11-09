@@ -3,26 +3,29 @@ esphome:
   platform: ESP32
   board: esp32-c3-devkitm-1
 
-wifi:
-  ssid: !secret WiFi_ssid
-  password: !secret WiFi_password
+external_components:
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: 'nvds-new-espnow'
+    components: [espnow]
 
 logger:
 
-# Use an interval component to log the MAC address
-interval:
-  - interval: 10s
-    then:
-      - lambda: |-
-          auto mac = WiFi.macAddress();
-          ESP_LOGD("custom", "MAC Address: %s", mac.c_str());
-
-#Without WiFi component
-# - lambda: |-
-#     uint8_t base_mac[6];
-#     esp_efuse_mac_get_default(base_mac);
-#     char mac_str[18];
-#     snprintf(mac_str, sizeof(mac_str), "%02X:%02X:%02X:%02X:%02X:%02X",
-#             base_mac[0], base_mac[1], base_mac[2], base_mac[3], base_mac[4], base_mac[5]);
-#     ESP_LOGD("main", "ESP32 MAC Address: %s", mac_str);
-# - script.execute: espnow_communication
+espnow:
+  auto_add_peer: false
+  wifi_channel: 1
+  peers:
+    - FF:FF:FF:FF:FF:FF
+# Own Peer Address (MAC Address) from log
+# [C][logger:185]: Logger:
+# [C][logger:186]:   Level: DEBUG
+# [C][logger:188]:   Log Baud Rate: 115200
+# [C][logger:189]:   Hardware UART: USB_CDC
+# [C][espnow:037]: esp_now:
+# [C][espnow:039]:   Own Peer Address: 0xe4d8931d0470.
+# [C][espnow:040]:   Wifi channel: 1.
+# [C][espnow:041]:   Auto add new peers: No.
+# [C][espnow:043]:   Use sent status: Yes.
+# [C][espnow:044]:   Conversation timeout: 1388ms.
+# [C][espnow:045]:   Send retries: 5.
