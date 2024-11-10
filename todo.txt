@@ -1,2 +1,4 @@
 ovladat kalibrační data přes mobil
 + jde v průběhu kódu přidat mac adress zařízení
+
+chyba pri psani tohoto           ESP_LOGI("main", "Peer: 0x%12llx, Header: %c%c%c, Protocol:%c%c%c-%02x, Sequents: %d.%d, Size: %d, Valid: %s", packet.peer, packet.get_byte_at(0), packet.get_byte_at(1), packet.get_byte_at(2),packet.get_byte_at(3), packet.get_byte_at(4), packet.get_byte_at(5), packet.get_byte_at(6),packet.get_byte_at(7), packet.attempts, packet.content_size(), packet.is_valid() ? "Yes" : "No");

@@ -24,9 +24,11 @@ globals:
   - id: peer_addresses
     type: uint64_t[8]
     initial_value: '{0, 0, 0, 0, 0, 0, 0, 0}'
+    restore_value: yes
   - id: peer_names
     type: uint8_t[8]
     initial_value: '{0, 0, 0, 0, 0, 0, 0, 0}'
+    restore_value: yes
 
 button:
   - platform: template
@@ -45,8 +47,6 @@ espnow:
   on_receive:
     then:
       - lambda: |-
-          ESP_LOGI("main", "Peer: 0x%12llx, Header: %c%c%c, Protocol:%c%c%c-%02x, Sequents: %d.%d, Size: %d, Valid: %s", packet.peer, packet.get_byte_at(0), packet.get_byte_at(1), packet.get_byte_at(2),packet.get_byte_at(3), packet.get_byte_at(4), packet.get_byte_at(5), packet.get_byte_at(6),packet.get_byte_at(7), packet.attempts, packet.content_size(), packet.is_valid() ? "Yes" : "No");
-
           if (packet.is_valid()) {
             // Convert the received data to a string
             std::string received_string((char*)packet.get_payload(), packet.size);
@@ -57,7 +57,7 @@ espnow:
             uint64_t peer = packet.peer;
             ESP_LOGI("main", "Peer: 0x%12llx", peer);
 
-            char buffer[250];
+            char buffer[241];
             strncpy(buffer, received_string.c_str(), sizeof(buffer));
 
             char* topic = strtok(buffer, ";");
@@ -67,13 +67,29 @@ espnow:
             if (topic != nullptr && value != nullptr) {
               ESP_LOGI("main", "Topic: %s, Value: %s", topic, value);
               if (strcmp(topic, "pong") == 0) {
-                // Add peer name to the global variable map
+                // Check if peer is already in the list
+                bool peer_exists = false;
                 for (int i = 0; i < 8; i++) {
-                  if (id(peer_addresses)[i] == 0) {
-                    id(peer_addresses)[i] = peer;
-                    id(peer_names)[i] = atoi(value);
-                    break;
-                  }
+                    if (id(peer_addresses)[i] == peer) {
+                        peer_exists = true;
+                        break;
+                    }
+                }
+
+                bool peer_added = false;
+                // If peer is not in the list, add it to the first available 0 position
+                if (!peer_exists) {
+                    for (int i = 0; i < 8; i++) {
+                        if (id(peer_addresses)[i] == 0) { // Check for an empty spot (0 indicates empty)
+                            id(peer_addresses)[i] = peer;
+                            id(peer_names)[i] = atoi(value);
+                            peer_added = true;
+                            break;
+                        }
+                    }
+                    if (!peer_added) {
+                        ESP_LOGW("main", "No more space for peers");
+                    }
                 }
 
                 ESP_LOGI("main", "Response: Peer: 0x%12llx Name: %s", peer, value);

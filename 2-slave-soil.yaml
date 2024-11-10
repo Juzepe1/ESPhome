@@ -1,0 +1,395 @@
+esphome:
+  name: esp32-slave-soil
+  platform: ESP32
+  board: esp32-c3-devkitm-1
+
+  includes:
+    - components/espnow_send_custom_data/espnow_send_custom_data.h
+    - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+
+  on_boot:
+    priority: -1000
+    then:
+      - lambda: |-
+          ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
+      - lambda: |-
+          // Set calibration data to spectral sensor
+          id(spectral_sensor).setup_atime(id(atime));
+          id(spectral_sensor).setup_astep(id(astep));
+          id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
+      - delay: 1s
+      - if:
+          condition:
+            lambda: 'return id(deep_sleep_button).state;'
+          then:
+            - deep_sleep.prevent: deep_sleep_1
+          else:
+            - script.execute: espnow_communication
+
+logger:
+
+deep_sleep:
+  id: deep_sleep_1
+  run_duration: 60s # Time for the ESP32 to run before entering sleep mode
+  sleep_duration: 60s # Change this to your desired sleep time
+  wakeup_pin:
+    number: GPIO3
+    allow_other_uses: true
+  wakeup_pin_mode: IGNORE
+
+external_components:
+  - source: components
+    components:
+      - as7343
+    refresh: never
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: 'nvds-new-espnow'
+    components: [espnow]
+
+i2c:
+  sda: GPIO5
+  scl: GPIO6
+  scan: true
+  id: bus_a
+
+globals:
+  - id: long_press_timer
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  - id: long_press_action
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: pinged
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: hub_address
+    type: uint64_t
+    initial_value: '0xFFFFFFFFFFFF'
+    restore_value: yes
+
+  - id: get_calibration
+    type: bool
+    initial_value: 'false'
+
+  - id: request_cal
+    type: bool
+    initial_value: 'false'
+
+  - id: flash
+    type: bool
+    initial_value: 'false'
+
+  - id: atime
+    type: uint8_t
+    initial_value: '29'
+    restore_value: 'yes'
+
+  - id: astep
+    type: uint16_t
+    initial_value: '599'
+    restore_value: 'yes'
+
+  - id: gain
+    type: int
+    initial_value: '3'
+    restore_value: 'yes'
+
+  #     enum AS7343Gain : uint8_t {
+  #   AS7343_GAIN_0_5X,   0
+  #   AS7343_GAIN_1X,     1
+  #   AS7343_GAIN_2X,     2
+  #   AS7343_GAIN_4X,     3
+  #   AS7343_GAIN_8X,     4
+  #   AS7343_GAIN_16X,    5
+  #   AS7343_GAIN_32X,    6
+  #   AS7343_GAIN_64X,    7
+  #   AS7343_GAIN_128X,   8
+  #   AS7343_GAIN_256X,   9
+  #   AS7343_GAIN_512X,   10
+  #   AS7343_GAIN_1024X,  11
+  #   AS7343_GAIN_2048X,  12
+  # };
+
+sensor:
+  - platform: as7343
+    id: 'spectral_sensor'
+    f1:
+      name: '405nm'
+      id: 'f1'
+    f2:
+      name: '425nm'
+      id: 'f2'
+    fz:
+      name: '450nm'
+      id: 'fz'
+    f3:
+      name: '475nm'
+      id: 'f3'
+    f4:
+      name: '515nm'
+      id: 'f4'
+    fy:
+      name: '555nm'
+      id: 'fy'
+    f5:
+      name: '550nm'
+      id: 'f5'
+    fxl:
+      name: '600nm'
+      id: 'fxl'
+    f6:
+      name: '640nm'
+      id: 'f6'
+    f7:
+      name: '690nm'
+      id: 'f7'
+    f8:
+      name: '745nm'
+      id: 'f8'
+    nir:
+      name: 'NIR'
+      id: 'nir'
+    clear:
+      name: 'Clear'
+      id: 'clear'
+    irradiance:
+      name: 'Irradiance'
+      id: 'irradiance'
+    irradiance_photopic:
+      name: 'Irradiance_photopic'
+      id: 'irradiance_photopic'
+    ppfd:
+      name: 'Pffd'
+      id: 'pffd'
+    saturation:
+      name: 'Saturation'
+      id: 'saturation'
+    color_temperature:
+      name: 'Color Temperature'
+      id: 'color_temperature'
+    par:
+      name: 'PAR'
+      id: 'par'
+    lux:
+      name: 'Lux'
+      id: 'lux'
+    lux2:
+      name: 'Lux2'
+      id: 'lux2'
+    update_interval: never
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO3
+      allow_other_uses: true
+    name: 'Button'
+    id: 'deep_sleep_button'
+    on_state:
+      then:
+        - if:
+            condition:
+              lambda: 'return !x;'
+            then:
+              - logger.log: 'Button pressed'
+              - deep_sleep.enter: deep_sleep_1
+  - platform: gpio
+    pin:
+      number: GPIO4 # replace with the actual GPIO number
+      mode: INPUT_PULLUP
+      inverted: true
+    name: 'Long Press Button'
+    id: long_press_button
+    on_press:
+      then:
+        - lambda: |-
+            id(long_press_timer) = millis();
+    on_release:
+      then:
+        - lambda: |-
+            if (millis() - id(long_press_timer) > 3000) {
+                ESP_LOGD("main", "Button was pressed for longer than 3 seconds.");
+                id(long_press_action) = true;
+                }
+            else {ESP_LOGD("main", "Button was pressed for less than 3 seconds.");}
+
+espnow:
+  auto_add_peer: true
+  wifi_channel: !secret espnow_channel
+  peers:
+    - FF:FF:FF:FF:FF:FF
+  on_receive:
+    then:
+      - lambda: |-
+          std::string received_string((char*)packet.get_payload(), packet.size);
+
+
+          ESP_LOGI("main", "Received data: %s", received_string.c_str());
+
+          ESP_LOGI("main", "Peer: 0x%12llx", packet.peer);
+
+          ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
+          if(packet.is_valid()){
+            // Convert the received data to a string
+            std::string received_string((char*)packet.get_payload(), packet.size);
+            ESP_LOGI("main", "Received data: %s", received_string.c_str());
+
+            if(received_string == "ping") {
+                if(id(long_press_action)) {
+                    id(hub_address) = packet.peer;
+                    ESP_LOGI("main", "Setting hub address: 0x%12llx", id(hub_address));
+                    id(long_press_action) = false;
+                }
+                id(pinged) = true;
+            }
+            if(packet.peer == id(hub_address)) {
+                ESP_LOGI("main", "Received from hub");
+                 // Parse the received data
+                char buffer[241];
+
+                strncpy(buffer, received_string.c_str(), sizeof(buffer));
+
+                char* topic = strtok(buffer, ";");
+                char* value = strtok(nullptr, ";");
+                char* end = strtok(nullptr, ";");
+                
+                if(topic != nullptr){
+                    if(value != nullptr){
+                        ESP_LOGI("main", "Topic: %s, Value: %s", topic, value);
+                    }
+                    else{ESP_LOGW("main", "Value is none");}
+                }
+                else{ESP_LOGW("main", "Topic is none");}
+                }
+            else {ESP_LOGW("main", "Received from unknown peer. Not accepting data from unknown peers.");}
+          }
+          else{ESP_LOGW("main", "Invalid packet");}
+      - if:
+          condition:
+            lambda: 'return id(pinged);'
+          then:
+            - espnow.send:
+                data: 'pong;22;'
+            - lambda: |-
+                id(pinged) = false;
+
+script:
+  - id: espnow_communication
+    then:
+      - script.execute: beReadyToReceiveMessage
+      - espnow.send:
+          data: 'requestCal;'
+      - logger.log: 'Wating for response'
+      - wait_until:
+          condition:
+            lambda: 'return id(request_cal);'
+          timeout: 15s
+      - logger.log: 'Response received'
+      - lambda: |-
+          id(request_cal) = false;
+      - wait_until:
+          condition:
+            lambda: 'return !id(get_calibration);'
+          timeout: 15s
+      - logger.log: 'Calibration data sent'
+      - logger.log: 'Updating sensor data'
+      - component.update: spectral_sensor
+      - delay: 3s
+      - logger.log: 'Sensor data updated'
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("f1", id(f1).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("f2", id(f2).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("fz", id(fz).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("f3", id(f3).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("f4", id(f4).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("fy", id(fy).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("f5", id(f5).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("fxl", id(fxl).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("f6", id(f6).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("f7", id(f7).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("f8", id(f8).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("nir", id(nir).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("clear", id(clear).state*100000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("irradiance", id(irradiance).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("irradiance_photopic", id(irradiance_photopic).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("pffd", id(pffd).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("saturation", id(saturation).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("color_temperature", id(color_temperature).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("par", id(par).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("lux", id(lux).state*1000000);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("lux2", id(lux2).state*1000000);
+  - id: beReadyToReceiveMessage
+    then:
+      - espnow.send:
+          data: 'hub;beReadyToReceiveMessage'
+      - delay: 500ms
