@@ -1,0 +1,467 @@
+esphome:
+  name: esp32-hub
+  platform: ESP32
+  board: esp32-c3-devkitm-1 # For ESP32-C3 based boards
+  includes:
+    - components/espnow_send_custom_data/espnow_send_custom_data.h
+    - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+  platformio_options:
+    board_build.flash_mode: qio
+
+logger:
+
+web_server:
+  port: 80
+  auth:
+    username: admin
+    password: password
+  version: 3
+  sorting_groups:
+    - id: sg_spectral
+      name: 'Spectral Settings'
+      sorting_weight: 10
+
+wifi:
+  ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
+  password: !secret WiFi_password # WiFi password from secrets.yaml
+  power_save_mode: none
+  on_connect:
+    then:
+      lambda: |-
+        ESP_LOGI("main", "Current WiFi channel: %d", WiFi.channel());
+
+# ota:
+#   - platform: esphome
+#     password: !secret OTA_password # OTA password from secrets.yaml
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: 'nvds-new-espnow'
+    components: [espnow]
+
+substitutions:
+  spectral_sensor_device_id: '22'
+
+globals:
+  - id: peer_addresses
+    type: uint64_t[8]
+    initial_value: '{0, 0, 0, 0, 0, 0, 0, 0}'
+    restore_value: yes
+  - id: peer_names
+    type: uint8_t[8]
+    initial_value: '{0, 0, 0, 0, 0, 0, 0, 0}'
+    restore_value: yes
+  - id: requestCal_${spectral_sensor_device_id}
+    type: bool
+    initial_value: 'false'
+
+sensor:
+  - platform: template
+    name: '405nm ${spectral_sensor_device_id}'
+    id: f1_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: '425nm ${spectral_sensor_device_id}'
+    id: f2_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: '450nm ${spectral_sensor_device_id}'
+    id: fz_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: '475nm ${spectral_sensor_device_id}'
+    id: f3_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: '515nm ${spectral_sensor_device_id}'
+    id: f4_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: '555nm ${spectral_sensor_device_id}'
+    id: fy_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: '550nm ${spectral_sensor_device_id}'
+    id: f5_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: '600nm ${spectral_sensor_device_id}'
+    id: fxl_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: '640nm ${spectral_sensor_device_id}'
+    id: f6_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: '690nm ${spectral_sensor_device_id}'
+    id: f7_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: '745nm ${spectral_sensor_device_id}'
+    id: f8_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: 'NIR ${spectral_sensor_device_id}'
+    id: nir_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: 'Clear ${spectral_sensor_device_id}'
+    id: clear_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+
+  - platform: template
+    name: 'Irradiance ${spectral_sensor_device_id}'
+    id: irradiance_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'W/m²'
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: 'Irradiance Photopic ${spectral_sensor_device_id}'
+    id: irradiance_photopic_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'lm/m²'
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: 'PFFD ${spectral_sensor_device_id}'
+    id: pffd_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'µmol/m²/s'
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: 'Saturation ${spectral_sensor_device_id}'
+    id: saturation_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: 'Color Temperature ${spectral_sensor_device_id}'
+    id: color_temperature_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'K'
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: 'PAR ${spectral_sensor_device_id}'
+    id: par_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'µmol/m²/s'
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: 'Lux ${spectral_sensor_device_id}'
+    id: lux_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'lx'
+    filters:
+      - multiply: 0.000001
+
+  - platform: template
+    name: 'Lux2 ${spectral_sensor_device_id}'
+    id: lux2_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'lx'
+    filters:
+      - multiply: 0.000001
+
+number:
+  - platform: template
+    name: 'ATime'
+    id: atime_${spectral_sensor_device_id}
+    min_value: 0.0
+    max_value: 255
+    step: 1.0
+    optimistic: true
+    web_server:
+      sorting_group_id: sg_spectral
+      sorting_weight: 3
+
+  - platform: template
+    name: 'AStep'
+    id: astep_${spectral_sensor_device_id}
+    min_value: 0.0
+    max_value: 65534
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_spectral
+      sorting_weight: 4
+
+  - platform: template
+    name: 'Gain'
+    id: gain_${spectral_sensor_device_id}
+    min_value: 0.0
+    max_value: 12.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_spectral
+      sorting_weight: 5
+
+button:
+  - platform: template
+    name: 'Ping Devices'
+    entity_category: config
+    on_press:
+      then:
+        - script.execute: beReadyToReceiveMessage
+        - espnow.send:
+            data: 'ping'
+
+  - platform: template
+    name: 'Peers list'
+    entity_category: config
+    on_press:
+      then:
+        - lambda: |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_addresses)[i] != 0) {
+                    ESP_LOGI("main", "Index %d Peer: 0x%12llx Name: %d",i, id(peer_addresses)[i], id(peer_names)[i]);
+                }
+            }
+
+  - platform: template
+    name: 'Get cal. data (spectral sensor)'
+    entity_category: config
+    on_press:
+      then:
+        - script.execute: beReadyToReceiveMessage
+        - espnow.send:
+            data: 'getcalibration;01'
+    web_server:
+      sorting_group_id: sg_spectral
+      sorting_weight: 1
+
+  - platform: template
+    name: 'Send cal. data (spectral sensor)'
+    entity_category: config
+    on_press:
+      then:
+        - script.execute: beReadyToReceiveMessage
+        - script.execute: send_calibration_data_${spectral_sensor_device_id}
+    web_server:
+      sorting_group_id: sg_spectral
+      sorting_weight: 8
+
+switch:
+  - platform: template
+    name: 'Write cal. dat to flash'
+    id: flash_${spectral_sensor_device_id}
+    restore_mode: ALWAYS_OFF # Start in the OFF state
+    optimistic: true # Optional: update state immediately
+    web_server:
+      sorting_group_id: sg_spectral
+      sorting_weight: 6
+
+  - platform: template
+    name: 'Request Calibration Data Spectral Sensor'
+    id: requestCalSwitch_${spectral_sensor_device_id}
+    restore_mode: ALWAYS_OFF # Start in the OFF state
+    optimistic: true # Optional: update state immediately
+    web_server:
+      sorting_group_id: sg_spectral
+      sorting_weight: 2
+
+  - platform: template
+    name: 'Send calibration data (spectral sensor)'
+    id: sendCalDataSwitch_${spectral_sensor_device_id}
+    restore_mode: ALWAYS_OFF # Start in the OFF state
+    optimistic: true # Optional: update state immediately
+    web_server:
+      sorting_group_id: sg_spectral
+      sorting_weight: 7
+
+espnow:
+  auto_add_peer: true
+  wifi_channel: !secret espnow_channel
+  peers:
+    - FF:FF:FF:FF:FF:FF
+  on_receive:
+    then:
+      - lambda: |-
+          if(packet.is_valid()){
+            // Convert the received data to a string
+            std::string received_string((char*)packet.get_payload(), packet.size);
+
+            ESP_LOGI("main", "Received data: %s", received_string.c_str());
+
+            // Peer
+            uint64_t peer = packet.peer;
+            ESP_LOGI("main", "Peer: 0x%12llx", peer);
+            
+            // Parse the received data
+            char buffer[241];
+
+            strncpy(buffer, received_string.c_str(), sizeof(buffer));
+            
+            
+
+            char* topic = strtok(buffer, ";");
+            char* value = strtok(nullptr, ";");
+            char* end = strtok(nullptr, ";");
+            
+            if(topic != nullptr){
+                if(strcmp(topic, "requestCal") == 0){
+                  id(requestCal_${spectral_sensor_device_id}) = true;
+                }
+                if(value != nullptr){
+                    if (strcmp(topic, "pong") == 0) {
+                        // Check if peer is already in the list
+                        bool peer_exists = false;
+                        for (int i = 0; i < 8; i++) {
+                            if (id(peer_addresses)[i] == peer) {
+                                peer_exists = true;
+                                break;
+                            }
+                        }
+
+                        bool peer_added = false;
+                        // If peer is not in the list, add it to the first available 0 position
+                        if (!peer_exists) {
+                            for (int i = 0; i < 8; i++) {
+                                if (id(peer_addresses)[i] == 0) { // Check for an empty spot (0 indicates empty)
+                                    id(peer_addresses)[i] = peer;
+                                    id(peer_names)[i] = atoi(value);
+                                    peer_added = true;
+                                    break;
+                                }
+                            }
+                            if (!peer_added) {
+                                ESP_LOGW("main", "No more space for peers");
+                            }
+                        }
+
+                        ESP_LOGI("main", "Response: Peer: 0x%12llx Name: %s", peer, value);
+                    }
+                    else{
+                        ESP_LOGW("main", "Unknown topic: %s", topic);
+                    }
+                }
+                else{ESP_LOGW("main", "Value is none");}
+            }
+            else{ESP_LOGW("main", "Topic is none");}
+
+          }
+          else{ESP_LOGW("main", "Invalid packet");}
+
+      - if:
+          condition:
+            lambda: 'return id(requestCal_${spectral_sensor_device_id});'
+          then:
+            - script.execute: beReadyToReceiveMessage
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("getcalibration", id(requestCalSwitch_${spectral_sensor_device_id}).state);
+            - lambda: |-
+                id(requestCal_${spectral_sensor_device_id}) = false;
+                id(requestCalSwitch_${spectral_sensor_device_id}).publish_state(false);
+
+script:
+  - id: send_calibration_data_${spectral_sensor_device_id}
+    then:
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("flash", id(flash_${spectral_sensor_device_id}).state);
+      - delay: 1000ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("atime", id(atime_${spectral_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("astep", id(astep_${spectral_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("gain", id(gain_${spectral_sensor_device_id}).state);
+  - id: beReadyToReceiveMessage
+    then:
+      - espnow.send:
+          data: 'hub;beReadyToReceiveMessage;'
+      - delay: 500ms

@@ -13,10 +13,49 @@ external_components:
 logger:
 
 globals:
+  - id: long_press_timer
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  - id: long_press_action
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
   - id: pinged
     type: bool
     restore_value: no
     initial_value: 'false'
+
+  - id: hub_address
+    type: uint64_t
+    initial_value: '0xFFFFFFFFFFFF'
+    restore_value: yes
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO4 # replace with the actual GPIO number
+      mode: INPUT_PULLUP
+      inverted: true
+    name: 'Long Press Button'
+    id: long_press_button
+    on_press:
+      then:
+        - lambda: |-
+            id(long_press_timer) = millis();
+    on_release:
+      then:
+        - lambda: |-
+            if (millis() - id(long_press_timer) > 3000) {
+              ESP_LOGD("main", "Button was pressed for longer than 3 seconds.");
+              // Perform the action here
+              id(long_press_action) = true;
+            }
+            else {
+              ESP_LOGD("main", "Button was pressed for less than 3 seconds.");
+            }
 
 espnow:
   auto_add_peer: true
@@ -30,9 +69,25 @@ espnow:
 
           ESP_LOGI("main", "Received data: %s", received_string.c_str());
 
+          ESP_LOGI("main", "Peer: 0x%12llx", packet.peer);
+
+          ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
+
           if(received_string == "ping") {
-            ESP_LOGI("main", "Received ping from hub");
+            if(id(long_press_action)) {
+
+              id(hub_address) = packet.peer;
+              ESP_LOGI("main", "Setting hub address: 0x%12llx", id(hub_address));
+              id(long_press_action) = false;
+            }
             id(pinged) = true;
+          }
+
+          if(packet.peer == id(hub_address)) {
+            ESP_LOGI("main", "Received from hub");
+          }
+          else {
+            ESP_LOGW("main", "Received from unknown peer");
           }
       - if:
           condition:
