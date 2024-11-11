@@ -8,7 +8,7 @@ esphome:
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
 
   on_boot:
-    priority: -1000
+    priority: -10000
     then:
       - lambda: |-
           ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
@@ -17,7 +17,7 @@ esphome:
           id(spectral_sensor).setup_atime(id(atime));
           id(spectral_sensor).setup_astep(id(astep));
           id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
-      - delay: 1s
+      - delay: 500ms
       - if:
           condition:
             lambda: 'return id(deep_sleep_button).state;'
@@ -30,7 +30,7 @@ logger:
 
 deep_sleep:
   id: deep_sleep_1
-  run_duration: 60s # Time for the ESP32 to run before entering sleep mode
+  run_duration: 80s # Time for the ESP32 to run before entering sleep mode
   sleep_duration: 60s # Change this to your desired sleep time
   wakeup_pin:
     number: GPIO3
@@ -231,12 +231,6 @@ espnow:
       - lambda: |-
           std::string received_string((char*)packet.get_payload(), packet.size);
 
-
-          ESP_LOGI("main", "Received data: %s", received_string.c_str());
-
-          ESP_LOGI("main", "Peer: 0x%12llx", packet.peer);
-
-          ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
           if(packet.is_valid()){
             // Convert the received data to a string
             std::string received_string((char*)packet.get_payload(), packet.size);
@@ -264,27 +258,55 @@ espnow:
                 if(topic != nullptr){
                     if(value != nullptr){
                         ESP_LOGI("main", "Topic: %s, Value: %s", topic, value);
+
+                        int value_int = atoi(value);
+
+                        if(strcmp(topic, "getcalibration") == 0){
+                            if(value_int == 1){id(get_calibration) = true;}
+                            id(request_cal) = true;
+                        }
+                        else if(strcmp(topic, "flash") == 0){
+                          if(value_int == 1){id(flash) = true;}
+                        }
+                        else if(strcmp(topic, "atime") == 0){
+                          
+                          if (id(flash)) {
+                            ESP_LOGI("main", "Writing atime to flash");
+                            id(astep) = value_int;
+                          }
+                          id(spectral_sensor).setup_astep(value_int);
+                              
+                        }
+                        else if(strcmp(topic, "astep") == 0){
+                          
+                          if (id(flash)) {
+                            ESP_LOGI("main", "Writing astep to flash");
+                            id(astep) = value_int;
+                          }
+                          id(spectral_sensor).setup_astep(value_int);
+                        }
+                        else if(strcmp(topic, "gain") == 0){ 
+                          if (id(flash)) {
+                            ESP_LOGI("main", "Writing gain to flash");
+                            id(gain) = value_int;
+                          }
+                          id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(value_int));
+                        }
+                        else{ESP_LOGW("main", "Value is none");}
                     }
                     else{ESP_LOGW("main", "Value is none");}
                 }
                 else{ESP_LOGW("main", "Topic is none");}
-                }
+            }
             else {ESP_LOGW("main", "Received from unknown peer. Not accepting data from unknown peers.");}
           }
           else{ESP_LOGW("main", "Invalid packet");}
-      - if:
-          condition:
-            lambda: 'return id(pinged);'
-          then:
-            - espnow.send:
-                data: 'pong;22;'
-            - lambda: |-
-                id(pinged) = false;
+      - script.execute: handleOnRecieve
 
 script:
   - id: espnow_communication
     then:
-      - script.execute: beReadyToReceiveMessage
+      #- script.execute: beReadyToReceiveMessage
       - espnow.send:
           data: 'requestCal;'
       - logger.log: 'Wating for response'
@@ -304,92 +326,135 @@ script:
       - component.update: spectral_sensor
       - delay: 3s
       - logger.log: 'Sensor data updated'
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("f1", id(f1).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("f2", id(f2).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("fz", id(fz).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("f3", id(f3).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("f4", id(f4).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("fy", id(fy).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("f5", id(f5).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("fxl", id(fxl).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("f6", id(f6).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("f7", id(f7).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("f8", id(f8).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("nir", id(nir).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("clear", id(clear).state*100000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("irradiance", id(irradiance).state*1000000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("irradiance_photopic", id(irradiance_photopic).state*1000000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("pffd", id(pffd).state*1000000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("saturation", id(saturation).state*1000000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("color_temperature", id(color_temperature).state*1000000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("par", id(par).state*1000000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("lux", id(lux).state*1000000);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("lux2", id(lux2).state*1000000);
+
+      - repeat:
+          count: 3
+          then:
+            - lambda: |-
+                ESP_LOGI("main", "Sending data to hub");
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("f1", id(f1).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("f2", id(f2).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("fz", id(fz).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("f3", id(f3).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("f4", id(f4).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("fy", id(fy).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("f5", id(f5).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("fxl", id(fxl).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("f6", id(f6).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("f7", id(f7).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("f8", id(f8).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("nir", id(nir).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("clear", id(clear).state*100000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("irradiance", id(irradiance).state*1000000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("irradiance_photopic", id(irradiance_photopic).state*1000000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("pffd", id(pffd).state*1000000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("saturation", id(saturation).state*1000000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("color_temperature", id(color_temperature).state*1000000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("par", id(par).state*1000000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("lux", id(lux).state*1000000);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("lux2", id(lux2).state*1000000);
   - id: beReadyToReceiveMessage
     then:
       - espnow.send:
           data: 'hub;beReadyToReceiveMessage'
       - delay: 500ms
+  - id: sendCalibrationData
+    then:
+      - component.update: spectral_sensor
+      - delay: 3s
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("atime", id(spectral_sensor).get_atime());
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("astep", id(spectral_sensor).get_astep());
+      - delay: 500ms
+      - espnow.send:
+          data: !lambda |-
+            return format_espnow_data_new("gain", id(spectral_sensor).get_gain());
+      - lambda: |-
+          ESP_LOGI("main", "Calibration data sent");
+          id(get_calibration) = false;
+  - id: handleOnRecieve
+    then:
+      - if:
+          condition:
+            lambda: 'return id(pinged);'
+          then:
+            - logger.log: 'Pinging back'
+            - espnow.send:
+                data: 'pong;22;'
+            - lambda: |-
+                id(pinged) = false;
+      - if:
+          condition:
+            lambda: 'return id(get_calibration);'
+          then:
+            - logger.log: 'Sending calibration data'
+            - script.execute: sendCalibrationData
+            - lambda: |-
+                id(get_calibration) = false;
