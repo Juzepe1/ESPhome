@@ -289,7 +289,7 @@ button:
     entity_category: config
     on_press:
       then:
-        - script.execute: beReadyToReceiveMessage
+        #- script.execute: beReadyToReceiveMessage
         - espnow.send:
             data: 'ping'
 
@@ -310,9 +310,8 @@ button:
     entity_category: config
     on_press:
       then:
-        - script.execute: beReadyToReceiveMessage
-        - espnow.send:
-            data: 'getcalibration;01'
+        #- script.execute: beReadyToReceiveMessage
+        - script.execute: requestCalResponse
     web_server:
       sorting_group_id: sg_spectral
       sorting_weight: 1
@@ -322,7 +321,7 @@ button:
     entity_category: config
     on_press:
       then:
-        - script.execute: beReadyToReceiveMessage
+        #- script.execute: beReadyToReceiveMessage
         - script.execute: send_calibration_data_${spectral_sensor_device_id}
     web_server:
       sorting_group_id: sg_spectral
@@ -384,12 +383,35 @@ espnow:
             char* topic = strtok(buffer, ";");
             char* value = strtok(nullptr, ";");
             char* end = strtok(nullptr, ";");
+
             
             if(topic != nullptr){
                 if(strcmp(topic, "requestCal") == 0){
                   id(requestCal_${spectral_sensor_device_id}) = true;
                 }
                 if(value != nullptr){
+                    int value_int = atoi(value);
+                    //float value_float = atof(value);
+
+                    bool savedPeer = false;
+                    int sensor_id = 0;
+                    // Peer name
+                    for (int i = 0; i < 8; i++) {
+                      if (id(peer_addresses)[i] == peer) {
+                        savedPeer = true;
+                        sensor_id = id(peer_names)[i];
+                        break;
+                      }
+                    }
+                    if (savedPeer){
+                      //ESP_LOGI("main", "Peer already saved");
+                      ESP_LOGI("main", "Sensor ID: %d", sensor_id);
+                    }
+                    else{
+                      ESP_LOGW("main", "Peer not saved");
+                    }
+                    
+
                     if (strcmp(topic, "pong") == 0) {
                         // Check if peer is already in the list
                         bool peer_exists = false;
@@ -406,7 +428,7 @@ espnow:
                             for (int i = 0; i < 8; i++) {
                                 if (id(peer_addresses)[i] == 0) { // Check for an empty spot (0 indicates empty)
                                     id(peer_addresses)[i] = peer;
-                                    id(peer_names)[i] = atoi(value);
+                                    id(peer_names)[i] = value_int;
                                     peer_added = true;
                                     break;
                                 }
@@ -417,6 +439,57 @@ espnow:
                         }
 
                         ESP_LOGI("main", "Response: Peer: 0x%12llx Name: %s", peer, value);
+                    }
+                    else if(sensor_id == ${spectral_sensor_device_id}){
+                        if (strcmp(topic, "f1") == 0) {
+                          id(f1_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f2") == 0) {
+                          id(f2_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "fz") == 0) {
+                          id(fz_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f3") == 0) {
+                          id(f3_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f4") == 0) {
+                          id(f4_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "fy") == 0) {
+                          id(fy_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f5") == 0) {
+                          id(f5_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "fxl") == 0) {
+                          id(fxl_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f6") == 0) {
+                          id(f6_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f7") == 0) {
+                          id(f7_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f8") == 0) {
+                          id(f8_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "nir") == 0) {
+                          id(nir_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "clear") == 0) {
+                          id(clear_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "irradiance") == 0) {
+                          id(irradiance_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "irradiance_photopic") == 0) {
+                          id(irradiance_photopic_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "pffd") == 0) {
+                          id(pffd_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "saturation") == 0) {
+                          id(saturation_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "color_temperature") == 0) {
+                          id(color_temperature_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "par") == 0) {
+                          id(par_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "lux") == 0) {
+                          id(lux_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "lux2") == 0) {
+                          id(lux2_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "atime") == 0) {
+                          id(atime_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "astep") == 0) {
+                          id(astep_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "gain") == 0) {
+                          id(gain_${spectral_sensor_device_id}).publish_state(value_int);
+                        }
                     }
                     else{
                         ESP_LOGW("main", "Unknown topic: %s", topic);
@@ -429,17 +502,7 @@ espnow:
           }
           else{ESP_LOGW("main", "Invalid packet");}
 
-      - if:
-          condition:
-            lambda: 'return id(requestCal_${spectral_sensor_device_id});'
-          then:
-            - script.execute: beReadyToReceiveMessage
-            - espnow.send:
-                data: !lambda |-
-                  return format_espnow_data_new("getcalibration", id(requestCalSwitch_${spectral_sensor_device_id}).state);
-            - lambda: |-
-                id(requestCal_${spectral_sensor_device_id}) = false;
-                id(requestCalSwitch_${spectral_sensor_device_id}).publish_state(false);
+      - script.execute: handleOnRecieve
 
 script:
   - id: send_calibration_data_${spectral_sensor_device_id}
@@ -465,3 +528,28 @@ script:
       - espnow.send:
           data: 'hub;beReadyToReceiveMessage;'
       - delay: 500ms
+  - id: requestCalResponse
+    then:
+      - espnow.send:
+          data: 'getcalibration;1;'
+  - id: handleOnRecieve
+    then:
+      - if:
+          condition:
+            lambda: 'return id(requestCal_${spectral_sensor_device_id});'
+          then:
+            - script.execute: beReadyToReceiveMessage
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("getcalibration", id(requestCalSwitch_${spectral_sensor_device_id}).state);
+            - lambda: |-
+                id(requestCal_${spectral_sensor_device_id}) = false;
+                id(requestCalSwitch_${spectral_sensor_device_id}).publish_state(false);
+      - if:
+          condition:
+            lambda: 'return id(requestCal_${spectral_sensor_device_id}) && id(sendCalDataSwitch_${spectral_sensor_device_id}).state;'
+          then:
+            - logger.log: 'Sending calibration data'
+            - script.execute: send_calibration_data_${spectral_sensor_device_id}
+            - lambda: |-
+                id(sendCalDataSwitch_${spectral_sensor_device_id}).publish_state(false);
