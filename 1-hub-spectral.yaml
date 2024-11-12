@@ -284,6 +284,10 @@ number:
       sorting_weight: 5
 
 button:
+  - platform: factory_reset
+    name: Restart with Factory Default Settings
+    entity_category: config
+
   - platform: template
     name: 'Ping Devices'
     entity_category: config
@@ -408,34 +412,37 @@ espnow:
                       ESP_LOGI("main", "Sensor ID: %d", sensor_id);
                     }
                     else{
-                      ESP_LOGW("main", "Peer not saved");
+                      ESP_LOGW("main", "Recieved message is not from saved peer");
                     }
                     
 
-                    if (strcmp(topic, "pong") == 0) {
-                        // Check if peer is already in the list
-                        bool peer_exists = false;
-                        for (int i = 0; i < 8; i++) {
-                            if (id(peer_addresses)[i] == peer) {
-                                peer_exists = true;
-                                break;
-                            }
-                        }
+                    if (strcmp(topic, "pong") == 0 && end != nullptr){
+                        int end_int = atoi(end);
+                        if(end_int == 1){
+                          // Check if peer is already in the list
+                          bool peer_exists = false;
+                          for (int i = 0; i < 8; i++) {
+                              if (id(peer_addresses)[i] == peer) {
+                                  peer_exists = true;
+                                  break;
+                              }
+                          }
 
-                        bool peer_added = false;
-                        // If peer is not in the list, add it to the first available 0 position
-                        if (!peer_exists) {
-                            for (int i = 0; i < 8; i++) {
-                                if (id(peer_addresses)[i] == 0) { // Check for an empty spot (0 indicates empty)
-                                    id(peer_addresses)[i] = peer;
-                                    id(peer_names)[i] = value_int;
-                                    peer_added = true;
-                                    break;
-                                }
-                            }
-                            if (!peer_added) {
-                                ESP_LOGW("main", "No more space for peers");
-                            }
+                          bool peer_added = false;
+                          // If peer is not in the list, add it to the first available 0 position
+                          if (!peer_exists) {
+                              for (int i = 0; i < 8; i++) {
+                                  if (id(peer_addresses)[i] == 0) { // Check for an empty spot (0 indicates empty)
+                                      id(peer_addresses)[i] = peer;
+                                      id(peer_names)[i] = value_int;
+                                      peer_added = true;
+                                      break;
+                                  }
+                              }
+                              if (!peer_added) {
+                                  ESP_LOGW("main", "No more space for peers");
+                              }
+                          }
                         }
 
                         ESP_LOGI("main", "Response: Peer: 0x%12llx Name: %s", peer, value);
