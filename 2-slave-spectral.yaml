@@ -70,6 +70,11 @@ globals:
     restore_value: no
     initial_value: 'false'
 
+  - id: paring
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
   - id: hub_address
     type: uint64_t
     initial_value: '0xFFFFFFFFFFFF'
@@ -241,6 +246,7 @@ espnow:
                     id(hub_address) = packet.peer;
                     ESP_LOGI("main", "Setting hub address: 0x%12llx", id(hub_address));
                     id(long_press_action) = false;
+                    id(paring) = true;
                 }
                 id(pinged) = true;
             }
@@ -447,8 +453,10 @@ script:
           then:
             - logger.log: 'Pinging back'
             - espnow.send:
-                data: 'pong;22;'
+                data: !lambda |-
+                  return format_espnow_data("pong", "22", id(paring));
             - lambda: |-
+                id(paring) = false;
                 id(pinged) = false;
       - if:
           condition:
