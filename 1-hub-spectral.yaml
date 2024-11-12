@@ -53,9 +53,6 @@ globals:
     type: uint8_t[8]
     initial_value: '{0, 0, 0, 0, 0, 0, 0, 0}'
     restore_value: yes
-  - id: requestCal_${spectral_sensor_device_id}
-    type: bool
-    initial_value: 'false'
 
 sensor:
   - platform: template
@@ -341,24 +338,6 @@ switch:
       sorting_group_id: sg_spectral
       sorting_weight: 6
 
-  - platform: template
-    name: 'Request Calibration Data Spectral Sensor'
-    id: requestCalSwitch_${spectral_sensor_device_id}
-    restore_mode: ALWAYS_OFF # Start in the OFF state
-    optimistic: true # Optional: update state immediately
-    web_server:
-      sorting_group_id: sg_spectral
-      sorting_weight: 2
-
-  - platform: template
-    name: 'Send calibration data (spectral sensor)'
-    id: sendCalDataSwitch_${spectral_sensor_device_id}
-    restore_mode: ALWAYS_OFF # Start in the OFF state
-    optimistic: true # Optional: update state immediately
-    web_server:
-      sorting_group_id: sg_spectral
-      sorting_weight: 7
-
 espnow:
   auto_add_peer: true
   wifi_channel: !secret espnow_channel
@@ -390,9 +369,6 @@ espnow:
 
             
             if(topic != nullptr){
-                if(strcmp(topic, "requestCal") == 0){
-                  id(requestCal_${spectral_sensor_device_id}) = true;
-                }
                 if(value != nullptr){
                     int value_int = atoi(value);
                     //float value_float = atof(value);
@@ -541,22 +517,4 @@ script:
           data: 'getcalibration;1;'
   - id: handleOnRecieve
     then:
-      - if:
-          condition:
-            lambda: 'return id(requestCal_${spectral_sensor_device_id});'
-          then:
-            - script.execute: beReadyToReceiveMessage
-            - espnow.send:
-                data: !lambda |-
-                  return format_espnow_data_new("getcalibration", id(requestCalSwitch_${spectral_sensor_device_id}).state);
-            - lambda: |-
-                id(requestCal_${spectral_sensor_device_id}) = false;
-                id(requestCalSwitch_${spectral_sensor_device_id}).publish_state(false);
-      - if:
-          condition:
-            lambda: 'return id(requestCal_${spectral_sensor_device_id}) && id(sendCalDataSwitch_${spectral_sensor_device_id}).state;'
-          then:
-            - logger.log: 'Sending calibration data'
-            - script.execute: send_calibration_data_${spectral_sensor_device_id}
-            - lambda: |-
-                id(sendCalDataSwitch_${spectral_sensor_device_id}).publish_state(false);
+      - logger.log: 'Received data'

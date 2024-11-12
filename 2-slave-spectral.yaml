@@ -312,22 +312,7 @@ espnow:
 script:
   - id: espnow_communication
     then:
-      #- script.execute: beReadyToReceiveMessage
-      - espnow.send:
-          data: 'requestCal;'
-      - logger.log: 'Wating for response'
-      - wait_until:
-          condition:
-            lambda: 'return id(request_cal);'
-          timeout: 15s
-      - logger.log: 'Response received'
-      - lambda: |-
-          id(request_cal) = false;
-      - wait_until:
-          condition:
-            lambda: 'return !id(get_calibration);'
-          timeout: 15s
-      - logger.log: 'Calibration data sent'
+      - script.execute: beReadyToReceiveMessage
       - logger.log: 'Updating sensor data'
       - component.update: spectral_sensor
       - delay: 3s
