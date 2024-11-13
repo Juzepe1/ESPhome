@@ -17,8 +17,8 @@ substitutions:
 web_server:
   port: 80
   auth:
-    username: admin
-    password: password
+    username: !secret web_username
+    password: !secret web_password
   version: 3
   sorting_groups:
     - id: sg_readings_${spectral_sensor_device_id}
