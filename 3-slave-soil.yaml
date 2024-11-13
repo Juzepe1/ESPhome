@@ -8,8 +8,30 @@ esphome:
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
     - components/write_to_modbus_device/write_to_modbus_device.h
     - components/write_to_modbus_device/write_to_modbus_device.cpp
+  on_boot:
+    priority: -10000
+    then:
+      - lambda: |-
+          ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
+      - delay: 500ms
+      - if:
+          condition:
+            lambda: 'return id(deep_sleep_button).state;'
+          then:
+            - deep_sleep.prevent: deep_sleep_1
+          else:
+            - script.execute: espnow_communication
 
 logger:
+
+deep_sleep:
+  id: deep_sleep_1
+  run_duration: 60s # Time for the ESP32 to run before entering sleep mode
+  sleep_duration: 60s # Change this to your desired sleep time
+  wakeup_pin:
+    number: GPIO3
+    allow_other_uses: true
+  wakeup_pin_mode: IGNORE
 
 external_components:
   - source:
@@ -317,7 +339,7 @@ binary_sensor:
   - platform: gpio
     pin:
       number: GPIO3
-      allow_other_uses: false
+      allow_other_uses: true
     name: 'Button'
     id: 'deep_sleep_button'
     on_state:
@@ -327,7 +349,7 @@ binary_sensor:
               lambda: 'return !x;'
             then:
               - logger.log: 'Button pressed'
-            #   - deep_sleep.enter: deep_sleep_1
+              - deep_sleep.enter: deep_sleep_1
   - platform: gpio
     pin:
       number: GPIO4 # replace with the actual GPIO number
@@ -339,7 +361,6 @@ binary_sensor:
       then:
         - lambda: |-
             id(long_press_timer) = millis();
-        - script.execute: espnow_communication
     on_release:
       then:
         - lambda: |-
