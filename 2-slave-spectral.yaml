@@ -1,5 +1,5 @@
 esphome:
-  name: esp32-slave-specral
+  name: esp32-slave-spectral
   platform: ESP32
   board: esp32-c3-devkitm-1
 
