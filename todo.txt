@@ -1,6 +1,0 @@
-ovladat kalibrační data přes mobil
-+ jde v průběhu kódu přidat mac adress zařízení
-
-chyba pri psani tohoto           
-
-+ vypsat na hubu jak moc je přijatý signál silný
