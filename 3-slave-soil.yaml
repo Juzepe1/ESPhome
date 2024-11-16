@@ -66,6 +66,11 @@ globals:
     initial_value: '0xFFFFFFFFFFFF'
     restore_value: yes
 
+  - id: own_address
+    type: std::string
+    initial_value: '"225200452927488"'
+    restore_value: no
+
   - id: get_calibration
     type: bool
     initial_value: 'false'
@@ -412,7 +417,7 @@ espnow:
                         int value_int = atoi(value);
 
                         if(strcmp(topic, "getcalibration") == 0){
-                            if(value_int == 1){id(get_calibration) = true;}
+                            if(value == id(own_address)){id(get_calibration) = true;}
                             id(request_cal) = true;
                         }
                         float value_float = atof(value);
