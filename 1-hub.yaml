@@ -971,7 +971,13 @@ script:
           data: !lambda |-
             for (int i = 0; i < 8; i++) {
                 if (id(peer_names)[i] == device_id) {
-                    return format_espnow_data_new("getcalibration", id(peer_addresses)[i]);
+                    char address[21];
+                    sprintf(address, "%" PRIu64, id(peer_addresses)[i]);
+                    
+
+                    char buffer[241];
+                    snprintf(buffer, sizeof(buffer), "getcalibration;%s", address);
+                    return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
                 }
             }
             return std::vector<unsigned char>();
