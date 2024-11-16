@@ -75,6 +75,11 @@ globals:
     restore_value: no
     initial_value: 'false'
 
+  - id: own_address
+    type: std::string
+    initial_value: '"251618830319616"'
+    restore_value: no
+
   - id: hub_address
     type: uint64_t
     initial_value: '0xFFFFFFFFFFFF'
@@ -268,7 +273,7 @@ espnow:
                         int value_int = atoi(value);
 
                         if(strcmp(topic, "getcalibration") == 0){
-                            if(value_int == 1){id(get_calibration) = true;}
+                            if(value == id(own_address)){id(get_calibration) = true;}
                             id(request_cal) = true;
                         }
                         else if(strcmp(topic, "flash") == 0){

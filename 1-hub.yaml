@@ -678,7 +678,9 @@ button:
     on_press:
       then:
         #- script.execute: beReadyToReceiveMessage
-        - script.execute: requestCalResponse
+        - script.execute:
+            id: requestCalResponse
+            device_id: ${spectral_sensor_device_id}
     web_server:
       sorting_group_id: sg_settings_${spectral_sensor_device_id}
       sorting_weight: 1
@@ -699,7 +701,9 @@ button:
     entity_category: config
     on_press:
       then:
-        - script.execute: requestCalResponse
+        - script.execute:
+            id: requestCalResponse
+            device_id: ${soil_sensor_device_id}
     web_server:
       sorting_group_id: sg_settings_${soil_sensor_device_id}
       sorting_weight: 1
@@ -960,9 +964,17 @@ script:
           data: 'hub;beReadyToReceiveMessage;'
       - delay: 500ms
   - id: requestCalResponse
+    parameters:
+      device_id: int
     then:
       - espnow.send:
-          data: 'getcalibration;1;'
+          data: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == device_id) {
+                    return format_espnow_data_new("getcalibration", id(peer_addresses)[i]);
+                }
+            }
+            return std::vector<unsigned char>();
   - id: handleOnRecieve
     then:
       - logger.log: 'Received data'
