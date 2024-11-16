@@ -67,8 +67,8 @@ globals:
     restore_value: yes
 
   - id: own_address
-    type: std::string
-    initial_value: '"225200452927488"'
+    type: uint64_t
+    initial_value: '0xccd1917c5824'
     restore_value: no
 
   - id: get_calibration
@@ -417,7 +417,9 @@ espnow:
                         int value_int = atoi(value);
 
                         if(strcmp(topic, "getcalibration") == 0){
-                            if(value == id(own_address)){id(get_calibration) = true;}
+                            char address[21];            
+                            sprintf(address, "%" PRIu64, id(own_address));
+                            if(strcmp(value, address) == 0) {id(get_calibration) = true;}
                             id(request_cal) = true;
                         }
                         float value_float = atof(value);
