@@ -1,10 +1,22 @@
+# Komplice
+
+K kompilaci kódu je potřeba mít soubor `secrets.yaml` s následujícím obsahem:
+
+```yaml
+WiFi_ssid: secret_ssid
+WiFi_password: secret_password
+espnow_channel: 6 # 1-13 based on your WiFi channel
+web_username: web_username
+web_password: web_password
+```
+
 ## Nahrání kódu
 
 Pokud je vysílač v deep sleep modu, tak na něj nemůžeme nahrát kód, proto jej musíme odpojit od USB, a potom zárověň se zmáčknutým tlačítkem BOOT (B) jej připojit k počítači a držet tlačítko do té doby dokud nezačne nahrávání kódu.
 
 ## Nepřijímání dat
 
-Pokud zapneme dříve vysílač než přijímáč, tak vysílač nemá nikam poslat data o proto počká 5 minut a zkusí to znovu. Pokud máme již připojený přijímač, tak abychom nemuseli čekat 5 minut, tak nám stačí zapnout a vypnout vysílač a data se poté objeví během několika sekund.
+Pokud hub nepřijímá data, tak je lepší před tím pingoutnout slaves.
 
 ## Problémy při komplici
 
@@ -32,4 +44,4 @@ Kanál WiFi zjistíme po nahrátí kodů v logu zpráv:
 [C][wifi:447]:   Channel: 11
 ```
 
-[Další informace](hub-slave.md)
+# [Další informace](hub-slave.md)

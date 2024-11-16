@@ -529,69 +529,73 @@ script:
     then:
       - component.update: modbus_device
       - delay: 5s
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("cond_f", id(cond_f).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("sal_f", id(sal_f).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("tds_f", id(tds_f).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("temp_offset", id(temp_offset).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("hum_offset", id(hum_offset).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("cond_offset", id(cond_offset).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("ph_offset", id(ph_offset).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("n_f_high", id(n_f_high).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("n_f_low", id(n_f_low).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("n_offset", id(n_offset).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("p_f_high", id(p_f_high).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("p_f_low", id(p_f_low).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("p_offset", id(p_offset).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("k_f_high", id(k_f_high).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("k_f_low", id(k_f_low).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("k_offset", id(k_offset).state);
+      - repeat:
+          count: 3
+          then:
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("cond_f", id(cond_f).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("sal_f", id(sal_f).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("tds_f", id(tds_f).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("temp_offset", id(temp_offset).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("hum_offset", id(hum_offset).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("cond_offset", id(cond_offset).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("ph_offset", id(ph_offset).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("n_f_high", id(n_f_high).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("n_f_low", id(n_f_low).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("n_offset", id(n_offset).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("p_f_high", id(p_f_high).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("p_f_low", id(p_f_low).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("p_offset", id(p_offset).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("k_f_high", id(k_f_high).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("k_f_low", id(k_f_low).state);
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("k_offset", id(k_offset).state);
+            - delay: 500ms
       - lambda: |-
           ESP_LOGI("main", "Calibration data sent");
           id(get_calibration) = false;
