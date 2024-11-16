@@ -423,17 +423,21 @@ script:
     then:
       - component.update: spectral_sensor
       - delay: 3s
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("atime", id(spectral_sensor).get_atime());
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("astep", id(spectral_sensor).get_astep());
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("gain", id(spectral_sensor).get_gain());
+      - repeat:
+          count: 3
+          then:
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("atime", id(spectral_sensor).get_atime());
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("astep", id(spectral_sensor).get_astep());
+            - delay: 500ms
+            - espnow.send:
+                data: !lambda |-
+                  return format_espnow_data_new("gain", id(spectral_sensor).get_gain());
+            - delay: 500ms
       - lambda: |-
           ESP_LOGI("main", "Calibration data sent");
           id(get_calibration) = false;
