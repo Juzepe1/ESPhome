@@ -51,11 +51,10 @@ wifi:
 #     password: !secret OTA_password # OTA password from secrets.yaml
 
 external_components:
-  - source:
-      type: git
-      url: https://github.com/nielsnl68/esphome
-      ref: 'nvds-new-espnow'
-    components: [espnow]
+  - source: components
+    components:
+      - espnow
+    refresh: never
 
 globals:
   - id: peer_addresses

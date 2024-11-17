@@ -34,11 +34,10 @@ deep_sleep:
   wakeup_pin_mode: IGNORE
 
 external_components:
-  - source:
-      type: git
-      url: https://github.com/nielsnl68/esphome
-      ref: 'nvds-new-espnow'
-    components: [espnow]
+  - source: components
+    components:
+      - espnow
+    refresh: never
 
 globals:
   - id: long_press_timer
