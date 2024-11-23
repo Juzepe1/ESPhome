@@ -271,7 +271,7 @@ espnow:
                             id(get_calibration) = true;
                             id(request_cal) = true;
                         }
-                    if(value != nullptr){
+                    else if(value != nullptr){
                         ESP_LOGI("main", "Topic: %s, Value: %s", topic, value);
 
                         int value_int = atoi(value);
