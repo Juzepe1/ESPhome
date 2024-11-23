@@ -18,6 +18,9 @@ esphome:
           id(spectral_sensor).setup_astep(id(astep));
           id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
       - delay: 500ms
+      - lambda: |-
+          id(espnow_component)->add_peer(id(hub_address));
+      - delay: 500ms
       - if:
           condition:
             lambda: 'return id(deep_sleep_button).state;'
@@ -41,11 +44,13 @@ external_components:
   - source: components
     components:
       - as7343
-    refresh: never
-  - source: components
-    components:
-      - espnow
-    refresh: never
+    refresh: 1min
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: d23346165e1baefd337ed805d3a211e5bead53af
+    refresh: 1min
+    components: [espnow]
 
 i2c:
   sda: GPIO5
@@ -73,11 +78,6 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-
-  - id: own_address
-    type: uint64_t
-    initial_value: '0xe4d8931d0470'
-    restore_value: no
 
   - id: hub_address
     type: uint64_t
@@ -231,9 +231,10 @@ binary_sensor:
             else {ESP_LOGD("main", "Button was pressed for less than 3 seconds.");}
 
 espnow:
-  auto_add_peer: true
+  id: espnow_component
+  auto_add_peer: false
   wifi_channel: !secret espnow_channel
-  peers:
+  predefined_peers:
     - FF:FF:FF:FF:FF:FF
   on_receive:
     then:
@@ -266,18 +267,16 @@ espnow:
                 char* end = strtok(nullptr, ";");
                 
                 if(topic != nullptr){
+                    if(strcmp(topic, "getcalibration") == 0){
+                            id(get_calibration) = true;
+                            id(request_cal) = true;
+                        }
                     if(value != nullptr){
                         ESP_LOGI("main", "Topic: %s, Value: %s", topic, value);
 
                         int value_int = atoi(value);
 
-                        if(strcmp(topic, "getcalibration") == 0){
-                            char address[21];            
-                            sprintf(address, "%" PRIu64, id(own_address));
-                            if(strcmp(value, address) == 0) {id(get_calibration) = true;}
-                            id(request_cal) = true;
-                        }
-                        else if(strcmp(topic, "flash") == 0){
+                        if(strcmp(topic, "flash") == 0){
                           if(value_int == 1){id(flash) = true;}
                         }
                         else if(strcmp(topic, "atime") == 0){
@@ -331,92 +330,114 @@ script:
                 ESP_LOGI("main", "Sending data to hub");
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("f1", id(f1).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("f2", id(f2).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("fz", id(fz).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("f3", id(f3).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("f4", id(f4).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("fy", id(fy).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("f5", id(f5).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("fxl", id(fxl).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("f6", id(f6).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("f7", id(f7).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("f8", id(f8).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("nir", id(nir).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("clear", id(clear).state*100000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("irradiance", id(irradiance).state*1000000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("irradiance_photopic", id(irradiance_photopic).state*1000000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("pffd", id(pffd).state*1000000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("saturation", id(saturation).state*1000000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("color_temperature", id(color_temperature).state*1000000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("par", id(par).state*1000000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("lux", id(lux).state*1000000);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("lux2", id(lux2).state*1000000);
   - id: beReadyToReceiveMessage
     then:
       - espnow.send:
-          data: 'hub;beReadyToReceiveMessage'
+          mac_address: !lambda 'return id(hub_address);'
+          payload: 'hub;beReadyToReceiveMessage'
       - delay: 500ms
   - id: sendCalibrationData
     then:
@@ -426,15 +447,18 @@ script:
           count: 3
           then:
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("atime", id(spectral_sensor).get_atime());
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("astep", id(spectral_sensor).get_astep());
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("gain", id(spectral_sensor).get_gain());
             - delay: 500ms
       - lambda: |-
@@ -448,7 +472,8 @@ script:
           then:
             - logger.log: 'Pinging back'
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data("pong", "22", id(paring));
             - lambda: |-
                 id(paring) = false;

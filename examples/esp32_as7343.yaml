@@ -17,10 +17,10 @@ ota:
     password: !secret OTA_password # OTA password from secrets.yaml
 
 external_components:
-  - source: github://pr#6285
-    refresh: 1s
+  - source: components
     components:
       - as7343
+    refresh: never
 
 i2c:
   sda: GPIO5
@@ -64,7 +64,7 @@ sensor:
       name: 'Pffd'
     saturation:
       name: 'Saturation'
-    
+
     #Changeable values
     update_interval: 10s
     #gain: X256
