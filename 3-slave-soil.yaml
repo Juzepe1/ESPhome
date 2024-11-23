@@ -14,6 +14,9 @@ esphome:
       - lambda: |-
           ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
       - delay: 500ms
+      - lambda: |-
+          id(espnow_component)->add_peer(id(hub_address));
+      - delay: 500ms
       - if:
           condition:
             lambda: 'return id(deep_sleep_button).state;'
@@ -34,10 +37,12 @@ deep_sleep:
   wakeup_pin_mode: IGNORE
 
 external_components:
-  - source: components
-    components:
-      - espnow
-    refresh: never
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: d23346165e1baefd337ed805d3a211e5bead53af
+    refresh: 1min
+    components: [espnow]
 
 globals:
   - id: long_press_timer
@@ -64,11 +69,6 @@ globals:
     type: uint64_t
     initial_value: '0xFFFFFFFFFFFF'
     restore_value: yes
-
-  - id: own_address
-    type: uint64_t
-    initial_value: '0xccd1917c5824'
-    restore_value: no
 
   - id: get_calibration
     type: bool
@@ -375,9 +375,10 @@ binary_sensor:
             else {ESP_LOGD("main", "Button was pressed for less than 3 seconds.");}
 
 espnow:
-  auto_add_peer: true
+  id: espnow_component
+  auto_add_peer: false
   wifi_channel: !secret espnow_channel
-  peers:
+  predefined_peers:
     - FF:FF:FF:FF:FF:FF
   on_receive:
     then:
@@ -410,17 +411,15 @@ espnow:
                 char* end = strtok(nullptr, ";");
                 
                 if(topic != nullptr){
-                    if(value != nullptr){
+                    if(strcmp(topic, "getcalibration") == 0){
+                            id(get_calibration) = true;
+                            id(request_cal) = true;
+                        }
+                    else if(value != nullptr){
                         ESP_LOGI("main", "Topic: %s, Value: %s", topic, value);
 
                         int value_int = atoi(value);
 
-                        if(strcmp(topic, "getcalibration") == 0){
-                            char address[21];            
-                            sprintf(address, "%" PRIu64, id(own_address));
-                            if(strcmp(value, address) == 0) {id(get_calibration) = true;}
-                            id(request_cal) = true;
-                        }
                         float value_float = atof(value);
                         if (strcmp(topic, "cond_f") == 0) {
                             write_to_modbus_device(id(modbus_device), 0x22, value_float);
@@ -485,44 +484,53 @@ script:
                 ESP_LOGI("main", "Sending data to hub");
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("humidity", id(humidity).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("temperature", id(temperature).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("conductivity", id(conductivity).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("ph", id(ph).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("nitrogen", id(nitrogen).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("phosphorus", id(phosphorus).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("potassium", id(potassium).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("salinity", id(salinity).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("tds", id(tds).state);
   - id: beReadyToReceiveMessage
     then:
-      - espnow.send:
-          data: 'hub;beReadyToReceiveMessage'
+      - espnow.broadcast:
+          payload: 'hub;beReadyToReceiveMessage'
       - delay: 500ms
   - id: sendCalibrationData
     then:
@@ -532,67 +540,83 @@ script:
           count: 3
           then:
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("cond_f", id(cond_f).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("sal_f", id(sal_f).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("tds_f", id(tds_f).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("temp_offset", id(temp_offset).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("hum_offset", id(hum_offset).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("cond_offset", id(cond_offset).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("ph_offset", id(ph_offset).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("n_f_high", id(n_f_high).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("n_f_low", id(n_f_low).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("n_offset", id(n_offset).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("p_f_high", id(p_f_high).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("p_f_low", id(p_f_low).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("p_offset", id(p_offset).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("k_f_high", id(k_f_high).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("k_f_low", id(k_f_low).state);
             - delay: 500ms
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data_new("k_offset", id(k_offset).state);
             - delay: 500ms
       - lambda: |-
@@ -606,7 +630,8 @@ script:
           then:
             - logger.log: 'Pinging back'
             - espnow.send:
-                data: !lambda |-
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
                   return format_espnow_data("pong", "33", id(paring));
             - lambda: |-
                 id(paring) = false;

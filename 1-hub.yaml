@@ -5,6 +5,17 @@ esphome:
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+
+  on_boot:
+    priority: -10000
+    then:
+      - lambda: |-
+          for (int i = 0; i < 8; i++) {
+            if(id(peer_addresses)[i] != 0){
+              id(espnow_component)->add_peer(id(peer_addresses)[i]);
+            }
+          }
+
   platformio_options:
     board_build.flash_mode: qio
 
@@ -51,10 +62,12 @@ wifi:
 #     password: !secret OTA_password # OTA password from secrets.yaml
 
 external_components:
-  - source: components
-    components:
-      - espnow
-    refresh: never
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: d23346165e1baefd337ed805d3a211e5bead53af
+    refresh: 1min
+    components: [espnow]
 
 globals:
   - id: peer_addresses
@@ -656,8 +669,8 @@ button:
     on_press:
       then:
         #- script.execute: beReadyToReceiveMessage
-        - espnow.send:
-            data: 'ping'
+        - espnow.broadcast:
+            payload: 'ping'
 
   - platform: template
     name: 'Peers list'
@@ -728,9 +741,10 @@ switch:
       sorting_weight: 5
 
 espnow:
+  id: espnow_component
   auto_add_peer: true
   wifi_channel: !secret espnow_channel
-  peers:
+  predefined_peers:
     - FF:FF:FF:FF:FF:FF
   on_receive:
     then:
@@ -943,109 +957,132 @@ script:
     then:
       - delay: 500ms
       - espnow.send:
-          data: !lambda |-
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${spectral_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
             return format_espnow_data_new("flash", id(flash_${spectral_sensor_device_id}).state);
       - delay: 1000ms
       - espnow.send:
-          data: !lambda |-
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${spectral_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
             return format_espnow_data_new("atime", id(atime_${spectral_sensor_device_id}).state);
       - delay: 500ms
       - espnow.send:
-          data: !lambda |-
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${spectral_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
             return format_espnow_data_new("astep", id(astep_${spectral_sensor_device_id}).state);
       - delay: 500ms
       - espnow.send:
-          data: !lambda |-
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${spectral_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
             return format_espnow_data_new("gain", id(gain_${spectral_sensor_device_id}).state);
   - id: beReadyToReceiveMessage
     then:
-      - espnow.send:
-          data: 'hub;beReadyToReceiveMessage;'
+      - espnow.broadcast:
+          payload: 'hub;beReadyToReceiveMessage;'
       - delay: 500ms
   - id: requestCalResponse
     parameters:
       device_id: int
     then:
       - espnow.send:
-          data: !lambda |-
+          mac_address: !lambda |-
             for (int i = 0; i < 8; i++) {
                 if (id(peer_names)[i] == device_id) {
-                    char address[21];
-                    sprintf(address, "%" PRIu64, id(peer_addresses)[i]);
-                    
-
-                    char buffer[241];
-                    snprintf(buffer, sizeof(buffer), "getcalibration;%s", address);
-                    return std::vector<unsigned char>(buffer, buffer + strlen(buffer));
+                    return id(peer_addresses)[i];
                 }
             }
-            return std::vector<unsigned char>();
+            return 0;
+          payload: 'getcalibration;'
   - id: handleOnRecieve
     then:
       - logger.log: 'Received data'
   - id: send_calibration_data_${soil_sensor_device_id}
     then:
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("cond_f", id(cond_f_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("sal_f", id(sal_f_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("tds_f", id(tds_f_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("temp_offset", id(temp_offset_${soil_sensor_device_id}).state * 10);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("hum_offset", id(hum_offset_${soil_sensor_device_id}).state * 10);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("cond_offset", id(cond_offset_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("ph_offset", id(ph_offset_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("n_f_high", id(n_f_high_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("n_f_low", id(n_f_low_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("n_offset", id(n_offset_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("p_f_high", id(p_f_high_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("p_f_low", id(p_f_low_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("p_offset", id(p_offset_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("k_f_high", id(k_f_high_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("k_f_low", id(k_f_low_${soil_sensor_device_id}).state);
-      - delay: 500ms
-      - espnow.send:
-          data: !lambda |-
-            return format_espnow_data_new("k_offset", id(k_offset_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("cond_f", id(cond_f_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("sal_f", id(sal_f_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("tds_f", id(tds_f_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("temp_offset", id(temp_offset_${soil_sensor_device_id}).state * 10);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("hum_offset", id(hum_offset_${soil_sensor_device_id}).state * 10);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("cond_offset", id(cond_offset_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("ph_offset", id(ph_offset_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("n_f_high", id(n_f_high_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("n_f_low", id(n_f_low_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("n_offset", id(n_offset_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("p_f_high", id(p_f_high_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("p_f_low", id(p_f_low_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("p_offset", id(p_offset_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("k_f_high", id(k_f_high_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("k_f_low", id(k_f_low_${soil_sensor_device_id}).state);
+      # - delay: 500ms
+      # - espnow.send:
+      #     payload: !lambda |-
+      #       return format_espnow_data_new("k_offset", id(k_offset_${soil_sensor_device_id}).state);
