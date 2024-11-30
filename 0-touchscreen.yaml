@@ -1,0 +1,101 @@
+esphome:
+  name: home-display
+  friendly_name: Home Display
+  platformio_options:
+    build_flags: '-DBOARD_HAS_PSRAM'
+    board_build.arduino.memory_type: qio_opi
+    board_build.flash_mode: dio
+    board_upload.maximum_ram_size: 524288
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
+      CONFIG_ESP32S3_DATA_CACHE_64KB: y
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: y
+      CONFIG_SPIRAM_RODATA: y
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+# Enable logging
+logger:
+  level: DEBUG
+
+i2c:
+  sda: GPIO08
+  scl: GPIO09
+  scan: True
+  id: bus_a
+
+display:
+  - platform: rpi_dpi_rgb
+    id: my_display
+    auto_clear_enabled: false
+    color_order: RGB
+    pclk_frequency: 14MHz
+    dimensions:
+      width: 1024
+      height: 600
+    de_pin:
+      number: 5
+    hsync_pin:
+      number: 46
+      ignore_strapping_warning: true
+    vsync_pin:
+      number: 3
+      ignore_strapping_warning: true
+    pclk_pin: 7
+    hsync_back_porch: 112
+    hsync_front_porch: 112
+    hsync_pulse_width: 56
+    vsync_back_porch: 4
+    vsync_front_porch: 4
+    vsync_pulse_width: 4
+    data_pins:
+      red:
+        - 1 #r3
+        - 2 #r4
+        - 42 #r5
+        - 41 #r6
+        - 40 #r7
+      blue:
+        - 14 #b3
+        - 38 #b4
+        - 18 #b5
+        - 17 #b6
+        - 10 #b7
+      green:
+        - 39 #g2
+        - 0 #g3
+        - 45 #g4
+        - 48 #g5
+        - 47 #g6
+        - 21 #g7
+
+touchscreen:
+  platform: gt911
+  id: my_touch
+  interrupt_pin: GPIO4
+  on_touch:
+    - lambda: |-
+        ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+            touch.x,
+            touch.y,
+            touch.x_raw,
+            touch.y_raw
+            );
+
+lvgl:
+  displays:
+    - my_display
+  pages:
+    - id: main_page
+      widgets:
+        - label:
+            align: CENTER
+            text: 'Hello World'
