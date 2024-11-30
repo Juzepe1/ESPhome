@@ -24,6 +24,7 @@ logger:
 substitutions:
   spectral_sensor_device_id: '22'
   soil_sensor_device_id: '33'
+  air_sensor_device_id: '44'
 
 web_server:
   port: 80
@@ -47,6 +48,10 @@ web_server:
     - id: sg_settings_${soil_sensor_device_id}
       name: 'Soil Settings'
       sorting_weight: 13
+
+    - id: sg_readings_${air_sensor_device_id}
+      name: 'Air Readings'
+      sorting_weight: 14
 
 wifi:
   ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
@@ -429,6 +434,74 @@ sensor:
     web_server:
       sorting_group_id: sg_readings_${soil_sensor_device_id}
       sorting_weight: 9
+
+  - platform: template
+    name: 'BMP Temperature ${air_sensor_device_id}'
+    id: bmp_temp_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '°C'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 1
+
+  - platform: template
+    name: 'BMP Pressure ${air_sensor_device_id}'
+    id: bmp_press_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: 'hPa'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 2
+
+  - platform: template
+    name: 'SI Temperature ${air_sensor_device_id}'
+    id: si_temp_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '°C'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 3
+
+  - platform: template
+    name: 'SI Humidity ${air_sensor_device_id}'
+    id: si_hum_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 4
+
+  - platform: template
+    name: 'CCS eCO2 ${air_sensor_device_id}'
+    id: ccs_eco2_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: 'ppm'
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 5
+
+  - platform: template
+    name: 'CCS TVOC ${air_sensor_device_id}'
+    id: ccs_tvoc_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: 'ppb'
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 6
 
 number:
   - platform: template
@@ -937,6 +1010,21 @@ espnow:
                           id(k_f_low_${soil_sensor_device_id}).publish_state(value_int);
                         } else if(strcmp(topic, "k_offset") == 0){
                           id(k_offset_${soil_sensor_device_id}).publish_state(value_int);
+                        }
+                    }
+                    else if(sensor_id == ${air_sensor_device_id}){
+                        if (strcmp(topic, "bmp_temp") == 0) {
+                          id(bmp_temp_${air_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "bmp_press") == 0) {
+                          id(bmp_press_${air_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "si_temp") == 0) {
+                          id(si_temp_${air_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "si_hum") == 0) {
+                          id(si_hum_${air_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "ccs_eco2") == 0) {
+                          id(ccs_eco2_${air_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "ccs_tvoc") == 0) {
+                          id(ccs_tvoc_${air_sensor_device_id}).publish_state(value_int);
                         }
                     }
                     else{
