@@ -232,7 +232,7 @@ binary_sensor:
 
 espnow:
   id: espnow_component
-  auto_add_peer: false
+  auto_add_peer: true
   wifi_channel: !secret espnow_channel
   predefined_peers:
     - FF:FF:FF:FF:FF:FF
