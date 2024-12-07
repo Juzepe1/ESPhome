@@ -1,7 +1,7 @@
 esphome:
   name: 4-slave-co2
   platformio_options:
-    platform: https://github.com/mnowak32/platform-espressif32.git#boards/seeed_xiao_esp32c6
+    platform: https://github.com/lucaskatayama/platform-espressif32.git#feat/seeed_xiao_esp32c6.json
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
@@ -10,14 +10,12 @@ esphome:
     then:
       - lambda: |-
           ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
-      # - lambda: |-
-      #     // Set calibration data to spectral sensor
-      #     id(spectral_sensor).setup_atime(id(atime));
-      #     id(spectral_sensor).setup_astep(id(astep));
-      #     id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
       - delay: 500ms
       - lambda: |-
           id(espnow_component)->add_peer(id(hub_address));
+      - script.execute:
+          id: changeTemperatureOversampling
+          oversampling_index_local: !lambda 'return id(oversampling_index);'
       - delay: 500ms
       - if:
           condition:
@@ -30,10 +28,10 @@ esphome:
 esp32:
   board: seeed_xiao_esp32c6
   variant: ESP32C6
-  flash_size: 4MB
   framework:
     type: esp-idf
-    version: 5.2.1
+    version: 5.3.0
+    platform_version: 6.9.0
     sdkconfig_options:
       CONFIG_ESPTOOLPY_FLASHSIZE_4MB: y
 
@@ -85,10 +83,15 @@ globals:
     type: bool
     initial_value: 'false'
 
+  - id: oversampling_index
+    type: int
+    initial_value: '4' # Default to BMP280_OVERSAMPLING_16X
+
 i2c:
   sda: GPIO22
   scl: GPIO23
-  scan: False
+  scan: true
+  frequency: 200kHz
 
 sensor:
   - platform: bmp280_i2c
@@ -96,7 +99,6 @@ sensor:
     temperature:
       name: 'Temperature (BMP280)'
       id: bmp280_temp
-      oversampling: 16x
     pressure:
       name: 'Pressure'
       id: bmp280_press
@@ -283,3 +285,22 @@ script:
             #- script.execute: sendCalibrationData
             - lambda: |-
                 id(get_calibration) = false;
+  - id: changeTemperatureOversampling
+    parameters:
+      oversampling_index_local: int
+    then:
+      - lambda: |-
+          std::vector<esphome::bmp280_base::BMP280Oversampling> oversampling_options = {
+            esphome::bmp280_base::BMP280_OVERSAMPLING_1X,
+            esphome::bmp280_base::BMP280_OVERSAMPLING_2X,
+            esphome::bmp280_base::BMP280_OVERSAMPLING_4X,
+            esphome::bmp280_base::BMP280_OVERSAMPLING_8X,
+            esphome::bmp280_base::BMP280_OVERSAMPLING_16X
+          };
+
+          if (oversampling_index_local >= 0 && oversampling_index_local < oversampling_options.size()) {
+            id(bmp280_sensor).set_temperature_oversampling(oversampling_options[oversampling_index_local]);
+            ESP_LOGI("configuration", "Temperature oversampling set to %dX", 1 << oversampling_index_local);
+          } else {
+            ESP_LOGW("configuration", "Invalid oversampling index: %d", oversampling_index_local);
+          }
