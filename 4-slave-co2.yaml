@@ -15,7 +15,13 @@ esphome:
           id(espnow_component)->add_peer(id(hub_address));
       - script.execute:
           id: changeTemperatureOversampling
-          oversampling_index_local: !lambda 'return id(oversampling_index);'
+          oversampling_index_local: !lambda 'return id(temperature_oversampling_index);'
+      - script.execute:
+          id: changePressureOversampling
+          oversampling_index_local: !lambda 'return id(pressure_oversampling_index);'
+      - script.execute:
+          id: changeIIRFilter
+          iir_filter_index_local: !lambda 'return id(iir_filter_index);'
       - delay: 500ms
       - if:
           condition:
@@ -83,10 +89,20 @@ globals:
     type: bool
     initial_value: 'false'
 
-  - id: oversampling_index
+  - id: temperature_oversampling_index
     type: int
     initial_value: '4' # Default to BMP280_OVERSAMPLING_16X
+    restore_value: yes
 
+  - id: pressure_oversampling_index
+    type: int
+    initial_value: '4' # Default to BMP280_OVERSAMPLING_16X
+    restore_value: yes
+
+  - id: iir_filter_index
+    type: int
+    initial_value: '0' # Default to BMP280_IIR_FILTER_OFF
+    restore_value: yes
 i2c:
   sda: GPIO22
   scl: GPIO23
@@ -102,8 +118,6 @@ sensor:
     pressure:
       name: 'Pressure'
       id: bmp280_press
-      oversampling: 16x
-    iir_filter: 4x
     address: 0x76
     update_interval: never
   - platform: htu21d
@@ -157,7 +171,38 @@ binary_sensor:
             id(long_press_timer) = millis();
     on_release:
       then:
+        - script.execute:
+            id: changeTemperatureOversampling
+            oversampling_index_local: !lambda 'return id(temperature_oversampling_index);'
+        - script.execute:
+            id: changePressureOversampling
+            oversampling_index_local: !lambda 'return id(pressure_oversampling_index);'
+        - script.execute:
+            id: changeIIRFilter
+            iir_filter_index_local: !lambda 'return id(iir_filter_index);'
         - lambda: |-
+            if(id(temperature_oversampling_index) < 4) {
+                id(temperature_oversampling_index)++;
+            }
+            else {
+                id(temperature_oversampling_index) = 0;
+            }
+
+            if(id(pressure_oversampling_index) < 4) {
+                id(pressure_oversampling_index)++;
+            }
+            else {
+                id(pressure_oversampling_index) = 0;
+            }
+
+            if(id(iir_filter_index) < 4) {
+                id(iir_filter_index)++;
+            }
+            else {
+                id(iir_filter_index) = 0;
+            }
+
+
             if (millis() - id(long_press_timer) > 3000) {
                 ESP_LOGD("main", "Button was pressed for longer than 3 seconds.");
                 id(long_press_action) = true;
@@ -212,6 +257,12 @@ external_components:
       ref: d23346165e1baefd337ed805d3a211e5bead53af
     refresh: 1min
     components: [espnow]
+
+interval:
+  - interval: 10s
+    startup_delay: 10s
+    then:
+      - component.update: bmp280_sensor
 
 script:
   - id: 'espnow_communication'
@@ -303,4 +354,46 @@ script:
             ESP_LOGI("configuration", "Temperature oversampling set to %dX", 1 << oversampling_index_local);
           } else {
             ESP_LOGW("configuration", "Invalid oversampling index: %d", oversampling_index_local);
+          }
+  - id: changePressureOversampling
+    parameters:
+      oversampling_index_local: int
+    then:
+      - lambda: |-
+          std::vector<esphome::bmp280_base::BMP280Oversampling> oversampling_options = {
+            esphome::bmp280_base::BMP280_OVERSAMPLING_1X,
+            esphome::bmp280_base::BMP280_OVERSAMPLING_2X,
+            esphome::bmp280_base::BMP280_OVERSAMPLING_4X,
+            esphome::bmp280_base::BMP280_OVERSAMPLING_8X,
+            esphome::bmp280_base::BMP280_OVERSAMPLING_16X
+          };
+
+          if (oversampling_index_local >= 0 && oversampling_index_local < oversampling_options.size()) {
+            id(bmp280_sensor).set_pressure_oversampling(oversampling_options[oversampling_index_local]);
+            ESP_LOGI("configuration", "Pressure oversampling set to %dX", 1 << oversampling_index_local);
+          } else {
+            ESP_LOGW("configuration", "Invalid oversampling index: %d", oversampling_index_local);
+          }
+  - id: changeIIRFilter
+    parameters:
+      iir_filter_index_local: int
+    then:
+      - lambda: |-
+          std::vector<esphome::bmp280_base::BMP280IIRFilter> iir_filter_options = {
+            esphome::bmp280_base::BMP280_IIR_FILTER_OFF,
+            esphome::bmp280_base::BMP280_IIR_FILTER_2X,
+            esphome::bmp280_base::BMP280_IIR_FILTER_4X,
+            esphome::bmp280_base::BMP280_IIR_FILTER_8X,
+            esphome::bmp280_base::BMP280_IIR_FILTER_16X
+          };
+
+          if (iir_filter_index_local >= 0 && iir_filter_index_local < iir_filter_options.size()) {
+            id(bmp280_sensor).set_iir_filter(iir_filter_options[iir_filter_index_local]);
+            if (iir_filter_index_local == 0) {
+              ESP_LOGI("configuration", "IIR filter set to OFF");
+            } else {
+              ESP_LOGI("configuration", "IIR filter set to %dX", 1 << (iir_filter_index_local));
+            }
+          } else {
+            ESP_LOGW("configuration", "Invalid IIR filter index: %d", iir_filter_index_local);
           }
