@@ -93,9 +93,18 @@ touchscreen:
 lvgl:
   displays:
     - my_display
+
+  touchscreens:
+    - my_touch
   pages:
     - id: main_page
       widgets:
         - label:
             align: CENTER
-            text: 'Hello World'
+            text: 'Hello World future ESP HOME dashboard'
+        - label:
+            align: TOP_RIGHT
+            text: 'Top Right'
+        - label:
+            align: BOTTOM_RIGHT
+            text: 'Bottom Right'
