@@ -22,6 +22,7 @@ esphome:
       - script.execute:
           id: changeIIRFilter
           iir_filter_index_local: !lambda 'return id(iir_filter_index);'
+      - component.update: bmp280_sensor
       - delay: 500ms
       - if:
           condition:
@@ -103,6 +104,10 @@ globals:
     type: int
     initial_value: '0' # Default to BMP280_IIR_FILTER_OFF
     restore_value: yes
+
+  - id: flash
+    type: bool
+    initial_value: 'false'
 i2c:
   sda: GPIO22
   scl: GPIO23
@@ -171,38 +176,7 @@ binary_sensor:
             id(long_press_timer) = millis();
     on_release:
       then:
-        - script.execute:
-            id: changeTemperatureOversampling
-            oversampling_index_local: !lambda 'return id(temperature_oversampling_index);'
-        - script.execute:
-            id: changePressureOversampling
-            oversampling_index_local: !lambda 'return id(pressure_oversampling_index);'
-        - script.execute:
-            id: changeIIRFilter
-            iir_filter_index_local: !lambda 'return id(iir_filter_index);'
         - lambda: |-
-            if(id(temperature_oversampling_index) < 4) {
-                id(temperature_oversampling_index)++;
-            }
-            else {
-                id(temperature_oversampling_index) = 0;
-            }
-
-            if(id(pressure_oversampling_index) < 4) {
-                id(pressure_oversampling_index)++;
-            }
-            else {
-                id(pressure_oversampling_index) = 0;
-            }
-
-            if(id(iir_filter_index) < 4) {
-                id(iir_filter_index)++;
-            }
-            else {
-                id(iir_filter_index) = 0;
-            }
-
-
             if (millis() - id(long_press_timer) > 3000) {
                 ESP_LOGD("main", "Button was pressed for longer than 3 seconds.");
                 id(long_press_action) = true;
@@ -244,6 +218,47 @@ espnow:
                 char* topic = strtok(buffer, ";");
                 char* value = strtok(nullptr, ";");
                 char* end = strtok(nullptr, ";");
+
+                if(topic != nullptr){
+                    if(strcmp(topic, "getcalibration") == 0){
+                            id(get_calibration) = true;
+                            id(request_cal) = true;
+                        }
+                    else if(value != nullptr){
+                        ESP_LOGI("main", "Topic: %s, Value: %s", topic, value);
+
+                        int value_int = atoi(value);
+
+                        if(strcmp(topic, "flash") == 0){
+                          if(value_int == 1){id(flash) = true;}
+                        }
+                        else if(strcmp(topic, "temp_index") == 0){
+                          
+                          if (id(flash)) {
+                            ESP_LOGI("main", "Writing temp_index to flash");
+                            id(temperature_oversampling_index) = value_int;
+                          }
+                          id(changeTemperatureOversampling)->execute(value_int);
+                        }
+                        else if(strcmp(topic, "press_index") == 0){
+                          if (id(flash)) {
+                            ESP_LOGI("main", "Writing press_index to flash");
+                            id(pressure_oversampling_index) = value_int;
+                          }
+                          id(changePressureOversampling)->execute(value_int);
+                        }
+                        else if(strcmp(topic, "iir_index") == 0){
+                          if (id(flash)) {
+                            ESP_LOGI("main", "Writing iir_index to flash");
+                            id(iir_filter_index) = value_int;
+                          }
+                          id(changeIIRFilter)->execute(value_int);
+                        }
+                        else{ESP_LOGW("main", "Value is none");}
+                    }
+                    else{ESP_LOGW("main", "Value is none");}
+                }
+                else{ESP_LOGW("main", "Topic is none");}
             }
             else {ESP_LOGW("main", "Received from unknown peer. Not accepting data from unknown peers.");}
           }
@@ -258,14 +273,8 @@ external_components:
     refresh: 1min
     components: [espnow]
 
-interval:
-  - interval: 10s
-    startup_delay: 10s
-    then:
-      - component.update: bmp280_sensor
-
 script:
-  - id: 'espnow_communication'
+  - id: espnow_communication
     then:
       - script.execute: beReadyToReceiveMessage
       - logger.log: 'Updating sensor data'
@@ -308,6 +317,29 @@ script:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("ccs_tvoc", id(ccs811_tvoc).state);
+  - id: sendCalibrationData
+    then:
+      - repeat:
+          count: 3
+          then:
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("temp_index", id(temperature_oversampling_index));
+            - delay: 500ms
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("press_index", id(pressure_oversampling_index));
+            - delay: 500ms
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("iir_index", id(iir_filter_index));
+            - delay: 500ms
+      - lambda: |-
+          ESP_LOGI("main", "Calibration data sent");
+          id(get_calibration) = false;
   - id: beReadyToReceiveMessage
     then:
       - espnow.send:
@@ -333,7 +365,7 @@ script:
             lambda: 'return id(get_calibration);'
           then:
             - logger.log: 'Sending calibration data'
-            #- script.execute: sendCalibrationData
+            - script.execute: sendCalibrationData
             - lambda: |-
                 id(get_calibration) = false;
   - id: changeTemperatureOversampling
