@@ -53,6 +53,10 @@ web_server:
       name: 'Air Readings'
       sorting_weight: 14
 
+    - id: sg_settings_${air_sensor_device_id}
+      name: 'Air Settings'
+      sorting_weight: 15
+
 wifi:
   ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
   password: !secret WiFi_password # WiFi password from secrets.yaml
@@ -731,6 +735,41 @@ number:
       sorting_group_id: sg_settings_${soil_sensor_device_id}
       sorting_weight: 17
 
+  - platform: template
+    name: 'BMP Temperature Oversampling ${air_sensor_device_id}'
+    id: temp_index_${air_sensor_device_id}
+    min_value: 0.0
+    max_value: 4.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 2
+
+  - platform: template
+    name: 'BMP Pressure Oversampling ${air_sensor_device_id}'
+    id: press_index_${air_sensor_device_id}
+    min_value: 0.0
+    max_value: 4.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 3
+
+  - platform: template
+    name: 'IIR Filter ${air_sensor_device_id}'
+    id: iir_index_${air_sensor_device_id}
+    min_value: 0.0
+    max_value: 4.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 4
 button:
   - platform: factory_reset
     name: Restart with Factory Default Settings
@@ -758,7 +797,7 @@ button:
             }
 
   - platform: template
-    name: 'Get cal. data (spectral sensor)'
+    name: 'Get cal. data ${spectral_sensor_device_id}'
     entity_category: config
     on_press:
       then:
@@ -771,7 +810,7 @@ button:
       sorting_weight: 1
 
   - platform: template
-    name: 'Send cal. data (spectral sensor)'
+    name: 'Send cal. data ${spectral_sensor_device_id}'
     entity_category: config
     on_press:
       then:
@@ -782,7 +821,7 @@ button:
       sorting_weight: 6
 
   - platform: template
-    name: 'Get cal. data (soil sensor)'
+    name: 'Get cal. data ${soil_sensor_device_id}'
     entity_category: config
     on_press:
       then:
@@ -794,7 +833,7 @@ button:
       sorting_weight: 1
 
   - platform: template
-    name: 'Send cal. data (soil sensor)'
+    name: 'Send cal. data ${soil_sensor_device_id}'
     entity_category: config
     on_press:
       then:
@@ -803,14 +842,43 @@ button:
       sorting_group_id: sg_settings_${soil_sensor_device_id}
       sorting_weight: 18
 
+  - platform: template
+    name: 'Get cal. data ${air_sensor_device_id}'
+    entity_category: config
+    on_press:
+      then:
+        - script.execute:
+            id: requestCalResponse
+            device_id: ${air_sensor_device_id}
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 1
+
+  - platform: template
+    name: 'Send cal. data ${air_sensor_device_id}'
+    entity_category: config
+    on_press:
+      then:
+        - script.execute: send_calibration_data_${air_sensor_device_id}
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 6
 switch:
   - platform: template
-    name: 'Write cal. dat to flash'
+    name: 'Write cal. dat to flash ${spectral_sensor_device_id}'
     id: flash_${spectral_sensor_device_id}
     restore_mode: ALWAYS_OFF # Start in the OFF state
     optimistic: true # Optional: update state immediately
     web_server:
       sorting_group_id: sg_settings_${spectral_sensor_device_id}
+      sorting_weight: 5
+  - platform: template
+    name: 'Write cal. dat to flash ${air_sensor_device_id}'
+    id: flash_${air_sensor_device_id}
+    restore_mode: ALWAYS_OFF # Start in the OFF state
+    optimistic: true # Optional: update state immediately
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
       sorting_weight: 5
 
 espnow:
@@ -1025,6 +1093,12 @@ espnow:
                           id(ccs_eco2_${air_sensor_device_id}).publish_state(value_int);
                         } else if (strcmp(topic, "ccs_tvoc") == 0) {
                           id(ccs_tvoc_${air_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "temp_index") == 0){
+                          id(temp_index_${air_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "press_index") == 0){
+                          id(press_index_${air_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "iir_index") == 0){
+                          id(iir_index_${air_sensor_device_id}).publish_state(value_int);
                         }
                     }
                     else{
@@ -1110,67 +1184,225 @@ script:
       - logger.log: 'Received data'
   - id: send_calibration_data_${soil_sensor_device_id}
     then:
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("cond_f", id(cond_f_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("sal_f", id(sal_f_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("tds_f", id(tds_f_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("temp_offset", id(temp_offset_${soil_sensor_device_id}).state * 10);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("hum_offset", id(hum_offset_${soil_sensor_device_id}).state * 10);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("cond_offset", id(cond_offset_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("ph_offset", id(ph_offset_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("n_f_high", id(n_f_high_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("n_f_low", id(n_f_low_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("n_offset", id(n_offset_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("p_f_high", id(p_f_high_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("p_f_low", id(p_f_low_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("p_offset", id(p_offset_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("k_f_high", id(k_f_high_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("k_f_low", id(k_f_low_${soil_sensor_device_id}).state);
-      # - delay: 500ms
-      # - espnow.send:
-      #     payload: !lambda |-
-      #       return format_espnow_data_new("k_offset", id(k_offset_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("cond_f", id(cond_f_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("sal_f", id(sal_f_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("tds_f", id(tds_f_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("temp_offset", id(temp_offset_${soil_sensor_device_id}).state * 10);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("hum_offset", id(hum_offset_${soil_sensor_device_id}).state * 10);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("cond_offset", id(cond_offset_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("ph_offset", id(ph_offset_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("n_f_high", id(n_f_high_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("n_f_low", id(n_f_low_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("n_offset", id(n_offset_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("p_f_high", id(p_f_high_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("p_f_low", id(p_f_low_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("p_offset", id(p_offset_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("k_f_high", id(k_f_high_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("k_f_low", id(k_f_low_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("k_offset", id(k_offset_${soil_sensor_device_id}).state);
+  - id: send_calibration_data_${air_sensor_device_id}
+    then:
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+              if (id(peer_names)[i] == ${air_sensor_device_id}) {
+                return id(peer_addresses)[i];
+              }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("flash", id(flash_${air_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${air_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("temp_index", id(temp_index_${air_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${air_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("press_index", id(press_index_${air_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${air_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("iir_index", id(iir_index_${air_sensor_device_id}).state);
