@@ -1,7 +1,7 @@
 esphome:
   name: esp32-hub
-  platform: ESP32
-  board: esp32-c3-devkitm-1 # For ESP32-C3 based boards
+  platformio_options:
+    platform: https://github.com/lucaskatayama/platform-espressif32.git#feat/seeed_xiao_esp32c6.json
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
@@ -16,10 +16,20 @@ esphome:
             }
           }
 
-  platformio_options:
-    board_build.flash_mode: qio
+esp32:
+  board: seeed_xiao_esp32c6
+  variant: ESP32C6
+  framework:
+    type: esp-idf
+    version: 5.3.0
+    platform_version: 6.9.0
+    sdkconfig_options:
+      CONFIG_ESPTOOLPY_FLASHSIZE_4MB: y
 
 logger:
+  baud_rate: 115200
+  level: DEBUG
+  hardware_uart: USB_SERIAL_JTAG
 
 substitutions:
   spectral_sensor_device_id: '22'
@@ -61,10 +71,6 @@ wifi:
   ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
   password: !secret WiFi_password # WiFi password from secrets.yaml
   power_save_mode: none
-  on_connect:
-    then:
-      lambda: |-
-        ESP_LOGI("main", "Current WiFi channel: %d", WiFi.channel());
 
 # ota:
 #   - platform: esphome
