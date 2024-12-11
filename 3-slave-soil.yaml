@@ -1,8 +1,7 @@
 esphome:
-  name: esp32-slave-soil
-  platform: ESP32
-  board: esp32-c3-devkitm-1
-
+  name: 3-slave-soil
+  platformio_options:
+    platform: https://github.com/lucaskatayama/platform-espressif32.git#feat/seeed_xiao_esp32c6.json
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
@@ -25,14 +24,27 @@ esphome:
           else:
             - script.execute: espnow_communication
 
+esp32:
+  board: seeed_xiao_esp32c6
+  variant: ESP32C6
+  framework:
+    type: esp-idf
+    version: 5.3.0
+    platform_version: 6.9.0
+    sdkconfig_options:
+      CONFIG_ESPTOOLPY_FLASHSIZE_4MB: y
+
 logger:
+  baud_rate: 115200
+  level: DEBUG
+  hardware_uart: USB_SERIAL_JTAG
 
 deep_sleep:
   id: deep_sleep_1
   run_duration: 60s # Time for the ESP32 to run before entering sleep mode
   sleep_duration: 60s # Change this to your desired sleep time
   wakeup_pin:
-    number: GPIO3
+    number: GPIO1
     allow_other_uses: true
   wakeup_pin_mode: IGNORE
 
@@ -80,8 +92,8 @@ globals:
 
 uart:
   - id: intmodbus
-    tx_pin: 21
-    rx_pin: 20
+    tx_pin: GPIO16
+    rx_pin: GPIO17
     baud_rate: 4800
     stop_bits: 1
     data_bits: 8
@@ -90,7 +102,7 @@ uart:
       direction: BOTH
 
 modbus:
-  flow_control_pin: GPIO1
+  flow_control_pin: GPIO21
   id: modbus1
 
 modbus_controller:
@@ -342,7 +354,7 @@ sensor:
 binary_sensor:
   - platform: gpio
     pin:
-      number: GPIO3
+      number: GPIO1
       allow_other_uses: true
     name: 'Button'
     id: 'deep_sleep_button'
@@ -356,7 +368,7 @@ binary_sensor:
               - deep_sleep.enter: deep_sleep_1
   - platform: gpio
     pin:
-      number: GPIO4 # replace with the actual GPIO number
+      number: GPIO19 # replace with the actual GPIO number
       mode: INPUT_PULLUP
       inverted: true
     name: 'Long Press Button'
