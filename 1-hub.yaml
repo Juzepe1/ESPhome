@@ -949,6 +949,9 @@ espnow:
                           bool peer_exists = false;
                           for (int i = 0; i < 8; i++) {
                               if (id(peer_addresses)[i] == peer) {
+                                  if(id(peer_names)[i] != value_int){
+                                    id(peer_names)[i] = value_int;
+                                  }
                                   peer_exists = true;
                                   break;
                               }
@@ -1266,7 +1269,7 @@ script:
             }
             return 0;
           payload: !lambda |-
-            return format_espnow_data_new("ph_offset", id(ph_offset_${soil_sensor_device_id}).state);
+            return format_espnow_data_new("ph_offset", id(ph_offset_${soil_sensor_device_id}).state * 10);
       - delay: 500ms
       - espnow.send:
           mac_address: !lambda |-
