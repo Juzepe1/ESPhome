@@ -1,5 +1,5 @@
 esphome:
-  name: 4-slave-co2
+  name: 4-slave-air
   platformio_options:
     platform: https://github.com/lucaskatayama/platform-espressif32.git#feat/seeed_xiao_esp32c6.json
   includes:
@@ -52,7 +52,7 @@ deep_sleep:
   run_duration: 80s # Time for the ESP32 to run before entering sleep mode
   sleep_duration: 60s # Change this to your desired sleep time
   wakeup_pin:
-    number: GPIO0
+    number: GPIO1
     allow_other_uses: true
   wakeup_pin_mode: IGNORE
 
@@ -108,6 +108,7 @@ globals:
   - id: flash
     type: bool
     initial_value: 'false'
+
 i2c:
   sda: GPIO22
   scl: GPIO23
@@ -151,7 +152,7 @@ sensor:
 binary_sensor:
   - platform: gpio
     pin:
-      number: GPIO0
+      number: GPIO1
       allow_other_uses: true
     name: 'Button'
     id: 'deep_sleep_button'
@@ -165,7 +166,7 @@ binary_sensor:
               - deep_sleep.enter: deep_sleep_1
   - platform: gpio
     pin:
-      number: GPIO19 # replace with the actual GPIO number
+      number: GPIO19
       mode: INPUT_PULLUP
       inverted: true
     name: 'Long Press Button'
