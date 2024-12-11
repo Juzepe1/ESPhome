@@ -14,14 +14,6 @@ web_password: web_password
 
 Pokud je vysílač v deep sleep modu, tak na něj nemůžeme nahrát kód, proto jej musíme odpojit od USB, a potom zárověň se zmáčknutým tlačítkem BOOT (B) jej připojit k počítači a držet tlačítko do té doby dokud nezačne nahrávání kódu.
 
-## Nepřijímání dat
-
-Pokud hub nepřijímá data, tak je lepší před tím pingoutnout slaves.
-
-## Problémy při komplici
-
-K nahrádí kódu `1-reciever.yaml` je potřeba python s verzí 3.12.7 a nižší, jelikož je potřeba pro vykreslování na disple mít `pip install pillow==10.2.0`
-
 ## ESP NOW knihovna
 
 Dokumentace k ESP NOW [knihovně](https://github.com/esphome/esphome-docs/pull/4086/files?short_path=ab1e072#diff-ab1e072d37305b336bc6e28977672a2afbcc6d0aef984d5e18b4a660aa4a2681)
@@ -42,6 +34,12 @@ Kanál WiFi zjistíme po nahrátí kodů v logu zpráv:
 
 ```yaml
 [C][wifi:447]:   Channel: 11
+```
+
+# Vymazání flash paměti
+
+```
+python -m esptool --port COMX erase_flash
 ```
 
 # [Další informace](hub-slave.md)
