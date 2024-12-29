@@ -113,7 +113,7 @@ i2c:
   sda: GPIO22
   scl: GPIO23
   scan: true
-  frequency: 200kHz
+  frequency: 150kHz
 
 sensor:
   - platform: bmp280_i2c
@@ -125,7 +125,7 @@ sensor:
       name: 'Pressure'
       id: bmp280_press
     address: 0x76
-    update_interval: never
+    update_interval: 1s
   - platform: htu21d
     id: si7021_sensor
     temperature:
@@ -135,7 +135,7 @@ sensor:
       name: 'Humidity'
       id: si7021_hum
     address: 0x40
-    update_interval: never
+    update_interval: 1s
   - platform: ccs811
     id: ccs811_sensor
     eco2:
@@ -147,7 +147,7 @@ sensor:
     temperature: bmp280_temp
     humidity: si7021_hum
     address: 0x5A
-    update_interval: never
+    update_interval: 10s
 
 binary_sensor:
   - platform: gpio
@@ -281,7 +281,11 @@ script:
       - logger.log: 'Updating sensor data'
       - component.update: bmp280_sensor
       - component.update: si7021_sensor
-      - component.update: ccs811_sensor
+      - wait_until:
+          condition:
+            lambda: |-
+              return (!isnan(id(ccs811_eco2).state) && !isnan(id(ccs811_tvoc).state));
+          timeout: 40s
       - delay: 3s
       - logger.log: 'Sensor data updated'
       - repeat:
