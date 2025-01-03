@@ -13,13 +13,6 @@ esp32:
 # Enable logging
 logger:
 
-# Use local waveshare epaper library
-external_components:
-  - source: components
-    components:
-      - waveshare_epaper
-    refresh: 1min
-
 spi:
   clk_pin: GPIO4 #GPIO2
   mosi_pin: GPIO6 #GPIO1
