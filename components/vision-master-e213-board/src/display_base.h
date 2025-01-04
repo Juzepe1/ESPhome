@@ -4,19 +4,148 @@
         - Base class, from which all displays derive
 */
 
-#ifndef __BASE_DISPLAY_H__
-#define __BASE_DISPLAY_H__
+#ifndef __DISPLAY_BASE_H__
+#define __DISPLAY_BASE_H__
 
 #include <Arduino.h>
 #include <SPI.h>
 
-#include "optimization.h" // Compile-time size reduction, configurable
+#include "GFX.h"
 
-#include "GFX_Root/GFX.h"
+#include "platforms.h"
 
-#include "Platforms/platforms.h"
-#include "Bounds/bounds.h"
-#include "Displays/BaseDisplay/enums.h"
+enum Flip : uint8_t
+{
+    NONE = 0,
+    HORIZONTAL = 1,
+    VERTICAL = 2,
+    HORIZONTAL_WINDOW = 5,
+    VERTICAL_WINDOW = 6
+};
+enum Color : uint8_t
+{
+    BLACK = 0,
+    WHITE = 1,
+    RED = 3
+};
+enum SwitchType : bool
+{
+    PNP = LOW,
+    NPN = HIGH,
+    ACTIVE_LOW = LOW,
+    ACTIVE_HIGH = HIGH
+};
+
+enum Rotation : uint8_t
+{
+#if !ALL_IN_ONE
+    // For "display modules"
+    PINS_ABOVE = 0,
+    PINS_LEFT = 1,
+    PINS_BELOW = 2,
+    PINS_RIGHT = 3,
+
+#elif defined(WIRELESS_PAPER) || defined(Vision_Master_E213) || defined(Vision_Master_E290)
+    // For "Wireless Paper" all-in-one board
+    USB_ABOVE = 0,
+    USB_LEFT = 1,
+    USB_BELOW = 2,
+    USB_RIGHT = 3
+#endif
+};
+
+class WindowBounds
+{
+public:
+    // TODO: Bounds.Window subclass with info about "Requested Bounds" vs "Actual Bounds"
+
+    uint16_t top();
+    uint16_t right();
+    uint16_t bottom();
+    uint16_t left();
+
+    uint16_t width() { return right() - left() + 1; }
+    uint16_t height() { return bottom() - top() + 1; }
+
+    uint16_t centerX() { return right() - ((width() - 1) / 2); }
+    uint16_t centerY() { return bottom() - ((height() - 1) / 2); }
+
+    // Constructors
+    WindowBounds() = default;
+    WindowBounds(uint16_t drawing_width, uint16_t drawing_height,
+                 uint16_t *top, uint16_t *right, uint16_t *bottom, uint16_t *left,
+                 uint8_t *rotation,
+                 Flip *imgflip);
+
+private:
+    uint16_t drawing_width;
+    uint16_t drawing_height;
+    uint16_t *edges[4]; // t, r, b, l
+    uint8_t *rotation;  // NB: "rotation" is already used as member
+    Flip *imgflip;
+    enum side
+    {
+        T = 0,
+        R = 1,
+        B = 2,
+        L = 3
+    };
+    uint16_t getWindowBounds(side request);
+};
+
+class FullBounds
+{
+public:
+    uint16_t left() { return 0; }
+    uint16_t right() { return width() - 1; }
+    uint16_t top() { return 0; }
+    uint16_t bottom() { return height() - 1; }
+
+    uint16_t width() { return ((*rotation % 2) ? drawing_height : drawing_width); } // Width if portrait, height if landscape
+    uint16_t height() { return ((*rotation % 2) ? drawing_width : drawing_height); }
+
+    uint16_t centerX() { return (right() / 2); }
+    uint16_t centerY() { return (bottom() / 2); }
+
+    // Constructors
+    FullBounds() = default;
+    FullBounds(uint16_t drawing_width, uint16_t drawing_height, uint8_t *rotation)
+    {
+        // Store pointers at construction
+        this->drawing_width = drawing_width;
+        this->drawing_height = drawing_height;
+        this->rotation = rotation;
+    }
+
+private:
+    uint8_t *rotation;
+    uint16_t drawing_width;
+    uint16_t drawing_height;
+};
+
+class Bounds
+{
+public:
+    // Constructors
+    Bounds() = default;
+    Bounds(const uint16_t drawing_width,
+           const uint16_t drawing_height,
+           uint16_t *window_top,
+           uint16_t *window_right,
+           uint16_t *window_bottom,
+           uint16_t *window_left,
+           uint8_t *rotation,
+           Flip *flip)
+    {
+
+        // At construction, create instances of "window" and "full"
+        this->window = WindowBounds(drawing_width, drawing_height, window_top, window_right, window_bottom, window_left, rotation, flip);
+        this->full = FullBounds(drawing_width, drawing_height, rotation);
+    }
+
+    WindowBounds window;
+    FullBounds full;
+};
 
 class BaseDisplay : public GFX
 {
@@ -84,73 +213,8 @@ public:
     /* --- Error: Microcontroller doesn't have enough RAM. Use a DRAW() loop instead --- */ void overwrite() = delete; // DEPRECATION
     /* --- Error: Microcontroller doesn't have enough RAM. Use a DRAW() loop instead --- */ void startOver() = delete; // DEPRECATION
 #endif
-
-    // SD card
     // ----------------------------
     // This is all a bit of a mess.. Have to include / exclude different components to suit the various platforms
-
-#ifndef DISABLE_SDCARD // optimization.h, WirelessPaper.h
-
-    void useSD(uint8_t pin_cs_card);                                                                                   // Store the config needed to use SD Card
-    bool SDCardFound();                                                                                                // Check if card is connected
-    bool SDFileExists(const char *filename);                                                                           // Check if file exists on SD card
-    bool SDFileExists(const char *prefix, uint32_t number);                                                            // Check if file exists, by prefix and iterable number
-    bool fullscreenBMPValid(const char *prefix, uint32_t number, bool purge = false);                                  // Check for corruption in a fullscreen .bmp, by prefix and iterable number
-    bool fullscreenBMPValid(const char *filename, bool purge = false);                                                 // Check for corruption in a fullscreen .bmp
-    void drawMonoBMP(int16_t left, int16_t top, const char *filename, Color color);                                    // Draw a mono .bmp from SD Card
-    void drawMonoBMP(int16_t left, int16_t top, const char *filename, Color foreground_color, Color background_color); // Draw a mono .bmp from SD Card, with background
-    uint16_t getBMPWidth(const char *filename);                                                                        // Read image width from .bmp header, sd card
-    uint16_t getBMPHeight(const char *filename);                                                                       // Read image height from .bmp header, sd card
-#define SAVE_TO_SD(display, ...) while (display.savingBMP(__VA_ARGS__))                                                // Macro to call while savingBMP()
-
-// Configure the SD card reader
-#if CAN_MOVE_SPI_PINS || ALL_IN_ONE
-    void useSD(uint8_t pin_cs_card, uint8_t pin_miso);
-#else
-    /* --- Error: This model of microcontroller can't move SPI pins around --- */ void useSD(uint8_t pin_cs_card, uint8_t pin_miso) = delete;
-#endif
-
-// Draw 24bit bitmap from SD
-#ifndef __AVR_ATmega328P__
-    void draw24bitBMP(int16_t left, int16_t top, const char *filename);
-    void draw24bitBMP(int16_t left, int16_t top, const char *filename, Color mask);
-    void draw24bitBMP(int16_t left, int16_t top, const char *filename, uint8_t mask_r, uint8_t mask_g, uint8_t mask_b, bool apply_mask = true);
-#else
-    /* --- Error: Not enough RAM, use drawMonoBMP() instead  --- */ void draw24bitBMP(int16_t left, int16_t top, const char *filename) = delete;
-    /* --- Error: Not enough RAM, use drawMonoBMP() instead  --- */ void draw24bitBMP(int16_t left, int16_t top, const char *filename, Color transparency) = delete;
-    /* --- Error: Not enough RAM, use drawMonoBMP() instead  --- */ void draw24bitBMP(int16_t left, int16_t top, const char *filename, uint8_t mask_r, uint8_t mask_g, uint8_t mask_b, bool apply_mask = true) = delete;
-
-#endif
-
-// SD write: Potentially disabled by optimization.h
-#if !defined(__AVR_ATmega328P__) || defined(UNO_ENABLE_SDWRITE)
-    virtual bool savingBMP(const char *filename);                // Non-paged: write memory to fullscreen.bmp
-    virtual bool savingBMP(const char *prefix, uint32_t number); // Non-paged: write memory to fullscreen .bmp (iterable)
-#else
-    /* --- Error: SD Write disabled by config in optimization.h --- */ bool savingBMP(const char *filename) = delete;
-    /* --- Error: SD Write disabled by config in optimization.h --- */ bool savingBMP(const char *prefix, uint32_t number) = delete;
-#endif
-
-// Non-paged: write image to SD card
-#if PRESERVE_IMAGE
-    void saveToSD(const char *filename);
-    void saveToSD(const char *prefix, uint32_t number);
-#else
-    /* --- Error: Not enough RAM, use SAVE_TO_SD() instead --- */ void saveToSD(const char *filename) = delete;
-    /* --- Error: Not enough RAM, use SAVE_TO_SD() instead --- */ void saveToSD(const char *prefix, uint32_t number) = delete;
-#endif
-
-// Load fullscreen bitmap
-// Declared virtual only if needed, otherwise it forces ATMega328P to build SD code, bloating by 30%
-#if ALL_IN_ONE
-    virtual void loadFullscreenBMP(const char *filename);        // Draw fullscreen .bmp from SD card, direct to screen
-    void loadFullscreenBMP(const char *prefix, uint32_t number); // Draw fullscreen .bmp (numbered) from SD, direct to screen
-#else
-    void loadFullscreenBMP(const char *filename);                // Draw fullscreen .bmp from SD card, direct to screen
-    void loadFullscreenBMP(const char *prefix, uint32_t number); // Draw fullscreen .bmp (numbered) from SD, direct to screen
-#endif
-
-#endif // ! DISABLE_SDCARD
 
     // Drawing helpers
     // ----------------
@@ -226,15 +290,6 @@ protected:
     void storeDrawingConfig();
     void restoreDrawingConfig();
 
-// SD card
-#ifndef DISABLE_SDCARD                                 // optimization.h, WirelessPaper.h
-    void send24BitBMP(Color target);                   // Feed .bmp into sendData()
-    Color parseColor(uint8_t B, uint8_t G, uint8_t R); // Get a Color enum. from a 24bit bgr pixel
-    void initBMP(const char *filename);                // Write a template .bmp to sd card
-    void writePageToBMP();                             // Write one page to the fullscreen BMP file
-    char *getIterableFilename(const char *prefix, uint32_t number);
-#endif
-
     // AdafruitGFX virtual: modified to fix text wrapping
     size_t write(uint8_t c);
     void charBounds(unsigned char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *miny, int16_t *maxx, int16_t *maxy);
@@ -265,14 +320,8 @@ protected:
     const SPISettings spi_settings = SPISettings(2000000, MSBFIRST, SPI_MODE0);
     bool begun = false; // Has BaseDisplay::begin run once?
 
-#ifndef DISABLE_SDCARD // optimization.h, WirelessPaper.h
-    // SD
-    SDWrapper *sd; // Dynamically allocated SD instance
-#endif
-    uint8_t pin_miso = DEFAULT_MISO; // Set in useSD(). Relevant to SAMD21 pin muxing
-    uint8_t pin_cs_card = -1;        // Set in useSD()
-    bool saving_to_sd = false;       // Are drawing operations currently diverted into a bmp file?
-    const char *sd_filename;         // Pass filename to writePageToBMP()
+    uint8_t pin_miso = DEFAULT_MISO;
+    uint8_t pin_cs_card = -1;
 
     // External power switch
     uint8_t pin_power = -1;       // Pin connected to switch / transistor gate
@@ -320,6 +369,359 @@ private:
     using GFX::GFX;
     using GFX::invertDisplay;
     using GFX::write;
+};
+
+// Heltec Wireless Paper
+// Connector label: HINK-E0213A162-FPC-A0 (Hidden, printed on back-side)
+class LCMEN2R13EFC1 : public BaseDisplay
+{
+
+    // Display Config
+    // ======================
+private:
+    static const uint16_t panel_width = 128;                      // Display width
+    static const uint16_t panel_height = 250;                     // Display height
+    static const uint16_t drawing_width = 122;                    // Usable width
+    static const uint16_t drawing_height = 250;                   // Usable height
+    static const Color supported_colors = (Color)(BLACK | WHITE); // Colors available for drawing
+
+    // Constructors
+    // ======================
+public:
+#if defined(WIRELESS_PAPER) || defined(Vision_Master_E213)
+    LCMEN2R13EFC1() : BaseDisplay(PIN_DISPLAY_DC, PIN_DISPLAY_CS, PIN_DISPLAY_BUSY, DEFAULT_SDI, DEFAULT_CLK, MAX_PAGE_HEIGHT)
+    {
+        init();
+    }
+#else
+    /* --- ERROR: Wrong build env. See https://github.com/todd-herbert/heltec-eink-modules/blob/main/docs/README.md#installation --- */ LCMEN2R13EFC1() = delete;
+#endif
+
+    // Look up tables
+    // ==========================
+private:
+    const uint8_t lut_partial_vcom_dc[56] = {
+        0x01,
+        0x06,
+        0x03,
+        0x02,
+        0x01,
+        0x01,
+        0x01,
+        0x01,
+        0x06,
+        0x02,
+        0x01,
+        0x01,
+        0x01,
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+    };
+    const uint8_t lut_partial_bb[56] = {
+        0x01,
+        0x06,
+        0x03,
+        0x42,
+        0x41,
+        0x01,
+        0x01,
+        0x01,
+        0x06,
+        0x02,
+        0x01,
+        0x01,
+        0x01,
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+    };
+    const uint8_t lut_partial_bw[56] = {
+        0x01,
+        0x86,
+        0x83,
+        0x82,
+        0x81,
+        0x01,
+        0x01,
+        0x01,
+        0x86,
+        0x82,
+        0x01,
+        0x01,
+        0x01,
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+    };
+    const uint8_t lut_partial_wb[56] = {
+        0x01,
+        0x46,
+        0x43,
+        0x02,
+        0x01,
+        0x01,
+        0x01,
+        0x01,
+        0x46,
+        0x42,
+        0x01,
+        0x01,
+        0x01,
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+    };
+    const uint8_t lut_partial_ww[56] = {
+        0x01,
+        0x06,
+        0x03,
+        0x02,
+        0x81,
+        0x01,
+        0x01,
+        0x01,
+        0x06,
+        0x02,
+        0x01,
+        0x01,
+        0x01,
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+    };
+
+    // Setup
+    // ==========================
+private:
+    void init(); // Once instantiated, pass config to base
+
+    // Virtual methods
+    // ==========================
+private:
+    void configPartial(); // Configure panel to use partial refresh
+    void configFull();    // Configure panel to use full refresh
+    void activate();      // Command sequence to trigger display update
+
+    // Display specific formatting of memory locations
+    void calculateMemoryArea(int16_t &sx, int16_t &sy, int16_t &ex, int16_t &ey,
+                             int16_t region_left, int16_t region_top, int16_t region_right, int16_t region_bottom);
+
+    // Display has controller IC from different manufacturer
+    // Lots of BaseDisplay behaviour needs overriding
+    void reset();                                                             // Reset the display - using physical pin
+    void setMemoryArea(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey) {} // Dummy - display doesn't support "partial window"
+    void sendImageData();                                                     // Different SPI commands
+    void sendBlankImageData();
+    void wait();                                                                                       // Read busy pin, inverted for this controller
+    void calculatePixelPageOffset(uint16_t x, uint16_t y, uint16_t &byte_offset, uint8_t &bit_offset); // No "partial window" support
+    void clearPageWindow();                                                                            // No "partial window" support
+    void endImageTxQuiet() {}                                                                          // Apparently, no action required to terminate an image tx for this controller(?)
+
+    // Disabled methods
+    // ==========================
+private:
+    /* --- Error: TURBO gives no performance boost with the all-in-one boards --- */ void fastmodeTurbo(bool) {}
 };
 
 #endif

@@ -2,13 +2,11 @@
 #define __VISION_MASTER_E213_BOARD_H__
 
 #include <Arduino.h>
-#include "GFX_Root/GFX.h"
+#include "GFX.h"
 
-#include "Platforms/platforms.h"
+#include "platforms.h"
 
-#include "Displays/class-aliases.h" // Rename displays, for backwards compatibility
+#define EInkDisplay_VisionMasterE213 LCMEN2R13EFC1
 
-// All-in-one "Wireless Paper" boards
-#include "Displays/LCMEN2R13EFC1/LCMEN2R13EFC1.h"
-
+#include "display_base.h"
 #endif
