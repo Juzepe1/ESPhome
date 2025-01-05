@@ -1,28 +1,5 @@
 #include "platforms.h"
 
-#if defined(ESP32) && !ALL_IN_ONE
-
-namespace Platform
-{
-
-    // Create SPI
-    SPIClass *getSPI()
-    {
-        return &SPI;
-    }
-
-    // Call SPI.begin
-    void beginSPI(SPIClass *spi, uint8_t pin_mosi, uint8_t pin_miso, uint8_t pin_clk)
-    {
-        spi->begin(pin_clk, pin_miso, pin_mosi, -1); // CS handled manually
-    }
-
-}
-
-#endif
-
-#ifdef Vision_Master_E213
-
 namespace Platform
 {
 
@@ -62,10 +39,6 @@ namespace Platform
 
 } // End of namespace
 
-#endif
-
-#ifdef Vision_Master_E213
-
 namespace Platform
 {
 
@@ -88,5 +61,3 @@ namespace Platform
     }
 
 }
-
-#endif

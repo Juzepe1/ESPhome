@@ -22,9 +22,16 @@ vision_master:
 logger:
   baud_rate: 115200
   level: VERBOSE
-# interval:
-#   - startup_delay: 5s
-#     interval: 10s
-#     then:
-#       - logger.log: 'Displaying'
-#       - lambda: |-
+
+interval:
+  - startup_delay: 5s
+    interval: 10s
+    then:
+      - logger.log: 'Displaying'
+      - lambda: |-
+          id(my_display).clearMemory(); // Start a new drawing
+          delay(4000);
+          id(my_display).landscape();
+          id(my_display).setFont(&FreeSans9pt7b);
+          id(my_display).printCenter("Uz to funguje");
+          id(my_display).update();
