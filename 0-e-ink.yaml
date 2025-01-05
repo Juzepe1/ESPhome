@@ -2,6 +2,10 @@ esphome:
   name: 290test2
   friendly_name: 290test2
 
+  on_boot:
+    priority: -1000
+    then:
+      - script.execute: my_script
 spi:
 
 esp32:
@@ -23,15 +27,24 @@ logger:
   baud_rate: 115200
   level: VERBOSE
 
-interval:
-  - startup_delay: 5s
-    interval: 10s
-    then:
-      - logger.log: 'Displaying'
-      - lambda: |-
-          id(my_display).clearMemory(); // Start a new drawing
-          delay(4000);
-          id(my_display).landscape();
-          id(my_display).setFont(&FreeSans9pt7b);
-          id(my_display).printCenter("Uz to funguje");
-          id(my_display).update();
+script:
+  id: my_script
+  then:
+    - lambda: |-
+        id(my_display).clearMemory(); // Start a new drawing
+    - delay: 4s
+    - lambda: |-
+        id(my_display).landscape();
+        id(my_display).setFont(&FreeSans9pt7b);
+        id(my_display).printCenter("It works from boot!");
+        id(my_display).update();
+    - delay: 10s
+    - lambda: |-
+        id(my_display).clearMemory(); // Start a new drawing
+        id(my_display).clear(); // Physically clear the screen
+
+# interval:
+#   - startup_delay: 5s
+#     interval: 10s
+#     then:
+#       - script.execute: my_script
