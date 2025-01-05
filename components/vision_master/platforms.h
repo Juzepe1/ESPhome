@@ -15,7 +15,7 @@
 #ifdef Vision_Master_E213
 
 #include <Arduino.h>
-#include <SPI.h>
+#include "esphome/components/spi/spi.h"
 #include <../include/driver/gpio.h> // Hack to prevent including the wrong gpio.h, which is bundled with "Heltec_ESP32" library
 
 // Don't use fallback settings
@@ -77,8 +77,7 @@ namespace Platform
 #if defined(ESP32) && !defined(PLATFORM_SUPPORTED)
 
 #include <Arduino.h>
-#include <SPI.h>
-
+#include "esphome/components/spi/spi.h"
 // Don't use fallback settings
 #define PLATFORM_SUPPORTED
 

@@ -8,7 +8,7 @@
 #define __DISPLAY_BASE_H__
 
 #include <Arduino.h>
-#include <SPI.h>
+#include "esphome/components/spi/spi.h"
 
 #include "GFX.h"
 
@@ -693,7 +693,7 @@ private:
 
     // Setup
     // ==========================
-private:
+public:
     void init(); // Once instantiated, pass config to base
 
     // Virtual methods

@@ -1,55 +1,30 @@
 esphome:
   name: 290test2
   friendly_name: 290test2
-  on_boot:
-    priority: 0
-    then:
-      - switch.turn_on: power3v3
+
+spi:
+
 esp32:
   board: esp32-s3-devkitc-1
   framework:
     type: arduino
 
+external_components:
+  - source: components
+    components:
+      - vision_master
+    refresh: 1min
+
+vision_master:
+  id: my_display
+
 # Enable logging
 logger:
-
-spi:
-  clk_pin: GPIO4 #GPIO2
-  mosi_pin: GPIO6 #GPIO1
-  id: spi_bus
-
-switch:
-  - platform: gpio
-    pin: GPIO18
-    id: power3v3
-    name: 'power'
-
-font:
-  - file: 'fonts/Roboto-Regular.ttf'
-    id: myfont
-    size: 30
-display:
-  - platform: waveshare_epaper
-    id: my_display
-    cs_pin: GPIO5 #GPIO3
-    dc_pin: GPIO2 #GPIO4
-    busy_pin: GPIO1 #GPIO6
-    reset_pin: GPIO3 #GPIO5
-    spi_id: spi_bus
-    reset_duration: 100ms
-    model: 2.13in-ttgo-dke
-    full_update_every: 10
-    update_interval: 10s
-    rotation: 270
-    lambda: |-
-      // Turn the whole display on
-      it.fill(COLOR_ON);
-      // Turn the whole display off
-      it.fill(COLOR_OFF);
-
-      it.print(0, 0, id(myfont), COLOR_ON, "Hello, World!");
-
-interval:
-  - interval: 10s
-    then:
-      - component.update: my_display
+  baud_rate: 115200
+  level: VERBOSE
+# interval:
+#   - startup_delay: 5s
+#     interval: 10s
+#     then:
+#       - logger.log: 'Displaying'
+#       - lambda: |-
