@@ -6,6 +6,9 @@ esphome:
     priority: -1000
     then:
       - script.execute: my_script
+
+  includes:
+    - components/XBitMaps/thermometer.h
 spi:
 
 esp32:
@@ -31,17 +34,175 @@ script:
   id: my_script
   then:
     - lambda: |-
-        id(my_display).clearMemory(); // Start a new drawing
-    - delay: 4s
-    - lambda: |-
+        int padding = 5;
+        int small_padding = 3;
+        int top_bottom_padding = 1;
+        int tvoc_padding_right = 20;
+
         id(my_display).landscape();
-        id(my_display).setFont(&FreeSans9pt7b);
-        id(my_display).printCenter("It works from boot!");
+        id(my_display).clearMemory();
+        id(my_display).setTextWrap(false);
+
+        //id(my_display).setTextColor(BLACK);
+        //id(my_display).setBackgroundColor(WHITE);
+        const uint16_t width  = id(my_display).width();
+        const uint16_t height = id(my_display).height();
+
+        id(my_display).setFont(&FreeMonoBold12pt7b);
+
+        String title = "Air Sensor 2";
+        uint8_t title_height = id(my_display).getTextHeight(title);
+
+        int title_y = title_height + top_bottom_padding;
+
+        id(my_display).setCursor(padding, title_y);
+        id(my_display).print("Air Sensor 2");
+
+        int line_y = title_y + small_padding;
+
+        id(my_display).drawLine(0, line_y, width, line_y, BLACK);
+
+
+
+
+
+
+        int eCO2_value = 4586;
+        int TVOC_value = 1234;
+        float pressure_value = 1001.8;
+
+        id(my_display).setFont(&FreeMonoBold12pt7b);
+
+        char eCO2_char[9];
+        sprintf(eCO2_char, "%4d", eCO2_value);
+        String eCO2_string = String(eCO2_char);
+
+        char TVOC_char[9];
+        sprintf(TVOC_char, "%4d", TVOC_value);
+        String TVOC_string = String(TVOC_char);
+
+        char pressure_char[10];
+        sprintf(pressure_char, "%5.1f", pressure_value);
+        String pressure_string = String(pressure_char);
+
+
+        uint8_t eco2_string_height = id(my_display).getTextHeight(eCO2_string);
+        uint8_t tvoc_string_height = id(my_display).getTextHeight(TVOC_string);
+        uint8_t pressure_string_height = id(my_display).getTextHeight(pressure_string);
+
+        uint8_t max_string_height = max(eco2_string_height, max(tvoc_string_height, pressure_string_height));
+
+        uint8_t eco2_string_width = id(my_display).getTextWidth(eCO2_string);
+        uint8_t tvoc_string_width = id(my_display).getTextWidth(TVOC_string);
+        uint8_t pressure_string_width = id(my_display).getTextWidth(pressure_string);
+
+        id(my_display).setFont(&FreeMono9pt7b);
+
+        String eCO2_label = "eCO2";
+        String TVOC_label = "TVOC";
+        String pressure_label = "Press.";
+
+        uint8_t eco2_label_height = id(my_display).getTextHeight(eCO2_label);
+        uint8_t tvoc_label_height = id(my_display).getTextHeight(TVOC_label);
+        uint8_t pressure_label_height = id(my_display).getTextHeight(pressure_label);
+
+        uint8_t eco2_label_width = id(my_display).getTextWidth(eCO2_label);
+        uint8_t tvoc_label_width = id(my_display).getTextWidth(TVOC_label);
+        uint8_t pressure_label_width = id(my_display).getTextWidth(pressure_label);
+
+        uint8_t max_label_height = max(eco2_label_height, max(tvoc_label_height, pressure_label_height));
+
+        id(my_display).setFont(&FreeMono7pt7b);
+
+        String eCO2_unit = "ppm";
+        String TVOC_unit = "ppb";
+        String pressure_unit = "hPa";
+
+        uint8_t eco2_unit_height = id(my_display).getTextHeight(eCO2_unit);
+        uint8_t tvoc_unit_height = id(my_display).getTextHeight(TVOC_unit);
+        uint8_t pressure_unit_height = id(my_display).getTextHeight(pressure_unit);
+
+        uint8_t max_unit_height = max(eco2_unit_height, max(tvoc_unit_height, pressure_unit_height));
+
+        uint8_t eco2_unit_width = id(my_display).getTextWidth(eCO2_unit);
+        uint8_t tvoc_unit_width = id(my_display).getTextWidth(TVOC_unit);
+        uint8_t pressure_unit_width = id(my_display).getTextWidth(pressure_unit);
+
+        int pressure_x = width - pressure_string_width - padding;
+        int eCO2_x = padding;
+        int TVOC_x = ((pressure_x + (eCO2_x + eco2_string_width)) / 2) - (tvoc_string_width / 2);
+
+
+
+        int small_letter_diff_down = 2; // ppb p is under the line and b is above the line
+        int small_letter_diff_top = 3; // ppm m is under the line and p is above the line
+
+
+        int unit_y = height - top_bottom_padding - small_letter_diff_down;
+        int string_y = unit_y - max_unit_height - padding + small_letter_diff_top;
+        int label_y = string_y - max_string_height - padding;
+
+        id(my_display).setFont(&FreeMono7pt7b);
+
+        id(my_display).setCursor(eCO2_x + (eco2_string_width - eco2_unit_width) / 2, unit_y);
+        id(my_display).print(eCO2_unit);
+
+        id(my_display).setCursor(TVOC_x + (tvoc_string_width - tvoc_unit_width) / 2, unit_y);
+        id(my_display).print(TVOC_unit);
+
+        id(my_display).setCursor(pressure_x + (pressure_string_width - pressure_unit_width) / 2, unit_y);
+        id(my_display).print(pressure_unit);
+
+        id(my_display).setFont(&FreeMono9pt7b);
+
+        id(my_display).setCursor(eCO2_x + (eco2_string_width - eco2_label_width) / 2 , label_y);
+        id(my_display).print(eCO2_label);
+
+        id(my_display).setCursor(TVOC_x + (tvoc_string_width - tvoc_label_width) / 2, label_y);
+        id(my_display).print(TVOC_label);
+
+        id(my_display).setCursor(pressure_x + (pressure_string_width - pressure_label_width) / 2, label_y);
+        id(my_display).print(pressure_label);
+
+        id(my_display).setFont(&FreeMonoBold12pt7b);
+
+        id(my_display).setCursor(eCO2_x, string_y);
+        id(my_display).print(eCO2_string);
+
+        id(my_display).setCursor(TVOC_x, string_y);
+        id(my_display).print(TVOC_string);
+
+        id(my_display).setCursor(pressure_x, string_y);
+        id(my_display).print(pressure_string);
+
+        // id(my_display).drawLine(0,unit_y , width, unit_y , BLACK);
+        // id(my_display).drawLine(0,label_y + padding , width, label_y + padding, BLACK);
+        // id(my_display).drawLine(0,label_y , width, label_y , BLACK);
+        // id(my_display).drawLine(0,string_y + padding , width , string_y + padding , BLACK);
+        // id(my_display).drawLine(0,string_y , width, string_y , BLACK);
+        // id(my_display).drawLine(0,label_y - max_label_height, width, label_y - max_label_height, BLACK);
+
+
+
+        // Draw vertical line from top to bottom in the middle of the screen
+        //id(my_display).drawLine(width / 2, 0, width / 2, height, BLACK);
+
+        int thermometer_top_left_y = line_y + padding + 1;
+        int thermometer_top_left_x = padding;
+
+        // First draw a thermometer in the background, top centre
+        id(my_display).drawXBitmap(thermometer_top_left_x,                      // Left
+                            thermometer_top_left_y,                             // Top
+                            thermometer_bits,                                  // Image Data
+                            thermometer_width,                                 // Width
+                            thermometer_height,                                // Height
+                            BLACK);       
+
         id(my_display).update();
-    - delay: 10s
-    - lambda: |-
-        id(my_display).clearMemory(); // Start a new drawing
-        id(my_display).clear(); // Physically clear the screen
+
+        int space_left = (label_y - max_label_height - padding) - title_y - 2 * padding;
+
+        ESP_LOGD("main", "space_left: %d", space_left);
 
 # interval:
 #   - startup_delay: 5s
