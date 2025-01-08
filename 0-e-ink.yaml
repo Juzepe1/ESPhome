@@ -8,7 +8,7 @@ esphome:
       - script.execute: my_script
 
   includes:
-    - components/XBitMaps/thermometer.h
+    - components/XBitMaps/sprites.h
 spi:
 
 esp32:
@@ -61,7 +61,6 @@ script:
         int line_y = title_y + small_padding;
 
         id(my_display).drawLine(0, line_y, width, line_y, BLACK);
-
 
 
 
@@ -182,10 +181,8 @@ script:
         // id(my_display).drawLine(0,string_y , width, string_y , BLACK);
         // id(my_display).drawLine(0,label_y - max_label_height, width, label_y - max_label_height, BLACK);
 
-
-
-        // Draw vertical line from top to bottom in the middle of the screen
-        //id(my_display).drawLine(width / 2, 0, width / 2, height, BLACK);
+        // // Draw vertical line from top to bottom in the middle of the screen
+        // id(my_display).drawLine(width / 2, 0, width / 2, height, BLACK);
 
         int thermometer_top_left_y = line_y + padding + 1;
         int thermometer_top_left_x = padding;
@@ -196,13 +193,83 @@ script:
                             thermometer_bits,                                  // Image Data
                             thermometer_width,                                 // Width
                             thermometer_height,                                // Height
-                            BLACK);       
+                            BLACK); 
+
+
+        float temperature = 23.5;
+
+        char temperature_char[4];
+        sprintf(temperature_char, "%2.1f", temperature); 
+        String temperature_string = String(temperature_char);
+
+        id(my_display).setFont(&FreeMonoBold12pt7b);
+
+        uint8_t temperature_string_height = id(my_display).getTextHeight(temperature_string);
+        uint8_t temperature_string_width = id(my_display).getTextWidth(temperature_string);
+
+
+        int temperature_x = thermometer_top_left_x + thermometer_width + padding;
+        int temperature_y = thermometer_top_left_y + thermometer_height * 0.48;
+
+        id(my_display).setCursor(temperature_x, temperature_y);
+        id(my_display).print(temperature_string);
+
+        id(my_display).setFont(&FreeSans7pt7b);
+
+        String temperature_unit = " C";
+        uint8_t temperature_unit_height = id(my_display).getTextHeight(temperature_unit);
+        uint8_t temperature_unit_width = id(my_display).getTextWidth(temperature_unit);
+
+        int temperature_unit_x = temperature_x + temperature_string_width / 2;
+        int temperature_unit_y = temperature_y + temperature_unit_height + padding;
+
+        id(my_display).setCursor(temperature_unit_x, temperature_unit_y);
+        id(my_display).print(temperature_unit);
+
+        //Draw degree symbol
+        id(my_display).drawCircle(temperature_unit_x + 1, temperature_unit_y - 7, 2, BLACK);
+
+        // water_drop
+        int water_drop_top_left_x = width / 2 + padding;
+        int water_drop_top_left_y = thermometer_top_left_y;
+
+        id(my_display).drawXBitmap(water_drop_top_left_x,                      // Left
+                            water_drop_top_left_y,                             // Top
+                            water_drop_bits,                                  // Image Data
+                            water_drop_width,                                 // Width
+                            water_drop_height,                                // Height
+                            BLACK);
+
+        float humidity = 45.5;
+
+        char humidity_char[4];
+        sprintf(humidity_char, "%2.1f", humidity);
+        String humidity_string = String(humidity_char);
+
+        id(my_display).setFont(&FreeMonoBold12pt7b);
+
+        uint8_t humidity_string_height = id(my_display).getTextHeight(humidity_string);
+        uint8_t humidity_string_width = id(my_display).getTextWidth(humidity_string);
+
+        int humidity_x = water_drop_top_left_x + water_drop_width + padding;
+        int humidity_y = temperature_y;
+
+        id(my_display).setCursor(humidity_x, humidity_y);
+        id(my_display).print(humidity_string);
+
+        id(my_display).setFont(&FreeSans7pt7b);
+
+        String humidity_unit = "%";
+        uint8_t humidity_unit_height = id(my_display).getTextHeight(humidity_unit);
+        uint8_t humidity_unit_width = id(my_display).getTextWidth(humidity_unit);
+
+        int humidity_unit_x = humidity_x + humidity_string_width / 2;
+        int humidity_unit_y = temperature_unit_y;
+
+        id(my_display).setCursor(humidity_unit_x, humidity_unit_y);
+        id(my_display).print(humidity_unit);
 
         id(my_display).update();
-
-        int space_left = (label_y - max_label_height - padding) - title_y - 2 * padding;
-
-        ESP_LOGD("main", "space_left: %d", space_left);
 
 # interval:
 #   - startup_delay: 5s
