@@ -64,7 +64,9 @@ script:
 
 
 
-
+        int eCO2_value_last = 4585;
+        int TVOC_value_last = 1235;
+        float pressure_value_last = 1001.7;
 
         int eCO2_value = 4586;
         int TVOC_value = 1234;
@@ -127,9 +129,9 @@ script:
         uint8_t tvoc_unit_width = id(my_display).getTextWidth(TVOC_unit);
         uint8_t pressure_unit_width = id(my_display).getTextWidth(pressure_unit);
 
-        int pressure_x = width - pressure_string_width - padding;
-        int eCO2_x = padding;
-        int TVOC_x = ((pressure_x + (eCO2_x + eco2_string_width)) / 2) - (tvoc_string_width / 2);
+        int pressure_x = width - pressure_string_width - padding - down_arrow_width;
+        int eCO2_x = 0;
+        int TVOC_x = ((pressure_x + (eCO2_x + eco2_string_width)) / 2) - ((tvoc_string_width) / 2);
 
 
 
@@ -173,6 +175,24 @@ script:
 
         id(my_display).setCursor(pressure_x, string_y);
         id(my_display).print(pressure_string);
+
+        if(eCO2_value > eCO2_value_last){
+          id(my_display).drawXBitmap(eCO2_x+eco2_string_width+padding, string_y-max_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+        } else if(eCO2_value < eCO2_value_last){
+          id(my_display).drawXBitmap(eCO2_x+eco2_string_width+padding,string_y-down_arrow_height,down_arrow_bits,down_arrow_width,down_arrow_height,BLACK);
+        }
+
+        if(TVOC_value > TVOC_value_last){
+          id(my_display).drawXBitmap(TVOC_x+tvoc_string_width+padding, string_y-max_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+        } else if(TVOC_value < TVOC_value_last){
+          id(my_display).drawXBitmap(TVOC_x+tvoc_string_width+padding,string_y-down_arrow_height,down_arrow_bits,down_arrow_width,down_arrow_height,BLACK);
+        }
+
+        if(pressure_value > pressure_value_last){
+          id(my_display).drawXBitmap(pressure_x+pressure_string_width+padding, string_y-max_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+        } else if(pressure_value < pressure_value_last){
+          id(my_display).drawXBitmap(pressure_x+pressure_string_width+padding,string_y-down_arrow_height,down_arrow_bits,down_arrow_width,down_arrow_height,BLACK);
+        }
 
         // id(my_display).drawLine(0,unit_y , width, unit_y , BLACK);
         // id(my_display).drawLine(0,label_y + padding , width, label_y + padding, BLACK);
@@ -268,6 +288,21 @@ script:
 
         id(my_display).setCursor(humidity_unit_x, humidity_unit_y);
         id(my_display).print(humidity_unit);
+
+        float temperature_last = 39.3;
+        float humidity_last = 45.1;
+
+        if(temperature > temperature_last){
+          id(my_display).drawXBitmap(temperature_x + temperature_string_width + padding, temperature_y - temperature_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+        } else if(temperature < temperature_last){
+          id(my_display).drawXBitmap(temperature_x + temperature_string_width + padding, temperature_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
+        }
+
+        if(humidity > humidity_last){
+          id(my_display).drawXBitmap(humidity_x + humidity_string_width + padding, humidity_y - humidity_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+        } else if(humidity < humidity_last){
+          id(my_display).drawXBitmap(humidity_x + humidity_string_width + padding, humidity_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
+        }
 
         id(my_display).update();
 
