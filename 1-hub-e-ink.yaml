@@ -1,0 +1,1411 @@
+esphome:
+  name: esp32-hub-e-ink
+  platformio_options:
+    platform: https://github.com/lucaskatayama/platform-espressif32.git#feat/seeed_xiao_esp32c6.json
+  includes:
+    - components/espnow_send_custom_data/espnow_send_custom_data.h
+    - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+
+  on_boot:
+    priority: -10000
+    then:
+      - lambda: |-
+          for (int i = 0; i < 8; i++) {
+            if(id(peer_addresses)[i] != 0){
+              id(espnow_component)->add_peer(id(peer_addresses)[i]);
+            }
+          }
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: arduino
+
+logger:
+  baud_rate: 115200
+  level: DEBUG
+
+substitutions:
+  spectral_sensor_device_id: '22'
+  soil_sensor_device_id: '33'
+  air_sensor_device_id: '44'
+
+web_server:
+  port: 80
+  auth:
+    username: !secret web_username
+    password: !secret web_password
+  version: 3
+  sorting_groups:
+    - id: sg_readings_${spectral_sensor_device_id}
+      name: 'Spectral Readings'
+      sorting_weight: 10
+
+    - id: sg_settings_${spectral_sensor_device_id}
+      name: 'Spectral Settings'
+      sorting_weight: 11
+
+    - id: sg_readings_${soil_sensor_device_id}
+      name: 'Soil Readings'
+      sorting_weight: 12
+
+    - id: sg_settings_${soil_sensor_device_id}
+      name: 'Soil Settings'
+      sorting_weight: 13
+
+    - id: sg_readings_${air_sensor_device_id}
+      name: 'Air Readings'
+      sorting_weight: 14
+
+    - id: sg_settings_${air_sensor_device_id}
+      name: 'Air Settings'
+      sorting_weight: 15
+
+wifi:
+  ssid: !secret WiFi_ssid # WiFi SSID from secrets.yaml
+  password: !secret WiFi_password # WiFi password from secrets.yaml
+  power_save_mode: none
+
+# ota:
+#   - platform: esphome
+#     password: !secret OTA_password # OTA password from secrets.yaml
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/nielsnl68/esphome
+      ref: d23346165e1baefd337ed805d3a211e5bead53af
+    refresh: 1min
+    components: [espnow]
+
+globals:
+  - id: peer_addresses
+    type: uint64_t[8]
+    initial_value: '{0, 0, 0, 0, 0, 0, 0, 0}'
+    restore_value: yes
+  - id: peer_names
+    type: uint8_t[8]
+    initial_value: '{0, 0, 0, 0, 0, 0, 0, 0}'
+    restore_value: yes
+
+sensor:
+  - platform: template
+    name: '405nm ${spectral_sensor_device_id}'
+    id: f1_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 1
+
+  - platform: template
+    name: '425nm ${spectral_sensor_device_id}'
+    id: f2_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 2
+
+  - platform: template
+    name: '450nm ${spectral_sensor_device_id}'
+    id: fz_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 3
+
+  - platform: template
+    name: '475nm ${spectral_sensor_device_id}'
+    id: f3_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 4
+
+  - platform: template
+    name: '515nm ${spectral_sensor_device_id}'
+    id: f4_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 5
+
+  - platform: template
+    name: '555nm ${spectral_sensor_device_id}'
+    id: fy_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 6
+
+  - platform: template
+    name: '550nm ${spectral_sensor_device_id}'
+    id: f5_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 7
+
+  - platform: template
+    name: '600nm ${spectral_sensor_device_id}'
+    id: fxl_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 8
+
+  - platform: template
+    name: '640nm ${spectral_sensor_device_id}'
+    id: f6_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 9
+
+  - platform: template
+    name: '690nm ${spectral_sensor_device_id}'
+    id: f7_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 10
+
+  - platform: template
+    name: '745nm ${spectral_sensor_device_id}'
+    id: f8_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 11
+
+  - platform: template
+    name: 'NIR ${spectral_sensor_device_id}'
+    id: nir_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 12
+
+  - platform: template
+    name: 'Clear ${spectral_sensor_device_id}'
+    id: clear_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 13
+
+  - platform: template
+    name: 'Irradiance ${spectral_sensor_device_id}'
+    id: irradiance_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'W/m²'
+    filters:
+      - multiply: 0.000001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 14
+
+  - platform: template
+    name: 'Irradiance Photopic ${spectral_sensor_device_id}'
+    id: irradiance_photopic_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'lm/m²'
+    filters:
+      - multiply: 0.000001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 15
+
+  - platform: template
+    name: 'PFFD ${spectral_sensor_device_id}'
+    id: pffd_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'µmol/m²/s'
+    filters:
+      - multiply: 0.000001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 16
+
+  - platform: template
+    name: 'Saturation ${spectral_sensor_device_id}'
+    id: saturation_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.000001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 17
+
+  - platform: template
+    name: 'Color Temperature ${spectral_sensor_device_id}'
+    id: color_temperature_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'K'
+    filters:
+      - multiply: 0.000001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 18
+
+  - platform: template
+    name: 'PAR ${spectral_sensor_device_id}'
+    id: par_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'µmol/m²/s'
+    filters:
+      - multiply: 0.000001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 19
+
+  - platform: template
+    name: 'Lux ${spectral_sensor_device_id}'
+    id: lux_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'lx'
+    filters:
+      - multiply: 0.000001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 20
+
+  - platform: template
+    name: 'Lux2 ${spectral_sensor_device_id}'
+    id: lux2_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 6
+    unit_of_measurement: 'lx'
+    filters:
+      - multiply: 0.000001
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 21
+
+  - platform: template
+    name: 'Humidity ${soil_sensor_device_id}'
+    id: 'humidity_${soil_sensor_device_id}'
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: '%RH'
+    device_class: humidity
+    web_server:
+      sorting_group_id: sg_readings_${soil_sensor_device_id}
+      sorting_weight: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: template
+    name: 'Temperature ${soil_sensor_device_id}'
+    id: temperature_${soil_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: '°C'
+    device_class: temperature
+    web_server:
+      sorting_group_id: sg_readings_${soil_sensor_device_id}
+      sorting_weight: 2
+    filters:
+      - multiply: 0.1
+
+  - platform: template
+    name: 'Conductivity_${soil_sensor_device_id}'
+    id: conductivity_${soil_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: 'µS/cm'
+    web_server:
+      sorting_group_id: sg_readings_${soil_sensor_device_id}
+      sorting_weight: 3
+
+  - platform: template
+    name: 'pH_${soil_sensor_device_id}'
+    id: ph_${soil_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 1
+    unit_of_measurement: 'pH'
+    web_server:
+      sorting_group_id: sg_readings_${soil_sensor_device_id}
+      sorting_weight: 4
+    filters:
+      - multiply: 0.1
+
+  - platform: template
+    name: 'Nitrogen_${soil_sensor_device_id}'
+    id: nitrogen_${soil_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: 'mg/kg'
+    web_server:
+      sorting_group_id: sg_readings_${soil_sensor_device_id}
+      sorting_weight: 5
+
+  - platform: template
+    name: 'Phosphorus_${soil_sensor_device_id}'
+    id: phosphorus_${soil_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: 'mg/kg'
+    web_server:
+      sorting_group_id: sg_readings_${soil_sensor_device_id}
+      sorting_weight: 6
+
+  - platform: template
+    name: 'Potassium_${soil_sensor_device_id}'
+    id: potassium_${soil_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: 'mg/kg'
+    web_server:
+      sorting_group_id: sg_readings_${soil_sensor_device_id}
+      sorting_weight: 7
+
+  - platform: template
+    name: 'Salinity_${soil_sensor_device_id}'
+    id: salinity_${soil_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: 'mg/L'
+    web_server:
+      sorting_group_id: sg_readings_${soil_sensor_device_id}
+      sorting_weight: 8
+
+  - platform: template
+    name: 'TDS_${soil_sensor_device_id}'
+    id: tds_${soil_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: 'mg/L'
+    web_server:
+      sorting_group_id: sg_readings_${soil_sensor_device_id}
+      sorting_weight: 9
+
+  - platform: template
+    name: 'BMP Temperature ${air_sensor_device_id}'
+    id: bmp_temp_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '°C'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 1
+
+  - platform: template
+    name: 'BMP Pressure ${air_sensor_device_id}'
+    id: bmp_press_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: 'hPa'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 2
+
+  - platform: template
+    name: 'SI Temperature ${air_sensor_device_id}'
+    id: si_temp_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '°C'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 3
+
+  - platform: template
+    name: 'SI Humidity ${air_sensor_device_id}'
+    id: si_hum_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 5
+    unit_of_measurement: '%'
+    filters:
+      - multiply: 0.00001
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 4
+
+  - platform: template
+    name: 'CCS eCO2 ${air_sensor_device_id}'
+    id: ccs_eco2_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: 'ppm'
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 5
+
+  - platform: template
+    name: 'CCS TVOC ${air_sensor_device_id}'
+    id: ccs_tvoc_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: 'ppb'
+    web_server:
+      sorting_group_id: sg_readings_${air_sensor_device_id}
+      sorting_weight: 6
+
+number:
+  - platform: template
+    name: 'ATime'
+    id: atime_${spectral_sensor_device_id}
+    min_value: 0.0
+    max_value: 255
+    step: 1.0
+    optimistic: true
+    web_server:
+      sorting_group_id: sg_settings_${spectral_sensor_device_id}
+      sorting_weight: 2
+
+  - platform: template
+    name: 'AStep'
+    id: astep_${spectral_sensor_device_id}
+    min_value: 0.0
+    max_value: 65534
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${spectral_sensor_device_id}
+      sorting_weight: 3
+
+  - platform: template
+    name: 'Gain'
+    id: gain_${spectral_sensor_device_id}
+    min_value: 0.0
+    max_value: 12.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${spectral_sensor_device_id}
+      sorting_weight: 4
+
+  - platform: template
+    name: 'Conductivity Factor ${soil_sensor_device_id}'
+    id: cond_f_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 100.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 2
+
+  - platform: template
+    name: 'Salinity Factor ${soil_sensor_device_id}'
+    id: sal_f_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 100.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 3
+
+  - platform: template
+    name: 'TDS Factor ${soil_sensor_device_id}'
+    id: tds_f_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 100.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 4
+
+  - platform: template
+    name: 'Temperature Offset ${soil_sensor_device_id}'
+    id: temp_offset_${soil_sensor_device_id}
+    min_value: -10.0
+    max_value: 10.0
+    step: 0.1
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 5
+
+  - platform: template
+    name: 'Humidity Offset ${soil_sensor_device_id}'
+    id: hum_offset_${soil_sensor_device_id}
+    min_value: -10.0
+    max_value: 10.0
+    step: 0.1
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 6
+
+  - platform: template
+    name: 'Conductivity Offset ${soil_sensor_device_id}'
+    id: cond_offset_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 7
+
+  - platform: template
+    name: 'pH Offset ${soil_sensor_device_id}'
+    id: ph_offset_${soil_sensor_device_id}
+    min_value: -10.0
+    max_value: 10.0
+    step: 0.1
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 8
+
+  - platform: template
+    name: 'Nitrogen Factor High ${soil_sensor_device_id}'
+    id: n_f_high_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 9
+
+  - platform: template
+    name: 'Nitrogen Factor Low ${soil_sensor_device_id}'
+    id: n_f_low_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 10
+
+  - platform: template
+    name: 'Nitrogen Offset ${soil_sensor_device_id}'
+    id: n_offset_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 11
+
+  - platform: template
+    name: 'Phosphorus Factor High ${soil_sensor_device_id}'
+    id: p_f_high_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 12
+
+  - platform: template
+    name: 'Phosphorus Factor Low ${soil_sensor_device_id}'
+    id: p_f_low_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 13
+
+  - platform: template
+    name: 'Phosphorus Offset ${soil_sensor_device_id}'
+    id: p_offset_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 14
+
+  - platform: template
+    name: 'Potassium Factor High ${soil_sensor_device_id}'
+    id: k_f_high_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 15
+
+  - platform: template
+    name: 'Potassium Factor Low ${soil_sensor_device_id}'
+    id: k_f_low_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 16
+
+  - platform: template
+    name: 'Potassium Offset ${soil_sensor_device_id}'
+    id: k_offset_${soil_sensor_device_id}
+    min_value: 0.0
+    max_value: 1000.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 17
+
+  - platform: template
+    name: 'BMP Temperature Oversampling ${air_sensor_device_id}'
+    id: temp_index_${air_sensor_device_id}
+    min_value: 0.0
+    max_value: 4.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 2
+
+  - platform: template
+    name: 'BMP Pressure Oversampling ${air_sensor_device_id}'
+    id: press_index_${air_sensor_device_id}
+    min_value: 0.0
+    max_value: 4.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 3
+
+  - platform: template
+    name: 'IIR Filter ${air_sensor_device_id}'
+    id: iir_index_${air_sensor_device_id}
+    min_value: 0.0
+    max_value: 4.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 4
+button:
+  - platform: factory_reset
+    name: Restart with Factory Default Settings
+    entity_category: config
+
+  - platform: template
+    name: 'Ping Devices'
+    entity_category: config
+    on_press:
+      then:
+        #- script.execute: beReadyToReceiveMessage
+        - espnow.broadcast:
+            payload: 'ping'
+
+  - platform: template
+    name: 'Peers list'
+    entity_category: config
+    on_press:
+      then:
+        - lambda: |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_addresses)[i] != 0) {
+                    ESP_LOGI("main", "Index %d Peer: 0x%12llx Name: %d",i, id(peer_addresses)[i], id(peer_names)[i]);
+                }
+            }
+
+  - platform: template
+    name: 'Get cal. data ${spectral_sensor_device_id}'
+    entity_category: config
+    on_press:
+      then:
+        #- script.execute: beReadyToReceiveMessage
+        - script.execute:
+            id: requestCalResponse
+            device_id: ${spectral_sensor_device_id}
+    web_server:
+      sorting_group_id: sg_settings_${spectral_sensor_device_id}
+      sorting_weight: 1
+
+  - platform: template
+    name: 'Send cal. data ${spectral_sensor_device_id}'
+    entity_category: config
+    on_press:
+      then:
+        #- script.execute: beReadyToReceiveMessage
+        - script.execute: send_calibration_data_${spectral_sensor_device_id}
+    web_server:
+      sorting_group_id: sg_settings_${spectral_sensor_device_id}
+      sorting_weight: 6
+
+  - platform: template
+    name: 'Get cal. data ${soil_sensor_device_id}'
+    entity_category: config
+    on_press:
+      then:
+        - script.execute:
+            id: requestCalResponse
+            device_id: ${soil_sensor_device_id}
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 1
+
+  - platform: template
+    name: 'Send cal. data ${soil_sensor_device_id}'
+    entity_category: config
+    on_press:
+      then:
+        - script.execute: send_calibration_data_${soil_sensor_device_id}
+    web_server:
+      sorting_group_id: sg_settings_${soil_sensor_device_id}
+      sorting_weight: 18
+
+  - platform: template
+    name: 'Get cal. data ${air_sensor_device_id}'
+    entity_category: config
+    on_press:
+      then:
+        - script.execute:
+            id: requestCalResponse
+            device_id: ${air_sensor_device_id}
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 1
+
+  - platform: template
+    name: 'Send cal. data ${air_sensor_device_id}'
+    entity_category: config
+    on_press:
+      then:
+        - script.execute: send_calibration_data_${air_sensor_device_id}
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 6
+switch:
+  - platform: template
+    name: 'Write cal. dat to flash ${spectral_sensor_device_id}'
+    id: flash_${spectral_sensor_device_id}
+    restore_mode: ALWAYS_OFF # Start in the OFF state
+    optimistic: true # Optional: update state immediately
+    web_server:
+      sorting_group_id: sg_settings_${spectral_sensor_device_id}
+      sorting_weight: 5
+  - platform: template
+    name: 'Write cal. dat to flash ${air_sensor_device_id}'
+    id: flash_${air_sensor_device_id}
+    restore_mode: ALWAYS_OFF # Start in the OFF state
+    optimistic: true # Optional: update state immediately
+    web_server:
+      sorting_group_id: sg_settings_${air_sensor_device_id}
+      sorting_weight: 5
+
+espnow:
+  id: espnow_component
+  auto_add_peer: true
+  wifi_channel: !secret espnow_channel
+  predefined_peers:
+    - FF:FF:FF:FF:FF:FF
+  on_receive:
+    then:
+      - lambda: |-
+          if(packet.is_valid()){
+            // Convert the received data to a string
+            std::string received_string((char*)packet.get_payload(), packet.size);
+
+            ESP_LOGI("main", "Received data: %s", received_string.c_str());
+
+            // Peer
+            uint64_t peer = packet.peer;
+            ESP_LOGI("main", "Peer: 0x%12llx", peer);
+            
+            // Parse the received data
+            char buffer[241];
+
+            strncpy(buffer, received_string.c_str(), sizeof(buffer));
+            
+            
+
+            char* topic = strtok(buffer, ";");
+            char* value = strtok(nullptr, ";");
+            char* end = strtok(nullptr, ";");
+
+            
+            if(topic != nullptr){
+                if(value != nullptr){
+                    int value_int = atoi(value);
+                    //float value_float = atof(value);
+
+                    bool savedPeer = false;
+                    int sensor_id = 0;
+                    // Peer name
+                    for (int i = 0; i < 8; i++) {
+                      if (id(peer_addresses)[i] == peer) {
+                        savedPeer = true;
+                        sensor_id = id(peer_names)[i];
+                        break;
+                      }
+                    }
+                    if (savedPeer){
+                      //ESP_LOGI("main", "Peer already saved");
+                      ESP_LOGI("main", "Sensor ID: %d", sensor_id);
+                    }
+                    else{
+                      ESP_LOGW("main", "Recieved message is not from saved peer");
+                    }
+                    
+
+                    if (strcmp(topic, "pong") == 0 && end != nullptr){
+                        int end_int = atoi(end);
+                        if(end_int == 1){
+                          // Check if peer is already in the list
+                          bool peer_exists = false;
+                          for (int i = 0; i < 8; i++) {
+                              if (id(peer_addresses)[i] == peer) {
+                                  if(id(peer_names)[i] != value_int){
+                                    id(peer_names)[i] = value_int;
+                                  }
+                                  peer_exists = true;
+                                  break;
+                              }
+                          }
+
+                          bool peer_added = false;
+                          // If peer is not in the list, add it to the first available 0 position
+                          if (!peer_exists) {
+                              for (int i = 0; i < 8; i++) {
+                                  if (id(peer_addresses)[i] == 0) { // Check for an empty spot (0 indicates empty)
+                                      id(peer_addresses)[i] = peer;
+                                      id(peer_names)[i] = value_int;
+                                      peer_added = true;
+                                      break;
+                                  }
+                              }
+                              if (!peer_added) {
+                                  ESP_LOGW("main", "No more space for peers");
+                              }
+                          }
+                        }
+
+                        ESP_LOGI("main", "Response: Peer: 0x%12llx Name: %s", peer, value);
+                    }
+                    else if(sensor_id == ${spectral_sensor_device_id}){
+                        if (strcmp(topic, "f1") == 0) {
+                          id(f1_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f2") == 0) {
+                          id(f2_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "fz") == 0) {
+                          id(fz_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f3") == 0) {
+                          id(f3_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f4") == 0) {
+                          id(f4_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "fy") == 0) {
+                          id(fy_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f5") == 0) {
+                          id(f5_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "fxl") == 0) {
+                          id(fxl_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f6") == 0) {
+                          id(f6_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f7") == 0) {
+                          id(f7_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "f8") == 0) {
+                          id(f8_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "nir") == 0) {
+                          id(nir_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "clear") == 0) {
+                          id(clear_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "irradiance") == 0) {
+                          id(irradiance_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "irradiance_photopic") == 0) {
+                          id(irradiance_photopic_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "pffd") == 0) {
+                          id(pffd_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "saturation") == 0) {
+                          id(saturation_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "color_temperature") == 0) {
+                          id(color_temperature_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "par") == 0) {
+                          id(par_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "lux") == 0) {
+                          id(lux_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "lux2") == 0) {
+                          id(lux2_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "atime") == 0) {
+                          id(atime_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "astep") == 0) {
+                          id(astep_${spectral_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "gain") == 0) {
+                          id(gain_${spectral_sensor_device_id}).publish_state(value_int);
+                        }
+                    }
+                    else if(sensor_id == ${soil_sensor_device_id}){
+                        if (strcmp(topic, "humidity") == 0) {
+                          id(humidity_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "temperature") == 0) {
+                          id(temperature_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "conductivity") == 0) {
+                          id(conductivity_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "ph") == 0) {
+                          id(ph_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "nitrogen") == 0) {
+                          id(nitrogen_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "phosphorus") == 0) {
+                          id(phosphorus_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "potassium") == 0) {
+                          id(potassium_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "salinity") == 0) {
+                          id(salinity_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "tds") == 0) {
+                          id(tds_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "cond_f") == 0){
+                          id(cond_f_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "sal_f") == 0){
+                          id(sal_f_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "tds_f") == 0){
+                          id(tds_f_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "temp_offset") == 0){
+                          if(value_int > 32767){
+                            value_int = value_int - 65536; // 65536
+                          }
+                          id(temp_offset_${soil_sensor_device_id}).publish_state(value_int / 10.0);
+                        } else if(strcmp(topic, "hum_offset") == 0){
+                          if(value_int > 32767){
+                            value_int = value_int - 65536; // 65536
+                          }
+                          id(hum_offset_${soil_sensor_device_id}).publish_state(value_int / 10.0);
+                        } else if(strcmp(topic, "cond_offset") == 0){
+                          id(cond_offset_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "ph_offset") == 0){
+                          if(value_int > 32767){
+                            value_int = value_int - 65536; // 65536
+                          }
+                          id(ph_offset_${soil_sensor_device_id}).publish_state(value_int / 10.0);
+                        } else if(strcmp(topic, "n_f_high") == 0){
+                          id(n_f_high_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "n_f_low") == 0){
+                          id(n_f_low_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "n_offset") == 0){
+                          id(n_offset_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "p_f_high") == 0){
+                          id(p_f_high_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "p_f_low") == 0){
+                          id(p_f_low_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "p_offset") == 0){
+                          id(p_offset_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "k_f_high") == 0){
+                          id(k_f_high_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "k_f_low") == 0){
+                          id(k_f_low_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "k_offset") == 0){
+                          id(k_offset_${soil_sensor_device_id}).publish_state(value_int);
+                        }
+                    }
+                    else if(sensor_id == ${air_sensor_device_id}){
+                        if (strcmp(topic, "bmp_temp") == 0) {
+                          id(bmp_temp_${air_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "bmp_press") == 0) {
+                          id(bmp_press_${air_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "si_temp") == 0) {
+                          id(si_temp_${air_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "si_hum") == 0) {
+                          id(si_hum_${air_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "ccs_eco2") == 0) {
+                          id(ccs_eco2_${air_sensor_device_id}).publish_state(value_int);
+                        } else if (strcmp(topic, "ccs_tvoc") == 0) {
+                          id(ccs_tvoc_${air_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "temp_index") == 0){
+                          id(temp_index_${air_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "press_index") == 0){
+                          id(press_index_${air_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "iir_index") == 0){
+                          id(iir_index_${air_sensor_device_id}).publish_state(value_int);
+                        }
+                    }
+                    else{
+                        ESP_LOGW("main", "Unknown topic: %s", topic);
+                    }
+                }
+                else{ESP_LOGW("main", "Value is none");}
+            }
+            else{ESP_LOGW("main", "Topic is none");}
+
+          }
+          else{ESP_LOGW("main", "Invalid packet");}
+
+      - script.execute: handleOnRecieve
+
+script:
+  - id: send_calibration_data_${spectral_sensor_device_id}
+    then:
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${spectral_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("flash", id(flash_${spectral_sensor_device_id}).state);
+      - delay: 1000ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${spectral_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("atime", id(atime_${spectral_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${spectral_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("astep", id(astep_${spectral_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${spectral_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("gain", id(gain_${spectral_sensor_device_id}).state);
+  - id: beReadyToReceiveMessage
+    then:
+      - espnow.broadcast:
+          payload: 'hub;beReadyToReceiveMessage;'
+      - delay: 500ms
+  - id: requestCalResponse
+    parameters:
+      device_id: int
+    then:
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == device_id) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: 'getcalibration;'
+  - id: handleOnRecieve
+    then:
+      - logger.log: 'Received data'
+  - id: send_calibration_data_${soil_sensor_device_id}
+    then:
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("cond_f", id(cond_f_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("sal_f", id(sal_f_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("tds_f", id(tds_f_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("temp_offset", id(temp_offset_${soil_sensor_device_id}).state * 10);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("hum_offset", id(hum_offset_${soil_sensor_device_id}).state * 10);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("cond_offset", id(cond_offset_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("ph_offset", id(ph_offset_${soil_sensor_device_id}).state * 10);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("n_f_high", id(n_f_high_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("n_f_low", id(n_f_low_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("n_offset", id(n_offset_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("p_f_high", id(p_f_high_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("p_f_low", id(p_f_low_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("p_offset", id(p_offset_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("k_f_high", id(k_f_high_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("k_f_low", id(k_f_low_${soil_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${soil_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("k_offset", id(k_offset_${soil_sensor_device_id}).state);
+  - id: send_calibration_data_${air_sensor_device_id}
+    then:
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+              if (id(peer_names)[i] == ${air_sensor_device_id}) {
+                return id(peer_addresses)[i];
+              }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("flash", id(flash_${air_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${air_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("temp_index", id(temp_index_${air_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${air_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("press_index", id(press_index_${air_sensor_device_id}).state);
+      - delay: 500ms
+      - espnow.send:
+          mac_address: !lambda |-
+            for (int i = 0; i < 8; i++) {
+                if (id(peer_names)[i] == ${air_sensor_device_id}) {
+                    return id(peer_addresses)[i];
+                }
+            }
+            return 0;
+          payload: !lambda |-
+            return format_espnow_data_new("iir_index", id(iir_index_${air_sensor_device_id}).state);
