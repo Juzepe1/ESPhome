@@ -1,11 +1,21 @@
 esphome:
-  name: 290test2
-  friendly_name: 290test2
+  name: esp32-vision-master
 
   on_boot:
     priority: -1000
     then:
-      - script.execute: my_script
+      - script.execute:
+          id: eink_air_sensor_page
+          eCO2_value: 4258
+          TVOC_value: 45
+          pressure_value: 1025.8
+          temperature_value: -24.5
+          humidity_value: 45.5
+          eCO2_value_last: 0
+          TVOC_value_last: 0
+          pressure_value_last: 0
+          temperature_value_last: 0
+          humidity_value_last: 0
 
   includes:
     - components/XBitMaps/sprites.h
@@ -30,8 +40,40 @@ logger:
   baud_rate: 115200
   level: VERBOSE
 
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO21
+      inverted: true
+    name: 'Internal Button'
+    on_press:
+      then:
+        - script.execute:
+            id: eink_air_sensor_page
+            eCO2_value: 4258
+            TVOC_value: 45
+            pressure_value: 1025.8
+            temperature_value: -9.333
+            humidity_value: 45.5
+            eCO2_value_last: 0
+            TVOC_value_last: 0
+            pressure_value_last: 0
+            temperature_value_last: 0
+            humidity_value_last: 0
+
 script:
-  id: my_script
+  id: eink_air_sensor_page
+  parameters:
+    eCO2_value: int
+    TVOC_value: int
+    pressure_value: float
+    temperature_value: float
+    humidity_value: float
+    eCO2_value_last: int
+    TVOC_value_last: int
+    pressure_value_last: float
+    temperature_value_last: float
+    humidity_value_last: float
   then:
     - lambda: |-
         int padding = 5;
@@ -61,16 +103,6 @@ script:
         int line_y = title_y + small_padding;
 
         id(my_display).drawLine(0, line_y, width, line_y, BLACK);
-
-
-
-        int eCO2_value_last = 4585;
-        int TVOC_value_last = 1235;
-        float pressure_value_last = 1001.7;
-
-        int eCO2_value = 4586;
-        int TVOC_value = 1234;
-        float pressure_value = 1001.8;
 
         id(my_display).setFont(&FreeMonoBold12pt7b);
 
@@ -208,18 +240,17 @@ script:
         int thermometer_top_left_x = padding;
 
         // First draw a thermometer in the background, top centre
-        id(my_display).drawXBitmap(thermometer_top_left_x,                      // Left
-                            thermometer_top_left_y,                             // Top
-                            thermometer_bits,                                  // Image Data
-                            thermometer_width,                                 // Width
-                            thermometer_height,                                // Height
-                            BLACK); 
+        id(my_display).drawXBitmap(thermometer_top_left_x, thermometer_top_left_y, thermometer_bits, thermometer_width, thermometer_height, BLACK);
 
+        bool negative_temperature = false;
 
-        float temperature = 23.5;
-
+        if(temperature_value < 0){
+          negative_temperature = true;
+          temperature_value = abs(temperature_value);
+        }
+          
         char temperature_char[4];
-        sprintf(temperature_char, "%2.1f", temperature); 
+        sprintf(temperature_char, "%2.1f", temperature_value); 
         String temperature_string = String(temperature_char);
 
         id(my_display).setFont(&FreeMonoBold12pt7b);
@@ -230,6 +261,14 @@ script:
 
         int temperature_x = thermometer_top_left_x + thermometer_width + padding;
         int temperature_y = thermometer_top_left_y + thermometer_height * 0.48;
+
+        int minus_sign_x = temperature_x - 15;
+        int minus_sign_y = temperature_y;
+
+        if(negative_temperature){
+          id(my_display).setCursor(minus_sign_x, minus_sign_y);
+          id(my_display).print("-");
+        }
 
         id(my_display).setCursor(temperature_x, temperature_y);
         id(my_display).print(temperature_string);
@@ -253,17 +292,10 @@ script:
         int water_drop_top_left_x = width / 2 + padding;
         int water_drop_top_left_y = thermometer_top_left_y;
 
-        id(my_display).drawXBitmap(water_drop_top_left_x,                      // Left
-                            water_drop_top_left_y,                             // Top
-                            water_drop_bits,                                  // Image Data
-                            water_drop_width,                                 // Width
-                            water_drop_height,                                // Height
-                            BLACK);
-
-        float humidity = 45.5;
+        id(my_display).drawXBitmap(water_drop_top_left_x, water_drop_top_left_y, water_drop_bits, water_drop_width, water_drop_height, BLACK);
 
         char humidity_char[4];
-        sprintf(humidity_char, "%2.1f", humidity);
+        sprintf(humidity_char, "%2.1f", humidity_value);
         String humidity_string = String(humidity_char);
 
         id(my_display).setFont(&FreeMonoBold12pt7b);
@@ -289,25 +321,16 @@ script:
         id(my_display).setCursor(humidity_unit_x, humidity_unit_y);
         id(my_display).print(humidity_unit);
 
-        float temperature_last = 39.3;
-        float humidity_last = 45.1;
-
-        if(temperature > temperature_last){
+        if(temperature_value > temperature_value_last){
           id(my_display).drawXBitmap(temperature_x + temperature_string_width + padding, temperature_y - temperature_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
-        } else if(temperature < temperature_last){
+        } else if(temperature_value < temperature_value_last){
           id(my_display).drawXBitmap(temperature_x + temperature_string_width + padding, temperature_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
         }
 
-        if(humidity > humidity_last){
+        if(humidity_value > humidity_value_last){
           id(my_display).drawXBitmap(humidity_x + humidity_string_width + padding, humidity_y - humidity_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
-        } else if(humidity < humidity_last){
+        } else if(humidity_value < humidity_value_last){
           id(my_display).drawXBitmap(humidity_x + humidity_string_width + padding, humidity_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
         }
 
         id(my_display).update();
-
-# interval:
-#   - startup_delay: 5s
-#     interval: 10s
-#     then:
-#       - script.execute: my_script
