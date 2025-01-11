@@ -5,6 +5,7 @@ esphome:
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+    - components/XBitMaps/sprites.h
 
   on_boot:
     priority: -10000
@@ -15,6 +16,8 @@ esphome:
               id(espnow_component)->add_peer(id(peer_addresses)[i]);
             }
           }
+
+spi:
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -70,6 +73,9 @@ wifi:
 #   - platform: esphome
 #     password: !secret OTA_password # OTA password from secrets.yaml
 
+vision_master:
+  id: my_display
+
 external_components:
   - source:
       type: git
@@ -77,6 +83,11 @@ external_components:
       ref: d23346165e1baefd337ed805d3a211e5bead53af
     refresh: 1min
     components: [espnow]
+
+  - source: components
+    components:
+      - vision_master
+    refresh: 1min
 
 globals:
   - id: peer_addresses
@@ -507,6 +518,42 @@ sensor:
       sorting_group_id: sg_readings_${air_sensor_device_id}
       sorting_weight: 6
 
+  - platform: template
+    name: 'Last BMP Temperature ${air_sensor_device_id}'
+    id: bmp_temp_last_${air_sensor_device_id}
+    update_interval: never
+    internal: true
+
+  - platform: template
+    name: 'Last BMP Pressure ${air_sensor_device_id}'
+    id: bmp_press_last_${air_sensor_device_id}
+    update_interval: never
+    internal: true
+
+  - platform: template
+    name: 'Last SI Temperature ${air_sensor_device_id}'
+    id: si_temp_last_${air_sensor_device_id}
+    update_interval: never
+    internal: true
+
+  - platform: template
+    name: 'Last SI Humidity ${air_sensor_device_id}'
+    id: si_hum_last_${air_sensor_device_id}
+    update_interval: never
+    internal: true
+
+  - platform: template
+    name: 'Last CCS eCO2 ${air_sensor_device_id}'
+    id: eCO2_last_${air_sensor_device_id}
+    update_interval: never
+    internal: true
+
+  - platform: template
+    name: 'Last CCS TVOC ${air_sensor_device_id}'
+    id: TVOC_last_${air_sensor_device_id}
+    update_interval: never
+    internal: true
+
 number:
   - platform: template
     name: 'ATime'
@@ -880,6 +927,28 @@ switch:
     web_server:
       sorting_group_id: sg_settings_${air_sensor_device_id}
       sorting_weight: 5
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO21
+      inverted: true
+    name: 'Internal Button'
+    on_press:
+      then:
+        - script.execute:
+            id: eink_page_${air_sensor_device_id}
+            eCO2_value: !lambda return id(ccs_eco2_${air_sensor_device_id}).state;
+            TVOC_value: !lambda return id(ccs_tvoc_${air_sensor_device_id}).state;
+            pressure_value: !lambda return id(bmp_press_${air_sensor_device_id}).state;
+            temperature_value: !lambda return id(si_temp_${air_sensor_device_id}).state;
+            humidity_value: !lambda return id(si_hum_${air_sensor_device_id}).state;
+            eCO2_value_last: !lambda return id(eCO2_last_${air_sensor_device_id}).state;
+            TVOC_value_last: !lambda return id(TVOC_last_${air_sensor_device_id}).state;
+            pressure_value_last: !lambda return id(bmp_press_last_${air_sensor_device_id}).state;
+            temperature_value_last: !lambda return id(si_temp_last_${air_sensor_device_id}).state;
+            humidity_value_last: !lambda return id(si_hum_last_${air_sensor_device_id}).state;
+        - script.execute: update_last_values_${air_sensor_device_id}
 
 espnow:
   id: espnow_component
@@ -1409,3 +1478,301 @@ script:
             return 0;
           payload: !lambda |-
             return format_espnow_data_new("iir_index", id(iir_index_${air_sensor_device_id}).state);
+  - id: eink_page_${air_sensor_device_id}
+    parameters:
+      eCO2_value: int
+      TVOC_value: int
+      pressure_value: float
+      temperature_value: float
+      humidity_value: float
+      eCO2_value_last: int
+      TVOC_value_last: int
+      pressure_value_last: float
+      temperature_value_last: float
+      humidity_value_last: float
+    then:
+      - lambda: |-
+          //Log the values
+          ESP_LOGI("main", "eCO2: %d", eCO2_value);
+          ESP_LOGI("main", "TVOC: %d", TVOC_value);
+          ESP_LOGI("main", "Pressure: %f", pressure_value);
+          ESP_LOGI("main", "Temperature: %f", temperature_value);
+          ESP_LOGI("main", "Humidity: %f", humidity_value);
+          ESP_LOGI("main", "eCO2 last: %d", eCO2_value_last);
+          ESP_LOGI("main", "TVOC last: %d", TVOC_value_last);
+          ESP_LOGI("main", "Pressure last: %f", pressure_value_last);
+          ESP_LOGI("main", "Temperature last: %f", temperature_value_last);
+          ESP_LOGI("main", "Humidity last: %f", humidity_value_last);
+
+          bool negative_temperature = false;
+
+          if(temperature_value < 0){
+            negative_temperature = true;
+            temperature_value = abs(temperature_value);
+          }
+          int padding = 5;
+          int small_padding = 3;
+          int top_bottom_padding = 1;
+          int tvoc_padding_right = 20;
+
+          id(my_display).landscape();
+          id(my_display).clearMemory();
+          id(my_display).setTextWrap(false);
+
+          //id(my_display).setTextColor(BLACK);
+          //id(my_display).setBackgroundColor(WHITE);
+          const uint16_t width  = id(my_display).width();
+          const uint16_t height = id(my_display).height();
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          String title = "Air Sensor 2";
+          uint8_t title_height = id(my_display).getTextHeight(title);
+
+          int title_y = title_height + top_bottom_padding;
+
+          id(my_display).setCursor(padding, title_y);
+          id(my_display).print("Air Sensor 2");
+
+          int line_y = title_y + small_padding;
+
+          id(my_display).drawLine(0, line_y, width, line_y, BLACK);
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          char eCO2_char[4];
+          sprintf(eCO2_char, "%4d", eCO2_value);
+          String eCO2_string = String(eCO2_char);
+          if(eCO2_value == 2147483647){
+            eCO2_string = " nan";
+          }
+
+          char TVOC_char[4];
+          sprintf(TVOC_char, "%4d", TVOC_value);
+          String TVOC_string = String(TVOC_char);
+          if(TVOC_value == 2147483647){
+            TVOC_string = " nan";
+          }
+
+          char pressure_char[6];
+          sprintf(pressure_char, "%5.1f", pressure_value);
+          String pressure_string = String(pressure_char);
+
+
+          uint8_t eco2_string_height = id(my_display).getTextHeight(eCO2_string);
+          uint8_t tvoc_string_height = id(my_display).getTextHeight(TVOC_string);
+          uint8_t pressure_string_height = id(my_display).getTextHeight(pressure_string);
+
+          uint8_t max_string_height = max(eco2_string_height, max(tvoc_string_height, pressure_string_height));
+
+          uint8_t eco2_string_width = id(my_display).getTextWidth(eCO2_string);
+          uint8_t tvoc_string_width = id(my_display).getTextWidth(TVOC_string);
+          uint8_t pressure_string_width = id(my_display).getTextWidth(pressure_string);
+
+          id(my_display).setFont(&FreeMono9pt7b);
+
+          String eCO2_label = "eCO2";
+          String TVOC_label = "TVOC";
+          String pressure_label = "Press.";
+
+          uint8_t eco2_label_height = id(my_display).getTextHeight(eCO2_label);
+          uint8_t tvoc_label_height = id(my_display).getTextHeight(TVOC_label);
+          uint8_t pressure_label_height = id(my_display).getTextHeight(pressure_label);
+
+          uint8_t eco2_label_width = id(my_display).getTextWidth(eCO2_label);
+          uint8_t tvoc_label_width = id(my_display).getTextWidth(TVOC_label);
+          uint8_t pressure_label_width = id(my_display).getTextWidth(pressure_label);
+
+          uint8_t max_label_height = max(eco2_label_height, max(tvoc_label_height, pressure_label_height));
+
+          id(my_display).setFont(&FreeMono7pt7b);
+
+          String eCO2_unit = "ppm";
+          String TVOC_unit = "ppb";
+          String pressure_unit = "hPa";
+
+          uint8_t eco2_unit_height = id(my_display).getTextHeight(eCO2_unit);
+          uint8_t tvoc_unit_height = id(my_display).getTextHeight(TVOC_unit);
+          uint8_t pressure_unit_height = id(my_display).getTextHeight(pressure_unit);
+
+          uint8_t max_unit_height = max(eco2_unit_height, max(tvoc_unit_height, pressure_unit_height));
+
+          uint8_t eco2_unit_width = id(my_display).getTextWidth(eCO2_unit);
+          uint8_t tvoc_unit_width = id(my_display).getTextWidth(TVOC_unit);
+          uint8_t pressure_unit_width = id(my_display).getTextWidth(pressure_unit);
+
+          int pressure_x = width - pressure_string_width - padding - down_arrow_width;
+          int eCO2_x = 0;
+          int TVOC_x = ((pressure_x + (eCO2_x + eco2_string_width)) / 2) - ((tvoc_string_width) / 2);
+
+
+
+          int small_letter_diff_down = 2; // ppb p is under the line and b is above the line
+          int small_letter_diff_top = 3; // ppm m is under the line and p is above the line
+
+
+          int unit_y = height - top_bottom_padding - small_letter_diff_down;
+          int string_y = unit_y - max_unit_height - padding + small_letter_diff_top;
+          int label_y = string_y - max_string_height - padding;
+
+          id(my_display).setFont(&FreeMono7pt7b);
+
+          id(my_display).setCursor(eCO2_x + (eco2_string_width - eco2_unit_width) / 2, unit_y);
+          id(my_display).print(eCO2_unit);
+
+          id(my_display).setCursor(TVOC_x + (tvoc_string_width - tvoc_unit_width) / 2, unit_y);
+          id(my_display).print(TVOC_unit);
+
+          id(my_display).setCursor(pressure_x + (pressure_string_width - pressure_unit_width) / 2, unit_y);
+          id(my_display).print(pressure_unit);
+
+          id(my_display).setFont(&FreeMono9pt7b);
+
+          id(my_display).setCursor(eCO2_x + (eco2_string_width - eco2_label_width) / 2 , label_y);
+          id(my_display).print(eCO2_label);
+
+          id(my_display).setCursor(TVOC_x + (tvoc_string_width - tvoc_label_width) / 2, label_y);
+          id(my_display).print(TVOC_label);
+
+          id(my_display).setCursor(pressure_x + (pressure_string_width - pressure_label_width) / 2, label_y);
+          id(my_display).print(pressure_label);
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          id(my_display).setCursor(eCO2_x, string_y);
+          id(my_display).print(eCO2_string);
+
+          id(my_display).setCursor(TVOC_x, string_y);
+          id(my_display).print(TVOC_string);
+
+          id(my_display).setCursor(pressure_x, string_y);
+          id(my_display).print(pressure_string);
+
+          if(eCO2_value > eCO2_value_last){
+            id(my_display).drawXBitmap(eCO2_x+eco2_string_width+padding, string_y-max_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(eCO2_value < eCO2_value_last){
+            id(my_display).drawXBitmap(eCO2_x+eco2_string_width+padding,string_y-down_arrow_height,down_arrow_bits,down_arrow_width,down_arrow_height,BLACK);
+          }
+
+          if(TVOC_value > TVOC_value_last){
+            id(my_display).drawXBitmap(TVOC_x+tvoc_string_width+padding, string_y-max_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(TVOC_value < TVOC_value_last){
+            id(my_display).drawXBitmap(TVOC_x+tvoc_string_width+padding,string_y-down_arrow_height,down_arrow_bits,down_arrow_width,down_arrow_height,BLACK);
+          }
+
+          if(pressure_value > pressure_value_last){
+            id(my_display).drawXBitmap(pressure_x+pressure_string_width+padding, string_y-max_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(pressure_value < pressure_value_last){
+            id(my_display).drawXBitmap(pressure_x+pressure_string_width+padding,string_y-down_arrow_height,down_arrow_bits,down_arrow_width,down_arrow_height,BLACK);
+          }
+
+          // id(my_display).drawLine(0,unit_y , width, unit_y , BLACK);
+          // id(my_display).drawLine(0,label_y + padding , width, label_y + padding, BLACK);
+          // id(my_display).drawLine(0,label_y , width, label_y , BLACK);
+          // id(my_display).drawLine(0,string_y + padding , width , string_y + padding , BLACK);
+          // id(my_display).drawLine(0,string_y , width, string_y , BLACK);
+          // id(my_display).drawLine(0,label_y - max_label_height, width, label_y - max_label_height, BLACK);
+
+          // // Draw vertical line from top to bottom in the middle of the screen
+          // id(my_display).drawLine(width / 2, 0, width / 2, height, BLACK);
+
+          int thermometer_top_left_y = line_y + padding + 1;
+          int thermometer_top_left_x = padding;
+
+          // First draw a thermometer in the background, top centre
+          id(my_display).drawXBitmap(thermometer_top_left_x, thermometer_top_left_y, thermometer_bits, thermometer_width, thermometer_height, BLACK);
+
+          char temperature_char[4];
+          sprintf(temperature_char, "%2.1f", temperature_value); 
+          String temperature_string = String(temperature_char);
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          uint8_t temperature_string_height = id(my_display).getTextHeight(temperature_string);
+          uint8_t temperature_string_width = id(my_display).getTextWidth(temperature_string);
+
+
+          int temperature_x = thermometer_top_left_x + thermometer_width + padding;
+          int temperature_y = thermometer_top_left_y + thermometer_height * 0.48;
+
+          int minus_sign_x = temperature_x - 15;
+          int minus_sign_y = temperature_y;
+
+          if(negative_temperature){
+            id(my_display).setCursor(minus_sign_x, minus_sign_y);
+            id(my_display).print("-");
+          }
+
+          id(my_display).setCursor(temperature_x, temperature_y);
+          id(my_display).print(temperature_string);
+
+          id(my_display).setFont(&FreeSans7pt7b);
+
+          String temperature_unit = " C";
+          uint8_t temperature_unit_height = id(my_display).getTextHeight(temperature_unit);
+          uint8_t temperature_unit_width = id(my_display).getTextWidth(temperature_unit);
+
+          int temperature_unit_x = temperature_x + temperature_string_width / 2;
+          int temperature_unit_y = temperature_y + temperature_unit_height + padding;
+
+          id(my_display).setCursor(temperature_unit_x, temperature_unit_y);
+          id(my_display).print(temperature_unit);
+
+          //Draw degree symbol
+          id(my_display).drawCircle(temperature_unit_x + 1, temperature_unit_y - 7, 2, BLACK);
+
+          // water_drop
+          int water_drop_top_left_x = width / 2 + padding;
+          int water_drop_top_left_y = thermometer_top_left_y;
+
+          id(my_display).drawXBitmap(water_drop_top_left_x, water_drop_top_left_y, water_drop_bits, water_drop_width, water_drop_height, BLACK);
+
+          char humidity_char[4];
+          sprintf(humidity_char, "%2.1f", humidity_value);
+          String humidity_string = String(humidity_char);
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          uint8_t humidity_string_height = id(my_display).getTextHeight(humidity_string);
+          uint8_t humidity_string_width = id(my_display).getTextWidth(humidity_string);
+
+          int humidity_x = water_drop_top_left_x + water_drop_width + padding;
+          int humidity_y = temperature_y;
+
+          id(my_display).setCursor(humidity_x, humidity_y);
+          id(my_display).print(humidity_string);
+
+          id(my_display).setFont(&FreeSans7pt7b);
+
+          String humidity_unit = "%";
+          uint8_t humidity_unit_height = id(my_display).getTextHeight(humidity_unit);
+          uint8_t humidity_unit_width = id(my_display).getTextWidth(humidity_unit);
+
+          int humidity_unit_x = humidity_x + humidity_string_width / 2;
+          int humidity_unit_y = temperature_unit_y;
+
+          id(my_display).setCursor(humidity_unit_x, humidity_unit_y);
+          id(my_display).print(humidity_unit);
+
+          if(temperature_value > temperature_value_last){
+            id(my_display).drawXBitmap(temperature_x + temperature_string_width + padding, temperature_y - temperature_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(temperature_value < temperature_value_last){
+            id(my_display).drawXBitmap(temperature_x + temperature_string_width + padding, temperature_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
+          }
+
+          if(humidity_value > humidity_value_last){
+            id(my_display).drawXBitmap(humidity_x + humidity_string_width + padding, humidity_y - humidity_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(humidity_value < humidity_value_last){
+            id(my_display).drawXBitmap(humidity_x + humidity_string_width + padding, humidity_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
+          }
+
+          id(my_display).update();
+  - id: update_last_values_${air_sensor_device_id}
+    then:
+      - lambda: |-
+          id(eCO2_last_${air_sensor_device_id}).publish_state(id(ccs_eco2_${air_sensor_device_id}).state);
+          id(TVOC_last_${air_sensor_device_id}).publish_state(id(ccs_tvoc_${air_sensor_device_id}).state);
+          id(bmp_press_last_${air_sensor_device_id}).publish_state(id(bmp_press_${air_sensor_device_id}).state);
+          id(bmp_temp_last_${air_sensor_device_id}).publish_state(id(bmp_temp_${air_sensor_device_id}).state);
+          id(si_temp_last_${air_sensor_device_id}).publish_state(id(si_temp_${air_sensor_device_id}).state);
+          id(si_hum_last_${air_sensor_device_id}).publish_state(id(si_hum_${air_sensor_device_id}).state);
