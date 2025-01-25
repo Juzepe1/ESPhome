@@ -503,20 +503,16 @@ script:
           uint8_t max_unit_height = max(chemical_element_unit_height, max(tds_and_salinity_unit_height, conductivity_unit_height));
           uint8_t max_unit_width = max(chemical_element_unit_width, max(tds_and_salinity_unit_width, conductivity_unit_width));
 
-          // int unit_x = width - max_unit_width - top_bottom_left_right_padding;
-          // int string_x = unit_x - max_string_width - padding;
-          // int label_x = string_x - max_label_width - padding; 
-
           int label_x = 0; //top_bottom_left_right_padding;
           int string_x = label_x + max_label_width + padding;
           int unit_x = string_x + max_string_width + padding;
 
-            int salinity_y = height - top_bottom_left_right_padding;
-            int tds_y = salinity_y - max_string_height - padding;
-            int conductivity_y = tds_y - max_string_height - padding;
-            int potassium_y = conductivity_y - max_string_height - padding;
-            int phosphorus_y = potassium_y - max_string_height - padding;
-            int nitrogen_y = phosphorus_y - max_string_height - padding;
+          int salinity_y = height - top_bottom_left_right_padding;
+          int tds_y = salinity_y - max_string_height - padding;
+          int conductivity_y = tds_y - max_string_height - padding;
+          int potassium_y = conductivity_y - max_string_height - padding;
+          int phosphorus_y = potassium_y - max_string_height - padding;
+          int nitrogen_y = phosphorus_y - max_string_height - padding;
 
           id(my_display).setFont(&Picopixel);
 
@@ -540,23 +536,23 @@ script:
 
           id(my_display).setFont(&FreeMono9pt7b);
 
-            id(my_display).setCursor(label_x+(max_label_width/2 - potassium_label_width/2), potassium_y);
-            id(my_display).print(potassium_label);
+          id(my_display).setCursor(label_x+(max_label_width/2 - potassium_label_width/2), potassium_y);
+          id(my_display).print(potassium_label);
 
-            id(my_display).setCursor(label_x+(max_label_width/2 - phosphorus_label_width/2), phosphorus_y);
-            id(my_display).print(phosphorus_label);
+          id(my_display).setCursor(label_x+(max_label_width/2 - phosphorus_label_width/2), phosphorus_y);
+          id(my_display).print(phosphorus_label);
 
-            id(my_display).setCursor(label_x+(max_label_width/2 - nitrogen_label_width/2), nitrogen_y);
-            id(my_display).print(nitrogen_label);
+          id(my_display).setCursor(label_x+(max_label_width/2 - nitrogen_label_width/2), nitrogen_y);
+          id(my_display).print(nitrogen_label);
 
-            id(my_display).setCursor(label_x+(max_label_width/2 - conductivity_label_width/2), conductivity_y);
-            id(my_display).print(conductivity_label);
+          id(my_display).setCursor(label_x+(max_label_width/2 - conductivity_label_width/2), conductivity_y);
+          id(my_display).print(conductivity_label);
 
-            id(my_display).setCursor(label_x+(max_label_width/2 - tds_label_width/2), tds_y);
-            id(my_display).print(tds_label);
+          id(my_display).setCursor(label_x+(max_label_width/2 - tds_label_width/2), tds_y);
+          id(my_display).print(tds_label);
 
-            id(my_display).setCursor(label_x+(max_label_width/2 - salinity_label_width/2), salinity_y);
-            id(my_display).print(salinity_label);
+          id(my_display).setCursor(label_x+(max_label_width/2 - salinity_label_width/2), salinity_y);
+          id(my_display).print(salinity_label);
 
           id(my_display).setFont(&FreeMonoBold9pt7b);
 
@@ -581,9 +577,6 @@ script:
 
           int left_side_x = unit_x + max_unit_width;
           // Right side of the screen
-
-
-
           char ph_char[4];
           sprintf(ph_char, "%2.1f", ph_value);
           String ph_string = String(ph_char);
@@ -600,13 +593,10 @@ script:
           uint8_t ph_label_height = id(my_display).getTextHeight(ph_label);
           uint8_t ph_label_width = id(my_display).getTextWidth(ph_label);
 
-
           int ph_width = ph_string_width + 2 * padding + ph_label_width;
 
           int ph_string_x = left_side_x + (width - left_side_x) / 2 - ph_width / 2;
           int ph_label_x = ph_string_x + ph_string_width + 2*padding;
-
-
 
           int ph_y = height - top_bottom_left_right_padding - ph_string_height/2;
 
@@ -620,98 +610,92 @@ script:
           id(my_display).setCursor(ph_string_x, ph_y);
           id(my_display).print(ph_string);
 
-            // Right-Top part of the screen
+          // Right-Top part of the screen
+          int thermometer_small_top_left_y = line_y + padding + 3;
+          int thermometer_small_top_left_x = left_side_x + 2*padding;
 
-            int thermometer_small_top_left_y = line_y + padding + 1;
-            int thermometer_small_top_left_x = left_side_x + 2*padding;
+          // First draw a small thermometer in the background, top centre
+          id(my_display).drawXBitmap(thermometer_small_top_left_x, thermometer_small_top_left_y, thermometer_small_bits, thermometer_small_width, thermometer_small_height, BLACK);
 
-            // First draw a small thermometer in the background, top centre
-            id(my_display).drawXBitmap(thermometer_small_top_left_x, thermometer_small_top_left_y, thermometer_small_bits, thermometer_small_width, thermometer_small_height, BLACK);
+          bool negative_temperature = false;
 
-            bool negative_temperature = false;
+          if(temperature_value < 0){
+          negative_temperature = true;
+          temperature_value = abs(temperature_value);
+          }
 
-            if(temperature_value < 0){
-            negative_temperature = true;
-            temperature_value = abs(temperature_value);
-            }
-            
-            char temperature_char[4];
-            sprintf(temperature_char, "%2.1f", temperature_value); 
-            String temperature_string = String(temperature_char);
+          char temperature_char[4];
+          sprintf(temperature_char, "%2.1f", temperature_value); 
+          String temperature_string = String(temperature_char);
 
-            id(my_display).setFont(&FreeMonoBold12pt7b);
+          id(my_display).setFont(&FreeMonoBold12pt7b);
 
-            uint8_t temperature_string_height = id(my_display).getTextHeight(temperature_string);
-            uint8_t temperature_string_width = id(my_display).getTextWidth(temperature_string);
+          uint8_t temperature_string_height = id(my_display).getTextHeight(temperature_string);
+          uint8_t temperature_string_width = id(my_display).getTextWidth(temperature_string);
 
-            int temperature_x = thermometer_small_top_left_x + thermometer_small_width + padding;
-            int temperature_y = thermometer_small_top_left_y + thermometer_small_height/2 + temperature_string_height/2;
+          int temperature_x = thermometer_small_top_left_x + thermometer_small_width + padding;
+          int temperature_y = thermometer_small_top_left_y + thermometer_small_height/2 + temperature_string_height/2;
 
-            int minus_sign_x = temperature_x - 12;
-            int minus_sign_y = temperature_y-2;
+          int minus_sign_x = temperature_x - 12;
+          int minus_sign_y = temperature_y-2;
 
-            if(negative_temperature){
-            id(my_display).setFont(&FreeMonoBold9pt7b);
-            id(my_display).setCursor(minus_sign_x, minus_sign_y);
-            id(my_display).print("-");
-            }
+          if(negative_temperature){
+          id(my_display).setFont(&FreeMonoBold9pt7b);
+          id(my_display).setCursor(minus_sign_x, minus_sign_y);
+          id(my_display).print("-");
+          }
 
-            id(my_display).setFont(&FreeMonoBold12pt7b);
+          id(my_display).setFont(&FreeMonoBold12pt7b);
 
-            id(my_display).setCursor(temperature_x, temperature_y);
-            id(my_display).print(temperature_string);
+          id(my_display).setCursor(temperature_x, temperature_y);
+          id(my_display).print(temperature_string);
 
-            id(my_display).setFont(&FreeSans7pt7b);
+          id(my_display).setFont(&FreeSans7pt7b);
 
-            String temperature_unit = " C";
-            uint8_t temperature_unit_height = id(my_display).getTextHeight(temperature_unit);
-            uint8_t temperature_unit_width = id(my_display).getTextWidth(temperature_unit);
+          String temperature_unit = " C";
+          uint8_t temperature_unit_height = id(my_display).getTextHeight(temperature_unit);
+          uint8_t temperature_unit_width = id(my_display).getTextWidth(temperature_unit);
 
-            int temperature_unit_x = temperature_x + temperature_string_width + 2*padding;
-            int temperature_unit_y = temperature_y - temperature_string_height/2 + temperature_unit_height/2;
+          int temperature_unit_x = temperature_x + temperature_string_width + 2*padding;
+          int temperature_unit_y = temperature_y - temperature_string_height/2 + temperature_unit_height/2;
 
-            id(my_display).setCursor(temperature_unit_x, temperature_unit_y);
-            id(my_display).print(temperature_unit);
+          id(my_display).setCursor(temperature_unit_x, temperature_unit_y);
+          id(my_display).print(temperature_unit);
 
           //Draw degree symbol
           id(my_display).drawCircle(temperature_unit_x + 1, temperature_unit_y - 7, 2, BLACK);
 
-            // water_drop_small
-            int water_drop_small_top_left_x = thermometer_small_top_left_x;
-            int water_drop_small_top_left_y = thermometer_small_top_left_y + thermometer_small_height + padding;
+          // water_drop_small
+          int water_drop_small_top_left_x = thermometer_small_top_left_x;
+          int water_drop_small_top_left_y = thermometer_small_top_left_y + thermometer_small_height + padding;
 
-            id(my_display).drawXBitmap(water_drop_small_top_left_x, water_drop_small_top_left_y, water_drop_small_bits, water_drop_small_width, water_drop_small_height, BLACK);
+          id(my_display).drawXBitmap(water_drop_small_top_left_x, water_drop_small_top_left_y, water_drop_small_bits, water_drop_small_width, water_drop_small_height, BLACK);
 
-            char humidity_char[4];
-            sprintf(humidity_char, "%2.1f", humidity_value);
-            String humidity_string = String(humidity_char);
+          char humidity_char[4];
+          sprintf(humidity_char, "%2.1f", humidity_value);
+          String humidity_string = String(humidity_char);
 
-            id(my_display).setFont(&FreeMonoBold12pt7b);
+          id(my_display).setFont(&FreeMonoBold12pt7b);
 
-            uint8_t humidity_string_height = id(my_display).getTextHeight(humidity_string);
-            uint8_t humidity_string_width = id(my_display).getTextWidth(humidity_string);
+          uint8_t humidity_string_height = id(my_display).getTextHeight(humidity_string);
+          uint8_t humidity_string_width = id(my_display).getTextWidth(humidity_string);
 
-            int humidity_x = temperature_x;
-            int humidity_y = water_drop_small_top_left_y + water_drop_small_height/2 + humidity_string_height/2;
+          int humidity_x = temperature_x;
+          int humidity_y = water_drop_small_top_left_y + water_drop_small_height/2 + humidity_string_height/2;
 
-            id(my_display).setCursor(humidity_x, humidity_y);
-            id(my_display).print(humidity_string);
+          id(my_display).setCursor(humidity_x, humidity_y);
+          id(my_display).print(humidity_string);
 
-            id(my_display).setFont(&FreeSans7pt7b);
+          id(my_display).setFont(&FreeSans7pt7b);
 
-            String humidity_unit = "%";
-            uint8_t humidity_unit_height = id(my_display).getTextHeight(humidity_unit);
-            uint8_t humidity_unit_width = id(my_display).getTextWidth(humidity_unit);
+          String humidity_unit = "%";
+          uint8_t humidity_unit_height = id(my_display).getTextHeight(humidity_unit);
+          uint8_t humidity_unit_width = id(my_display).getTextWidth(humidity_unit);
 
-            int humidity_unit_x = humidity_x + humidity_string_width + 2*padding;
-            int humidity_unit_y = humidity_y - humidity_string_height/2 + humidity_unit_height/2;
+          int humidity_unit_x = humidity_x + humidity_string_width + 2*padding;
+          int humidity_unit_y = humidity_y - humidity_string_height/2 + humidity_unit_height/2;
 
-            id(my_display).setCursor(humidity_unit_x, humidity_unit_y);
-            id(my_display).print(humidity_unit);
-
-            ESP_LOGD("main", "line_y: %d", line_y);
-            ESP_LOGD("main", "ph_y: %d", ph_y-ph_string_height);
-
-
+          id(my_display).setCursor(humidity_unit_x, humidity_unit_y);
+          id(my_display).print(humidity_unit);
 
           id(my_display).update();
