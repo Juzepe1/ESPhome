@@ -1558,14 +1558,23 @@ script:
           char eCO2_char[9];
           sprintf(eCO2_char, "%4d", eCO2_value);
           String eCO2_string = String(eCO2_char);
+          if(eCO2_value > 9999 || eCO2_value < 0){
+            eCO2_string = "nan";
+          }
 
           char TVOC_char[9];
           sprintf(TVOC_char, "%4d", TVOC_value);
           String TVOC_string = String(TVOC_char);
+          if(TVOC_value > 9999 || TVOC_value < 0){
+            TVOC_string = "nan";
+          }
 
           char pressure_char[10];
           sprintf(pressure_char, "%5.1f", pressure_value);
           String pressure_string = String(pressure_char);
+          if(pressure_value > 9999 || pressure_value < 0){
+            pressure_string = "nan";
+          }
 
 
           uint8_t eco2_string_height = id(my_display).getTextHeight(eCO2_string);
@@ -1702,6 +1711,9 @@ script:
           char temperature_char[4];
           sprintf(temperature_char, "%2.1f", temperature_value_new); 
           String temperature_string = String(temperature_char);
+          if(temperature_value > 99.9 || temperature_value < -99.9){
+            temperature_string = "nan";
+          }
 
           id(my_display).setFont(&FreeMonoBold12pt7b);
 
@@ -1747,6 +1759,9 @@ script:
           char humidity_char[4];
           sprintf(humidity_char, "%2.1f", humidity_value);
           String humidity_string = String(humidity_char);
+          if(humidity_value > 99.9 || humidity_value < 0){
+            humidity_string = "nan";
+          }
 
           id(my_display).setFont(&FreeMonoBold12pt7b);
 
@@ -1832,26 +1847,44 @@ script:
           char nitrogen_char[5];
           sprintf(nitrogen_char, "%5d", nitrogen_value);
           String nitrogen_string = String(nitrogen_char);
+          if (nitrogen_value > 99999 || nitrogen_value < 0) {
+            nitrogen_string = "nan";
+          }
 
           char phosphorus_char[5];
           sprintf(phosphorus_char, "%5d", phosphorus_value);
           String phosphorus_string = String(phosphorus_char);
+          if (phosphorus_value > 99999 || phosphorus_value < 0) {
+            phosphorus_string = "nan";
+          }
 
           char potassium_char[5];
           sprintf(potassium_char, "%5d", potassium_value);
           String potassium_string = String(potassium_char);
+          if (potassium_value > 99999 || potassium_value < 0) {
+            potassium_string = "nan";
+          }
 
           char conductivity_char[5];
           sprintf(conductivity_char, "%5d", conductivity_value);
           String conductivity_string = String(conductivity_char);
+          if (conductivity_value > 99999 || conductivity_value < 0) {
+            conductivity_string = "nan";
+          }
 
           char tds_char[5];
           sprintf(tds_char, "%5d", tds_value);
           String tds_string = String(tds_char);
+          if (tds_value > 99999 || tds_value < 0) {
+            tds_string = "nan";
+          }
 
           char salinity_char[5];
           sprintf(salinity_char, "%5d", salinity_value);
           String salinity_string = String(salinity_char);
+          if (salinity_value > 99999 || salinity_value < 0) {
+            salinity_string = "nan";
+          }
 
           id(my_display).setFont(&FreeMonoBold9pt7b);
 
@@ -2000,6 +2033,9 @@ script:
           char ph_char[4];
           sprintf(ph_char, "%2.1f", ph_value);
           String ph_string = String(ph_char);
+          if (ph_value > 14 || ph_value < 0) {
+            ph_string = "nan";
+          }
 
           id(my_display).setFont(&FreeMonoBold12pt7b);
 
@@ -2048,6 +2084,9 @@ script:
           char temperature_char[4];
           sprintf(temperature_char, "%2.1f", temperature_value_new); 
           String temperature_string = String(temperature_char);
+          if (temperature_value > 99.9 || temperature_value < -99.9) {
+          temperature_string = "nan";
+          }
 
           id(my_display).setFont(&FreeMonoBold12pt7b);
 
@@ -2095,6 +2134,9 @@ script:
           char humidity_char[4];
           sprintf(humidity_char, "%2.1f", humidity_value);
           String humidity_string = String(humidity_char);
+          if (humidity_value > 100 || humidity_value < 0) {
+          humidity_string = "nan";
+          }
 
           id(my_display).setFont(&FreeMonoBold12pt7b);
 
