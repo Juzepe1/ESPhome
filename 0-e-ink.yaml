@@ -11,19 +11,13 @@ esphome:
           humidity_value: 45.5
           humidity_value_last: 0
           conductivity_value: 19999
-          conductivity_value_last: 0
           ph_value: 13.5
           ph_value_last: 0
           nitrogen_value: 2999
-          nitrogen_value_last: 0
           phosphorus_value: 1258
-          phosphorus_value_last: 0
           potassium_value: 1458
-          potassium_value_last: 0
           salinity_value: 9999
-          salinity_value_last: 0
           tds_value: 5000
-          tds_value_last: 0
 
   includes:
     - components/XBitMaps/sprites.h
@@ -56,38 +50,34 @@ binary_sensor:
     name: 'Internal Button'
     on_press:
       then:
-        # - script.execute:
-        #     id: eink_air_sensor_page
-        #     eCO2_value: 4258
-        #     TVOC_value: 45
-        #     pressure_value: 1025.8
-        #     temperature_value: -9.333
-        #     humidity_value: 45.5
-        #     eCO2_value_last: 0
-        #     TVOC_value_last: 0
-        #     pressure_value_last: 0
-        #     temperature_value_last: 0
-        #     humidity_value_last: 0
+        - script.execute:
+            id: eink_air_sensor_page
+            eCO2_value: 4258
+            TVOC_value: 45
+            pressure_value: 1025.8
+            temperature_value: -9.333
+            humidity_value: 45.5
+            eCO2_value_last: 0
+            TVOC_value_last: 0
+            pressure_value_last: 0
+            temperature_value_last: 0
+            humidity_value_last: 0
+
+        - delay: 5s
         - script.execute:
             id: eink_soil_sensor_page
             temperature_value: -24.5
             temperature_value_last: 0
             humidity_value: 45.5
-            humidity_value_last: 0
+            humidity_value_last: 90
             conductivity_value: 19999
-            conductivity_value_last: 0
-            ph_value: 13.5
-            ph_value_last: 0
+            ph_value: 11.5
+            ph_value_last: 13.3
             nitrogen_value: 2999
-            nitrogen_value_last: 0
             phosphorus_value: 1258
-            phosphorus_value_last: 0
             potassium_value: 1458
-            potassium_value_last: 0
             salinity_value: 9999
-            salinity_value_last: 0
             tds_value: 5000
-            tds_value_last: 0
 
 script:
   - id: eink_air_sensor_page
@@ -272,13 +262,14 @@ script:
 
           bool negative_temperature = false;
 
+          float temperature_value_new = temperature_value;
           if(temperature_value < 0){
             negative_temperature = true;
-            temperature_value = abs(temperature_value);
+            temperature_value_new = abs(temperature_value);
           }
             
           char temperature_char[4];
-          sprintf(temperature_char, "%2.1f", temperature_value); 
+          sprintf(temperature_char, "%2.1f", temperature_value_new); 
           String temperature_string = String(temperature_char);
 
           id(my_display).setFont(&FreeMonoBold12pt7b);
@@ -369,19 +360,13 @@ script:
       humidity_value: float
       humidity_value_last: float
       conductivity_value: int
-      conductivity_value_last: int
       ph_value: float
       ph_value_last: float
       nitrogen_value: int
-      nitrogen_value_last: int
       phosphorus_value: int
-      phosphorus_value_last: int
       potassium_value: int
-      potassium_value_last: int
       salinity_value: int
-      salinity_value_last: int
       tds_value: int
-      tds_value_last: int
     then:
       - lambda: |-
           int padding = 5;
@@ -503,9 +488,13 @@ script:
           uint8_t max_unit_height = max(chemical_element_unit_height, max(tds_and_salinity_unit_height, conductivity_unit_height));
           uint8_t max_unit_width = max(chemical_element_unit_width, max(tds_and_salinity_unit_width, conductivity_unit_width));
 
-          int label_x = 0; //top_bottom_left_right_padding;
-          int string_x = label_x + max_label_width + padding;
-          int unit_x = string_x + max_string_width + padding;
+          // int label_x = 0; //top_bottom_left_right_padding;
+          // int string_x = label_x + max_label_width + padding;
+          // int unit_x = string_x + max_string_width + padding;
+
+          int unit_x = width - max_unit_width; //- top_bottom_left_right_padding;
+          int string_x = unit_x - max_string_width - padding;
+          int label_x = string_x - max_label_width - padding;
 
           int salinity_y = height - top_bottom_left_right_padding;
           int tds_y = salinity_y - max_string_height - padding;
@@ -575,7 +564,7 @@ script:
           id(my_display).print(salinity_string);
 
 
-          int left_side_x = unit_x + max_unit_width;
+          int right_side_x = label_x;
           // Right side of the screen
           char ph_char[4];
           sprintf(ph_char, "%2.1f", ph_value);
@@ -593,10 +582,10 @@ script:
           uint8_t ph_label_height = id(my_display).getTextHeight(ph_label);
           uint8_t ph_label_width = id(my_display).getTextWidth(ph_label);
 
-          int ph_width = ph_string_width + 2 * padding + ph_label_width;
+          int ph_width = ph_string_width + 3 * padding + ph_label_width;
 
-          int ph_string_x = left_side_x + (width - left_side_x) / 2 - ph_width / 2;
-          int ph_label_x = ph_string_x + ph_string_width + 2*padding;
+          int ph_string_x = right_side_x/2 - ph_width/2;
+          int ph_label_x = ph_string_x + ph_string_width + 3*padding;
 
           int ph_y = height - top_bottom_left_right_padding - ph_string_height/2;
 
@@ -612,20 +601,21 @@ script:
 
           // Right-Top part of the screen
           int thermometer_small_top_left_y = line_y + padding + 3;
-          int thermometer_small_top_left_x = left_side_x + 2*padding;
+          int thermometer_small_top_left_x = padding;
 
           // First draw a small thermometer in the background, top centre
           id(my_display).drawXBitmap(thermometer_small_top_left_x, thermometer_small_top_left_y, thermometer_small_bits, thermometer_small_width, thermometer_small_height, BLACK);
 
           bool negative_temperature = false;
 
+          float temperature_value_new = temperature_value;
           if(temperature_value < 0){
           negative_temperature = true;
-          temperature_value = abs(temperature_value);
+          temperature_value_new = abs(temperature_value);
           }
 
           char temperature_char[4];
-          sprintf(temperature_char, "%2.1f", temperature_value); 
+          sprintf(temperature_char, "%2.1f", temperature_value_new); 
           String temperature_string = String(temperature_char);
 
           id(my_display).setFont(&FreeMonoBold12pt7b);
@@ -656,7 +646,7 @@ script:
           uint8_t temperature_unit_height = id(my_display).getTextHeight(temperature_unit);
           uint8_t temperature_unit_width = id(my_display).getTextWidth(temperature_unit);
 
-          int temperature_unit_x = temperature_x + temperature_string_width + 2*padding;
+          int temperature_unit_x = temperature_x + temperature_string_width + 3*padding;
           int temperature_unit_y = temperature_y - temperature_string_height/2 + temperature_unit_height/2;
 
           id(my_display).setCursor(temperature_unit_x, temperature_unit_y);
@@ -692,10 +682,32 @@ script:
           uint8_t humidity_unit_height = id(my_display).getTextHeight(humidity_unit);
           uint8_t humidity_unit_width = id(my_display).getTextWidth(humidity_unit);
 
-          int humidity_unit_x = humidity_x + humidity_string_width + 2*padding;
+          int humidity_unit_x = humidity_x + humidity_string_width + 3*padding;
           int humidity_unit_y = humidity_y - humidity_string_height/2 + humidity_unit_height/2;
 
           id(my_display).setCursor(humidity_unit_x, humidity_unit_y);
           id(my_display).print(humidity_unit);
+
+          //Draw line between the two parts
+          //id(my_display).drawLine(right_side_x-padding, line_y,  right_side_x-padding, height, BLACK);
+
+
+          if(temperature_value > temperature_value_last){
+          id(my_display).drawXBitmap(temperature_x + temperature_string_width+ + padding, temperature_y - temperature_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(temperature_value < temperature_value_last){
+          id(my_display).drawXBitmap(temperature_x + temperature_string_width + padding, temperature_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
+          }
+
+          if(humidity_value > humidity_value_last){
+          id(my_display).drawXBitmap(humidity_x + humidity_string_width + padding, humidity_y - humidity_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(humidity_value < humidity_value_last){
+          id(my_display).drawXBitmap(humidity_x + humidity_string_width + padding, humidity_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
+          }
+
+          if(ph_value > ph_value_last){
+          id(my_display).drawXBitmap(ph_string_x + ph_string_width + padding, ph_y - ph_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(ph_value < ph_value_last){
+          id(my_display).drawXBitmap(ph_string_x + ph_string_width + padding, ph_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
+          }
 
           id(my_display).update();

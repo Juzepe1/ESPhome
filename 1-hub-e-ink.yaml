@@ -554,6 +554,24 @@ sensor:
     update_interval: never
     internal: true
 
+  - platform: template
+    name: 'Last Temperature ${soil_sensor_device_id}'
+    id: temperature_last_${soil_sensor_device_id}
+    update_interval: never
+    internal: true
+
+  - platform: template
+    name: 'Last Humidity ${soil_sensor_device_id}'
+    id: humidity_last_${soil_sensor_device_id}
+    update_interval: never
+    internal: true
+
+  - platform: template
+    name: 'Last pH ${soil_sensor_device_id}'
+    id: ph_last_${soil_sensor_device_id}
+    update_interval: never
+    internal: true
+
 number:
   - platform: template
     name: 'ATime'
@@ -936,19 +954,34 @@ binary_sensor:
     name: 'Internal Button'
     on_press:
       then:
+        # - script.execute:
+        #     id: eink_page_${air_sensor_device_id}
+        #     eCO2_value: !lambda return id(ccs_eco2_${air_sensor_device_id}).state;
+        #     TVOC_value: !lambda return id(ccs_tvoc_${air_sensor_device_id}).state;
+        #     pressure_value: !lambda return id(bmp_press_${air_sensor_device_id}).state;
+        #     temperature_value: !lambda return id(si_temp_${air_sensor_device_id}).state;
+        #     humidity_value: !lambda return id(si_hum_${air_sensor_device_id}).state;
+        #     eCO2_value_last: !lambda return id(eCO2_last_${air_sensor_device_id}).state;
+        #     TVOC_value_last: !lambda return id(TVOC_last_${air_sensor_device_id}).state;
+        #     pressure_value_last: !lambda return id(bmp_press_last_${air_sensor_device_id}).state;
+        #     temperature_value_last: !lambda return id(si_temp_last_${air_sensor_device_id}).state;
+        #     humidity_value_last: !lambda return id(si_hum_last_${air_sensor_device_id}).state;
+        # - script.execute: update_last_values_${air_sensor_device_id}
         - script.execute:
-            id: eink_page_${air_sensor_device_id}
-            eCO2_value: !lambda return id(ccs_eco2_${air_sensor_device_id}).state;
-            TVOC_value: !lambda return id(ccs_tvoc_${air_sensor_device_id}).state;
-            pressure_value: !lambda return id(bmp_press_${air_sensor_device_id}).state;
-            temperature_value: !lambda return id(si_temp_${air_sensor_device_id}).state;
-            humidity_value: !lambda return id(si_hum_${air_sensor_device_id}).state;
-            eCO2_value_last: !lambda return id(eCO2_last_${air_sensor_device_id}).state;
-            TVOC_value_last: !lambda return id(TVOC_last_${air_sensor_device_id}).state;
-            pressure_value_last: !lambda return id(bmp_press_last_${air_sensor_device_id}).state;
-            temperature_value_last: !lambda return id(si_temp_last_${air_sensor_device_id}).state;
-            humidity_value_last: !lambda return id(si_hum_last_${air_sensor_device_id}).state;
-        - script.execute: update_last_values_${air_sensor_device_id}
+            id: eink_page_${soil_sensor_device_id}
+            temperature_value: !lambda return id(temperature_${soil_sensor_device_id}).state;
+            humidity_value: !lambda return id(humidity_${soil_sensor_device_id}).state;
+            conductivity_value: !lambda return id(conductivity_${soil_sensor_device_id}).state;
+            ph_value: !lambda return id(ph_${soil_sensor_device_id}).state;
+            nitrogen_value: !lambda return id(nitrogen_${soil_sensor_device_id}).state;
+            phosphorus_value: !lambda return id(phosphorus_${soil_sensor_device_id}).state;
+            potassium_value: !lambda return id(potassium_${soil_sensor_device_id}).state;
+            salinity_value: !lambda return id(salinity_${soil_sensor_device_id}).state;
+            tds_value: !lambda return id(tds_${soil_sensor_device_id}).state;
+            temperature_value_last: !lambda return id(temperature_last_${soil_sensor_device_id}).state;
+            humidity_value_last: !lambda return id(humidity_last_${soil_sensor_device_id}).state;
+            ph_value_last: !lambda return id(ph_last_${soil_sensor_device_id}).state;
+        - script.execute: update_last_values_${soil_sensor_device_id}
 
 espnow:
   id: espnow_component
@@ -1492,24 +1525,6 @@ script:
       humidity_value_last: float
     then:
       - lambda: |-
-          //Log the values
-          ESP_LOGI("main", "eCO2: %d", eCO2_value);
-          ESP_LOGI("main", "TVOC: %d", TVOC_value);
-          ESP_LOGI("main", "Pressure: %f", pressure_value);
-          ESP_LOGI("main", "Temperature: %f", temperature_value);
-          ESP_LOGI("main", "Humidity: %f", humidity_value);
-          ESP_LOGI("main", "eCO2 last: %d", eCO2_value_last);
-          ESP_LOGI("main", "TVOC last: %d", TVOC_value_last);
-          ESP_LOGI("main", "Pressure last: %f", pressure_value_last);
-          ESP_LOGI("main", "Temperature last: %f", temperature_value_last);
-          ESP_LOGI("main", "Humidity last: %f", humidity_value_last);
-
-          bool negative_temperature = false;
-
-          if(temperature_value < 0){
-            negative_temperature = true;
-            temperature_value = abs(temperature_value);
-          }
           int padding = 5;
           int small_padding = 3;
           int top_bottom_padding = 1;
@@ -1540,21 +1555,15 @@ script:
 
           id(my_display).setFont(&FreeMonoBold12pt7b);
 
-          char eCO2_char[4];
+          char eCO2_char[9];
           sprintf(eCO2_char, "%4d", eCO2_value);
           String eCO2_string = String(eCO2_char);
-          if(eCO2_value == 2147483647){
-            eCO2_string = " nan";
-          }
 
-          char TVOC_char[4];
+          char TVOC_char[9];
           sprintf(TVOC_char, "%4d", TVOC_value);
           String TVOC_string = String(TVOC_char);
-          if(TVOC_value == 2147483647){
-            TVOC_string = " nan";
-          }
 
-          char pressure_char[6];
+          char pressure_char[10];
           sprintf(pressure_char, "%5.1f", pressure_value);
           String pressure_string = String(pressure_char);
 
@@ -1682,8 +1691,16 @@ script:
           // First draw a thermometer in the background, top centre
           id(my_display).drawXBitmap(thermometer_top_left_x, thermometer_top_left_y, thermometer_bits, thermometer_width, thermometer_height, BLACK);
 
+          bool negative_temperature = false;
+
+          float temperature_value_new = temperature_value;
+          if(temperature_value < 0){
+            negative_temperature = true;
+            temperature_value_new = abs(temperature_value);
+          }
+            
           char temperature_char[4];
-          sprintf(temperature_char, "%2.1f", temperature_value); 
+          sprintf(temperature_char, "%2.1f", temperature_value_new); 
           String temperature_string = String(temperature_char);
 
           id(my_display).setFont(&FreeMonoBold12pt7b);
@@ -1767,6 +1784,365 @@ script:
           }
 
           id(my_display).update();
+  - id: eink_page_${soil_sensor_device_id}
+    parameters:
+      temperature_value: float
+      temperature_value_last: float
+      humidity_value: float
+      humidity_value_last: float
+      conductivity_value: int
+      ph_value: float
+      ph_value_last: float
+      nitrogen_value: int
+      phosphorus_value: int
+      potassium_value: int
+      salinity_value: int
+      tds_value: int
+    then:
+      - lambda: |-
+          int padding = 5;
+          int small_padding = 3;
+          int top_bottom_left_right_padding = 1;
+
+          id(my_display).landscape();
+          id(my_display).clearMemory();
+          id(my_display).setTextWrap(false);
+
+          //id(my_display).setTextColor(BLACK);
+          //id(my_display).setBackgroundColor(WHITE);
+          const uint16_t width  = id(my_display).width();
+          const uint16_t height = id(my_display).height();
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          String title = "Soil Sensor 1";
+          uint8_t title_height = id(my_display).getTextHeight(title);
+
+          int title_y = title_height + top_bottom_left_right_padding;
+
+          id(my_display).setCursor(padding, title_y);
+          id(my_display).print("Soil Sensor 1");
+
+          int line_y = title_y + small_padding;
+
+          id(my_display).drawLine(0, line_y, width, line_y, BLACK);
+
+          // Right side of the screen
+
+          char nitrogen_char[5];
+          sprintf(nitrogen_char, "%5d", nitrogen_value);
+          String nitrogen_string = String(nitrogen_char);
+
+          char phosphorus_char[5];
+          sprintf(phosphorus_char, "%5d", phosphorus_value);
+          String phosphorus_string = String(phosphorus_char);
+
+          char potassium_char[5];
+          sprintf(potassium_char, "%5d", potassium_value);
+          String potassium_string = String(potassium_char);
+
+          char conductivity_char[5];
+          sprintf(conductivity_char, "%5d", conductivity_value);
+          String conductivity_string = String(conductivity_char);
+
+          char tds_char[5];
+          sprintf(tds_char, "%5d", tds_value);
+          String tds_string = String(tds_char);
+
+          char salinity_char[5];
+          sprintf(salinity_char, "%5d", salinity_value);
+          String salinity_string = String(salinity_char);
+
+          id(my_display).setFont(&FreeMonoBold9pt7b);
+
+
+          uint8_t nitrogen_string_height = id(my_display).getTextHeight(nitrogen_string);
+          uint8_t phosphorus_string_height = id(my_display).getTextHeight(phosphorus_string);
+          uint8_t potassium_string_height = id(my_display).getTextHeight(potassium_string);
+          uint8_t conductivity_string_height = id(my_display).getTextHeight(conductivity_string);
+          uint8_t tds_string_height = id(my_display).getTextHeight(tds_string);
+          uint8_t salinity_string_height = id(my_display).getTextHeight(salinity_string);
+
+          uint8_t max_string_height = max(nitrogen_string_height, max(phosphorus_string_height, max(potassium_string_height, max(conductivity_string_height, max(tds_string_height, salinity_string_height)))));
+
+
+          uint8_t nitrogen_string_width = id(my_display).getTextWidth(nitrogen_string);
+          uint8_t phosphorus_string_width = id(my_display).getTextWidth(phosphorus_string);
+          uint8_t potassium_string_width = id(my_display).getTextWidth(potassium_string);
+          uint8_t conductivity_string_width = id(my_display).getTextWidth(conductivity_string);
+          uint8_t tds_string_width = id(my_display).getTextWidth(tds_string);
+          uint8_t salinity_string_width = id(my_display).getTextWidth(salinity_string);
+
+          uint8_t max_string_width = max(nitrogen_string_width, max(phosphorus_string_width, max(potassium_string_width, max(conductivity_string_width, max(tds_string_width, salinity_string_width)))));
+
+          id(my_display).setFont(&FreeMono9pt7b);
+
+          String nitrogen_label = "N";
+          String phosphorus_label = "P";
+          String potassium_label = "K";
+          String conductivity_label = "EC";
+          String tds_label = "TDS";
+          String salinity_label = "Sal";
+
+          uint8_t nitrogen_label_height = id(my_display).getTextHeight(nitrogen_label);
+          uint8_t phosphorus_label_height = id(my_display).getTextHeight(phosphorus_label);
+          uint8_t potassium_label_height = id(my_display).getTextHeight(potassium_label);
+          uint8_t conductivity_label_height = id(my_display).getTextHeight(conductivity_label);
+          uint8_t tds_label_height = id(my_display).getTextHeight(tds_label);
+          uint8_t salinity_label_height = id(my_display).getTextHeight(salinity_label);
+
+          uint8_t nitrogen_label_width = id(my_display).getTextWidth(nitrogen_label);
+          uint8_t phosphorus_label_width = id(my_display).getTextWidth(phosphorus_label);
+          uint8_t potassium_label_width = id(my_display).getTextWidth(potassium_label);
+          uint8_t conductivity_label_width = id(my_display).getTextWidth(conductivity_label);
+          uint8_t tds_label_width = id(my_display).getTextWidth(tds_label);
+          uint8_t salinity_label_width = id(my_display).getTextWidth(salinity_label);
+
+          uint8_t max_label_height = max(nitrogen_label_height, max(phosphorus_label_height, max(potassium_label_height, max(conductivity_label_height, max(tds_label_height, salinity_label_height)))));
+          uint8_t max_label_width = max(nitrogen_label_width, max(phosphorus_label_width, max(potassium_label_width, max(conductivity_label_width, max(tds_label_width, salinity_label_width)))));
+
+          id(my_display).setFont(&Picopixel);
+
+          String chemical_element_unit = "mg/kg";
+          String tds_and_salinity_unit = "mg/L";
+          String conductivity_unit = "uS/cm";
+
+          uint8_t chemical_element_unit_height = id(my_display).getTextHeight(chemical_element_unit);
+          uint8_t chemical_element_unit_width = id(my_display).getTextWidth(chemical_element_unit);
+
+          uint8_t tds_and_salinity_unit_height = id(my_display).getTextHeight(tds_and_salinity_unit);
+          uint8_t tds_and_salinity_unit_width = id(my_display).getTextWidth(tds_and_salinity_unit);
+
+          uint8_t conductivity_unit_height = id(my_display).getTextHeight(conductivity_unit);
+          uint8_t conductivity_unit_width = id(my_display).getTextWidth(conductivity_unit);
+
+          uint8_t max_unit_height = max(chemical_element_unit_height, max(tds_and_salinity_unit_height, conductivity_unit_height));
+          uint8_t max_unit_width = max(chemical_element_unit_width, max(tds_and_salinity_unit_width, conductivity_unit_width));
+
+          // int label_x = 0; //top_bottom_left_right_padding;
+          // int string_x = label_x + max_label_width + padding;
+          // int unit_x = string_x + max_string_width + padding;
+
+          int unit_x = width - max_unit_width; //- top_bottom_left_right_padding;
+          int string_x = unit_x - max_string_width - padding;
+          int label_x = string_x - max_label_width - padding;
+
+          int salinity_y = height - top_bottom_left_right_padding;
+          int tds_y = salinity_y - max_string_height - padding;
+          int conductivity_y = tds_y - max_string_height - padding;
+          int potassium_y = conductivity_y - max_string_height - padding;
+          int phosphorus_y = potassium_y - max_string_height - padding;
+          int nitrogen_y = phosphorus_y - max_string_height - padding;
+
+          id(my_display).setFont(&Picopixel);
+
+          id(my_display).setCursor(unit_x, potassium_y - max_string_height/2 + chemical_element_unit_height/2);
+          id(my_display).print(chemical_element_unit);
+
+          id(my_display).setCursor(unit_x, phosphorus_y - max_string_height/2 + chemical_element_unit_height/2);
+          id(my_display).print(chemical_element_unit);
+
+          id(my_display).setCursor(unit_x, nitrogen_y - max_string_height/2 + chemical_element_unit_height/2);
+          id(my_display).print(chemical_element_unit);
+
+          id(my_display).setCursor(unit_x, conductivity_y - max_string_height/2 + conductivity_unit_height/2);
+          id(my_display).print(conductivity_unit);
+
+          id(my_display).setCursor(unit_x, tds_y - max_string_height/2 + tds_and_salinity_unit_height/2);
+          id(my_display).print(tds_and_salinity_unit);
+
+          id(my_display).setCursor(unit_x, salinity_y - max_string_height/2 + tds_and_salinity_unit_height/2);
+          id(my_display).print(tds_and_salinity_unit);
+
+          id(my_display).setFont(&FreeMono9pt7b);
+
+          id(my_display).setCursor(label_x+(max_label_width/2 - potassium_label_width/2), potassium_y);
+          id(my_display).print(potassium_label);
+
+          id(my_display).setCursor(label_x+(max_label_width/2 - phosphorus_label_width/2), phosphorus_y);
+          id(my_display).print(phosphorus_label);
+
+          id(my_display).setCursor(label_x+(max_label_width/2 - nitrogen_label_width/2), nitrogen_y);
+          id(my_display).print(nitrogen_label);
+
+          id(my_display).setCursor(label_x+(max_label_width/2 - conductivity_label_width/2), conductivity_y);
+          id(my_display).print(conductivity_label);
+
+          id(my_display).setCursor(label_x+(max_label_width/2 - tds_label_width/2), tds_y);
+          id(my_display).print(tds_label);
+
+          id(my_display).setCursor(label_x+(max_label_width/2 - salinity_label_width/2), salinity_y);
+          id(my_display).print(salinity_label);
+
+          id(my_display).setFont(&FreeMonoBold9pt7b);
+
+          id(my_display).setCursor(string_x, potassium_y);
+          id(my_display).print(potassium_string);
+
+          id(my_display).setCursor(string_x, phosphorus_y);
+          id(my_display).print(phosphorus_string);
+
+          id(my_display).setCursor(string_x, nitrogen_y);
+          id(my_display).print(nitrogen_string);
+
+          id(my_display).setCursor(string_x, conductivity_y);
+          id(my_display).print(conductivity_string);
+
+          id(my_display).setCursor(string_x, tds_y);
+          id(my_display).print(tds_string);
+
+          id(my_display).setCursor(string_x, salinity_y);
+          id(my_display).print(salinity_string);
+
+
+          int right_side_x = label_x;
+          // Right side of the screen
+          char ph_char[4];
+          sprintf(ph_char, "%2.1f", ph_value);
+          String ph_string = String(ph_char);
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          uint8_t ph_string_height = id(my_display).getTextHeight(ph_string);
+          uint8_t ph_string_width = id(my_display).getTextWidth(ph_string);
+
+          String ph_label = "pH";
+
+          id(my_display).setFont(&FreeMono9pt7b);
+
+          uint8_t ph_label_height = id(my_display).getTextHeight(ph_label);
+          uint8_t ph_label_width = id(my_display).getTextWidth(ph_label);
+
+          int ph_width = ph_string_width + 3 * padding + ph_label_width;
+
+          int ph_string_x = right_side_x/2 - ph_width/2;
+          int ph_label_x = ph_string_x + ph_string_width + 3*padding;
+
+          int ph_y = height - top_bottom_left_right_padding - ph_string_height/2;
+
+          id(my_display).setFont(&FreeMono9pt7b);
+
+          id(my_display).setCursor(ph_label_x, ph_y - ph_string_height/2 + ph_label_height/2);
+          id(my_display).print(ph_label);
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          id(my_display).setCursor(ph_string_x, ph_y);
+          id(my_display).print(ph_string);
+
+          // Right-Top part of the screen
+          int thermometer_small_top_left_y = line_y + padding + 3;
+          int thermometer_small_top_left_x = padding;
+
+          // First draw a small thermometer in the background, top centre
+          id(my_display).drawXBitmap(thermometer_small_top_left_x, thermometer_small_top_left_y, thermometer_small_bits, thermometer_small_width, thermometer_small_height, BLACK);
+
+          bool negative_temperature = false;
+
+          float temperature_value_new = temperature_value;
+          if(temperature_value < 0){
+          negative_temperature = true;
+          temperature_value_new = abs(temperature_value);
+          }
+
+          char temperature_char[4];
+          sprintf(temperature_char, "%2.1f", temperature_value_new); 
+          String temperature_string = String(temperature_char);
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          uint8_t temperature_string_height = id(my_display).getTextHeight(temperature_string);
+          uint8_t temperature_string_width = id(my_display).getTextWidth(temperature_string);
+
+          int temperature_x = thermometer_small_top_left_x + thermometer_small_width + padding;
+          int temperature_y = thermometer_small_top_left_y + thermometer_small_height/2 + temperature_string_height/2;
+
+          int minus_sign_x = temperature_x - 12;
+          int minus_sign_y = temperature_y-2;
+
+          if(negative_temperature){
+          id(my_display).setFont(&FreeMonoBold9pt7b);
+          id(my_display).setCursor(minus_sign_x, minus_sign_y);
+          id(my_display).print("-");
+          }
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          id(my_display).setCursor(temperature_x, temperature_y);
+          id(my_display).print(temperature_string);
+
+          id(my_display).setFont(&FreeSans7pt7b);
+
+          String temperature_unit = " C";
+          uint8_t temperature_unit_height = id(my_display).getTextHeight(temperature_unit);
+          uint8_t temperature_unit_width = id(my_display).getTextWidth(temperature_unit);
+
+          int temperature_unit_x = temperature_x + temperature_string_width + 3*padding;
+          int temperature_unit_y = temperature_y - temperature_string_height/2 + temperature_unit_height/2;
+
+          id(my_display).setCursor(temperature_unit_x, temperature_unit_y);
+          id(my_display).print(temperature_unit);
+
+          //Draw degree symbol
+          id(my_display).drawCircle(temperature_unit_x + 1, temperature_unit_y - 7, 2, BLACK);
+
+          // water_drop_small
+          int water_drop_small_top_left_x = thermometer_small_top_left_x;
+          int water_drop_small_top_left_y = thermometer_small_top_left_y + thermometer_small_height + padding;
+
+          id(my_display).drawXBitmap(water_drop_small_top_left_x, water_drop_small_top_left_y, water_drop_small_bits, water_drop_small_width, water_drop_small_height, BLACK);
+
+          char humidity_char[4];
+          sprintf(humidity_char, "%2.1f", humidity_value);
+          String humidity_string = String(humidity_char);
+
+          id(my_display).setFont(&FreeMonoBold12pt7b);
+
+          uint8_t humidity_string_height = id(my_display).getTextHeight(humidity_string);
+          uint8_t humidity_string_width = id(my_display).getTextWidth(humidity_string);
+
+          int humidity_x = temperature_x;
+          int humidity_y = water_drop_small_top_left_y + water_drop_small_height/2 + humidity_string_height/2;
+
+          id(my_display).setCursor(humidity_x, humidity_y);
+          id(my_display).print(humidity_string);
+
+          id(my_display).setFont(&FreeSans7pt7b);
+
+          String humidity_unit = "%";
+          uint8_t humidity_unit_height = id(my_display).getTextHeight(humidity_unit);
+          uint8_t humidity_unit_width = id(my_display).getTextWidth(humidity_unit);
+
+          int humidity_unit_x = humidity_x + humidity_string_width + 3*padding;
+          int humidity_unit_y = humidity_y - humidity_string_height/2 + humidity_unit_height/2;
+
+          id(my_display).setCursor(humidity_unit_x, humidity_unit_y);
+          id(my_display).print(humidity_unit);
+
+          //Draw line between the two parts
+          //id(my_display).drawLine(right_side_x-padding, line_y,  right_side_x-padding, height, BLACK);
+
+
+          if(temperature_value > temperature_value_last){
+          id(my_display).drawXBitmap(temperature_x + temperature_string_width+ + padding, temperature_y - temperature_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(temperature_value < temperature_value_last){
+          id(my_display).drawXBitmap(temperature_x + temperature_string_width + padding, temperature_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
+          }
+
+          if(humidity_value > humidity_value_last){
+          id(my_display).drawXBitmap(humidity_x + humidity_string_width + padding, humidity_y - humidity_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(humidity_value < humidity_value_last){
+          id(my_display).drawXBitmap(humidity_x + humidity_string_width + padding, humidity_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
+          }
+
+          if(ph_value > ph_value_last){
+          id(my_display).drawXBitmap(ph_string_x + ph_string_width + padding, ph_y - ph_string_height, up_arrow_bits, up_arrow_width, up_arrow_height, BLACK);
+          } else if(ph_value < ph_value_last){
+          id(my_display).drawXBitmap(ph_string_x + ph_string_width + padding, ph_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
+          }
+
+          id(my_display).update();
+
   - id: update_last_values_${air_sensor_device_id}
     then:
       - lambda: |-
@@ -1776,3 +2152,10 @@ script:
           id(bmp_temp_last_${air_sensor_device_id}).publish_state(id(bmp_temp_${air_sensor_device_id}).state);
           id(si_temp_last_${air_sensor_device_id}).publish_state(id(si_temp_${air_sensor_device_id}).state);
           id(si_hum_last_${air_sensor_device_id}).publish_state(id(si_hum_${air_sensor_device_id}).state);
+
+  - id: update_last_values_${soil_sensor_device_id}
+    then:
+      - lambda: |-
+          id(temperature_last_${soil_sensor_device_id}).publish_state(id(temperature_${soil_sensor_device_id}).state);
+          id(humidity_last_${soil_sensor_device_id}).publish_state(id(humidity_${soil_sensor_device_id}).state);
+          id(ph_last_${soil_sensor_device_id}).publish_state(id(ph_${soil_sensor_device_id}).state);
