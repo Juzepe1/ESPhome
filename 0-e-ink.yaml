@@ -4,20 +4,40 @@ esphome:
   on_boot:
     priority: -1000
     then:
+      # - script.execute:
+      #     id: eink_soil_sensor_page
+      #     temperature_value: 24.5
+      #     temperature_value_last: 0
+      #     humidity_value: 45.5
+      #     humidity_value_last: 0
+      #     conductivity_value: 19999
+      #     ph_value: 13.5
+      #     ph_value_last: 0
+      #     nitrogen_value: 2999
+      #     phosphorus_value: 1258
+      #     potassium_value: 1458
+      #     salinity_value: 9999
+      #     tds_value: 5000
+
       - script.execute:
-          id: eink_soil_sensor_page
-          temperature_value: 24.5
-          temperature_value_last: 0
-          humidity_value: 45.5
-          humidity_value_last: 0
-          conductivity_value: 19999
-          ph_value: 13.5
-          ph_value_last: 0
-          nitrogen_value: 2999
-          phosphorus_value: 1258
-          potassium_value: 1458
-          salinity_value: 9999
-          tds_value: 5000
+          id: eink_spectral_sensor_page
+          f1_value: 10
+          f2_value: 5
+          fz_value: 100
+          f3_value: 1
+          f4_value: 16
+          fy_value: 21.38634
+          f5_value: 45.56
+          fxl_value: 39.04
+          f6_value: 55.4
+          f7_value: 32
+          f8_value: 13
+          nir_value: 5.5
+          irradiance_value: 84523.987
+          par_value: 9834.83
+          ppfd_value: 0.828046
+          lux_value: 14.451061
+          cct_value: 3119.495605
 
   includes:
     - components/XBitMaps/sprites.h
@@ -709,5 +729,294 @@ script:
           } else if(ph_value < ph_value_last){
           id(my_display).drawXBitmap(ph_string_x + ph_string_width + padding, ph_y - down_arrow_height, down_arrow_bits, down_arrow_width, down_arrow_height, BLACK);
           }
+
+          id(my_display).update();
+  - id: eink_spectral_sensor_page
+    parameters:
+      f1_value: float
+      f2_value: float
+      fz_value: float
+      f3_value: float
+      f4_value: float
+      fy_value: float
+      f5_value: float
+      fxl_value: float
+      f6_value: float
+      f7_value: float
+      f8_value: float
+      nir_value: float
+      irradiance_value: float
+      par_value: float
+      ppfd_value: float
+      lux_value: float
+      cct_value: float
+
+    then:
+      - lambda: |-
+          int big_padding = 7;
+          int padding = 5;
+          int small_padding = 3;
+          int top_bottom_left_right_padding = 1;
+
+          id(my_display).landscape();
+          id(my_display).clearMemory();
+          id(my_display).setTextWrap(false);
+
+          //id(my_display).setTextColor(BLACK);
+          //id(my_display).setBackgroundColor(WHITE);
+          const uint16_t width  = id(my_display).width();
+          const uint16_t height = id(my_display).height();
+
+          id(my_display).setFont(&FreeMonoBold9pt7b);
+
+          String title = "Spectral Sensor 1";
+          uint8_t title_height = id(my_display).getTextHeight(title);
+
+          int title_y = title_height + top_bottom_left_right_padding;
+
+          id(my_display).setCursor(padding, title_y);
+          id(my_display).print(title);
+
+          int line_y = title_y + small_padding;
+
+          id(my_display).drawLine(0, line_y, width, line_y, BLACK);
+
+          // Left side of the screen
+
+          auto format_value = [](float value) -> String {
+            if (value >= 10000) {
+              char buf[10];
+              sprintf(buf, "%5.0f", value);
+              return String(buf);
+            } else if (value >= 1000) {
+              char buf[10];
+              sprintf(buf, "%4.1f", value);
+              return String(buf);
+            } else if (value >= 100) {
+              char buf[10];
+              sprintf(buf, "%3.2f", value);
+              return String(buf);
+            } else if (value >= 10) {
+              char buf[10];
+              sprintf(buf, "%2.3f", value);
+              return String(buf);
+            } else {
+              char buf[10];
+              sprintf(buf, "%1.4f", value);
+              return String(buf);
+            }
+          };
+
+
+          String irradiance_string = format_value(irradiance_value);
+
+          String par_string = format_value(par_value);
+
+          String ppfd_string = format_value(ppfd_value);
+
+          String lux_string = format_value(lux_value);
+
+          char cct_char[10];
+          sprintf(cct_char, "%5.0f", cct_value); // CCT typically displayed as an integer
+          String cct_string = String(cct_char);
+
+          id(my_display).setFont(&FreeMonoBold9pt7b);
+
+          uint8_t irradiance_string_height = id(my_display).getTextHeight(irradiance_string);
+          uint8_t par_string_height = id(my_display).getTextHeight(par_string);
+          uint8_t ppfd_string_height = id(my_display).getTextHeight(ppfd_string);
+          uint8_t lux_string_height = id(my_display).getTextHeight(lux_string);
+          uint8_t cct_string_height = id(my_display).getTextHeight(cct_string);
+
+          uint8_t max_string_height = max(irradiance_string_height, max(par_string_height, max(ppfd_string_height, max(lux_string_height, cct_string_height))));
+
+          uint8_t irradiance_string_width = id(my_display).getTextWidth(irradiance_string);
+          uint8_t par_string_width = id(my_display).getTextWidth(par_string);
+          uint8_t ppfd_string_width = id(my_display).getTextWidth(ppfd_string);
+          uint8_t lux_string_width = id(my_display).getTextWidth(lux_string);
+          uint8_t cct_string_width = id(my_display).getTextWidth(cct_string);
+
+          uint8_t max_string_width = max(irradiance_string_width, max(par_string_width, max(ppfd_string_width, max(lux_string_width, cct_string_width))));
+
+          id(my_display).setFont(&FreeMono9pt7b);
+
+          String irradiance_label = "Irr";
+          String par_label = "PAR";
+          String ppfd_label = "PPFD";
+          String lux_label = "Lux";
+          String cct_label = "CCT";
+
+          uint8_t irradiance_label_width = id(my_display).getTextWidth(irradiance_label);
+          uint8_t par_label_width = id(my_display).getTextWidth(par_label);
+          uint8_t ppfd_label_width = id(my_display).getTextWidth(ppfd_label);
+          uint8_t lux_label_width = id(my_display).getTextWidth(lux_label);
+          uint8_t cct_label_width = id(my_display).getTextWidth(cct_label);
+
+          uint8_t max_label_width = max(irradiance_label_width, max(par_label_width, max(ppfd_label_width, max(lux_label_width, cct_label_width))));
+
+          id(my_display).setFont(&Picopixel);
+
+          String irradiance_unit = "W/m2";
+          String par_unit = "W/m2";
+          String ppfd_unit = "μmol/\nsm2";
+          String lux_unit = "lx";
+          String cct_unit = "K";
+
+          uint8_t irradiance_unit_width = id(my_display).getTextWidth(irradiance_unit);
+          uint8_t par_unit_width = id(my_display).getTextWidth(par_unit);
+          uint8_t ppfd_unit_width = id(my_display).getTextWidth(ppfd_unit);
+          uint8_t lux_unit_width = id(my_display).getTextWidth(lux_unit);
+          uint8_t cct_unit_width = id(my_display).getTextWidth(cct_unit);
+
+          uint8_t max_unit_width = max(irradiance_unit_width, max(par_unit_width, max(ppfd_unit_width, max(lux_unit_width, cct_unit_width))));
+
+          int label_x = 0; //top_bottom_left_right_padding;
+          int string_x = label_x + max_label_width + big_padding;
+          int unit_x = string_x + max_string_width + big_padding;
+
+          int space_left = height - line_y;
+
+            int ppfd_y = line_y + space_left / 2 + max_string_height / 2;
+            int par_y = ppfd_y - max_string_height - big_padding;
+            int irradiance_y = par_y - max_string_height - big_padding;
+            int lux_y = ppfd_y + max_string_height + big_padding;
+            int cct_y = lux_y + max_string_height + big_padding;
+
+          // Printing units
+            id(my_display).setCursor(unit_x, irradiance_y - irradiance_string_height / 2 + id(my_display).getTextHeight(irradiance_unit) / 2);
+            id(my_display).print(irradiance_unit);
+
+            id(my_display).setCursor(unit_x, par_y - par_string_height / 2 + id(my_display).getTextHeight(par_unit) / 2);
+            id(my_display).print(par_unit);
+
+            id(my_display).setCursor(unit_x, ppfd_y - ppfd_string_height + id(my_display).getTextHeight(ppfd_unit)/2 - 1 );
+            id(my_display).print(ppfd_unit);
+
+            id(my_display).setCursor(unit_x, lux_y - lux_string_height / 2 + id(my_display).getTextHeight(lux_unit) / 2);
+            id(my_display).print(lux_unit);
+
+            id(my_display).setCursor(unit_x, cct_y - cct_string_height / 2 + id(my_display).getTextHeight(cct_unit) / 2);
+            id(my_display).print(cct_unit);
+
+          // Printing labels
+          id(my_display).setFont(&FreeMono9pt7b);
+
+          id(my_display).setCursor(label_x, irradiance_y);
+          id(my_display).print(irradiance_label);
+
+          id(my_display).setCursor(label_x, par_y);
+          id(my_display).print(par_label);
+
+          id(my_display).setCursor(label_x, ppfd_y);
+          id(my_display).print(ppfd_label);
+
+          id(my_display).setCursor(label_x, lux_y);
+          id(my_display).print(lux_label);
+
+          id(my_display).setCursor(label_x, cct_y);
+          id(my_display).print(cct_label);
+
+          // Printing strings
+          id(my_display).setFont(&FreeMonoBold9pt7b);
+
+          id(my_display).setCursor(string_x + max_string_width/2 - irradiance_string_width/2, irradiance_y);
+          id(my_display).print(irradiance_string);
+
+          id(my_display).setCursor(string_x + max_string_width/2 - par_string_width/2, par_y);
+          id(my_display).print(par_string);
+
+          id(my_display).setCursor(string_x + max_string_width/2 - ppfd_string_width/2, ppfd_y);
+          id(my_display).print(ppfd_string);
+
+          id(my_display).setCursor(string_x + max_string_width/2 - lux_string_width/2, lux_y);
+          id(my_display).print(lux_string);
+
+          id(my_display).setCursor(string_x + max_string_width/2 - cct_string_width/2, cct_y);
+          id(my_display).print(cct_string);
+
+          // Bar chart on the right side of the screen
+
+          id(my_display).setFont(&kongtext5pt7b);
+          String number_label = "405";
+          int number_label_width = id(my_display).getTextWidth(number_label);
+          int number_label_height = id(my_display).getTextHeight(number_label);
+
+          int text_x = unit_x + max_unit_width + big_padding;
+          int text_y = line_y + padding + number_label_height;
+
+          int max_bar_width = width - text_x - number_label_width - padding;
+
+          int bar_x = text_x + number_label_width + padding;
+
+          int bar_height = number_label_height;
+
+          auto draw_bar = [&](float value, const char* label) {
+              int bar_y = text_y - number_label_height / 2 - bar_height / 2;
+              if (value < 0) {
+                  value = 0;
+              } else if (value > 100) {
+                  value = 100;
+              }
+
+              // Calculate the width of the filled bar
+              int bar_width = (value / 100.0) * max_bar_width;
+
+              // Draw the bar outline
+              id(my_display).drawRect(bar_x, bar_y, max_bar_width, bar_height, BLACK);
+
+              // Draw the chessboard pattern
+              int square_size = 1;  // Size of each "square" in the chessboard
+              for (int x = 0; x < bar_width; x += square_size) {
+                  for (int y = 0; y < bar_height; y += square_size) {
+                      // Alternate between black and white based on position
+                      if (((x / square_size) + (y / square_size)) % 2 == 0) {
+                          id(my_display).fillRect(bar_x + x, bar_y + y, square_size, square_size, BLACK);
+                      }
+                  }
+              }
+
+              // Print the label next to the bar
+              id(my_display).setFont(&kongtext5pt7b);
+              id(my_display).setCursor(text_x, text_y);
+              id(my_display).print(label);
+
+              // Print percentage value in the middle of the bar
+              id(my_display).setFont(&Picopixel);
+              char value_char[10];
+              sprintf(value_char, "%3.0f", value);
+              String value_string = String(value_char);
+
+              int value_string_width = id(my_display).getTextWidth(value_string);
+              int value_string_height = id(my_display).getTextHeight(value_string);
+
+              int value_x = bar_x + max_bar_width / 2 - value_string_width / 2;
+              int value_y = bar_y + bar_height / 2 + value_string_height / 2;
+
+              // Draw white rectangle over the chessboard pattern to make the text more readable
+              id(my_display).fillRect(value_x - 1, value_y - value_string_height + 1, value_string_width + 2, value_string_height, WHITE);
+              
+
+              id(my_display).setCursor(value_x, value_y);
+              id(my_display).print(value_string);
+              
+
+              // Move to the next row
+              text_y += number_label_height + 1;
+            };
+
+            draw_bar(f1_value, "405");
+            draw_bar(f2_value, "425");
+            draw_bar(fz_value, "450");
+            draw_bar(f3_value, "475");
+            draw_bar(f4_value, "515");
+            draw_bar(fy_value, "555");
+            draw_bar(f5_value, "550");
+            draw_bar(fxl_value, "600");
+            draw_bar(f6_value, "640");
+            draw_bar(f7_value, "690");
+            draw_bar(f8_value, "745");
+            draw_bar(nir_value, "855");
+
+
 
           id(my_display).update();
