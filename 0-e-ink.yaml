@@ -782,7 +782,6 @@ script:
           id(my_display).drawLine(0, line_y, width, line_y, BLACK);
 
           // Left side of the screen
-
           auto format_value = [](float value) -> String {
             if (value >= 10000) {
               char buf[10];
@@ -806,7 +805,6 @@ script:
               return String(buf);
             }
           };
-
 
           String irradiance_string = format_value(irradiance_value);
 
@@ -883,20 +881,20 @@ script:
             int cct_y = lux_y + max_string_height + big_padding;
 
           // Printing units
-            id(my_display).setCursor(unit_x, irradiance_y - irradiance_string_height / 2 + id(my_display).getTextHeight(irradiance_unit) / 2);
-            id(my_display).print(irradiance_unit);
+          id(my_display).setCursor(unit_x, irradiance_y - irradiance_string_height / 2 + id(my_display).getTextHeight(irradiance_unit) / 2);
+          id(my_display).print(irradiance_unit);
 
-            id(my_display).setCursor(unit_x, par_y - par_string_height / 2 + id(my_display).getTextHeight(par_unit) / 2);
-            id(my_display).print(par_unit);
+          id(my_display).setCursor(unit_x, par_y - par_string_height / 2 + id(my_display).getTextHeight(par_unit) / 2);
+          id(my_display).print(par_unit);
 
-            id(my_display).setCursor(unit_x, ppfd_y - ppfd_string_height + id(my_display).getTextHeight(ppfd_unit)/2 - 1 );
-            id(my_display).print(ppfd_unit);
+          id(my_display).setCursor(unit_x, ppfd_y - ppfd_string_height + id(my_display).getTextHeight(ppfd_unit)/2 - 1 );
+          id(my_display).print(ppfd_unit);
 
-            id(my_display).setCursor(unit_x, lux_y - lux_string_height / 2 + id(my_display).getTextHeight(lux_unit) / 2);
-            id(my_display).print(lux_unit);
+          id(my_display).setCursor(unit_x, lux_y - lux_string_height / 2 + id(my_display).getTextHeight(lux_unit) / 2);
+          id(my_display).print(lux_unit);
 
-            id(my_display).setCursor(unit_x, cct_y - cct_string_height / 2 + id(my_display).getTextHeight(cct_unit) / 2);
-            id(my_display).print(cct_unit);
+          id(my_display).setCursor(unit_x, cct_y - cct_string_height / 2 + id(my_display).getTextHeight(cct_unit) / 2);
+          id(my_display).print(cct_unit);
 
           // Printing labels
           id(my_display).setFont(&FreeMono9pt7b);
@@ -995,11 +993,9 @@ script:
               // Draw white rectangle over the chessboard pattern to make the text more readable
               id(my_display).fillRect(value_x - 1, value_y - value_string_height + 1, value_string_width + 2, value_string_height, WHITE);
               
-
               id(my_display).setCursor(value_x, value_y);
               id(my_display).print(value_string);
               
-
               // Move to the next row
               text_y += number_label_height + 1;
             };
@@ -1016,7 +1012,5 @@ script:
             draw_bar(f7_value, "690");
             draw_bar(f8_value, "745");
             draw_bar(nir_value, "855");
-
-
 
           id(my_display).update();
