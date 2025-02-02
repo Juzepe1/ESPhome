@@ -6,6 +6,60 @@ esphome:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
     - components/XBitMaps/sprites.h
+    - components/vision_master/FreeMono7pt7b.h
+    - components/vision_master/FreeMono9pt7b.h
+    - components/vision_master/FreeMono12pt7b.h
+    - components/vision_master/FreeMono18pt7b.h
+    - components/vision_master/FreeMono24pt7b.h
+    - components/vision_master/FreeMonoBold9pt7b.h
+    - components/vision_master/FreeMonoBold12pt7b.h
+    - components/vision_master/FreeMonoBold18pt7b.h
+    - components/vision_master/FreeMonoBold24pt7b.h
+    - components/vision_master/FreeMonoBoldOblique9pt7b.h
+    - components/vision_master/FreeMonoBoldOblique12pt7b.h
+    - components/vision_master/FreeMonoBoldOblique18pt7b.h
+    - components/vision_master/FreeMonoBoldOblique24pt7b.h
+    - components/vision_master/FreeMonoOblique9pt7b.h
+    - components/vision_master/FreeMonoOblique12pt7b.h
+    - components/vision_master/FreeMonoOblique18pt7b.h
+    - components/vision_master/FreeMonoOblique24pt7b.h
+    - components/vision_master/FreeSans9pt7b.h
+    - components/vision_master/FreeSans12pt7b.h
+    - components/vision_master/FreeSans18pt7b.h
+    - components/vision_master/FreeSans24pt7b.h
+    - components/vision_master/FreeSansBold9pt7b.h
+    - components/vision_master/FreeSansBold12pt7b.h
+    - components/vision_master/FreeSansBold18pt7b.h
+    - components/vision_master/FreeSansBold24pt7b.h
+    - components/vision_master/FreeSansBoldOblique9pt7b.h
+    - components/vision_master/FreeSansBoldOblique12pt7b.h
+    - components/vision_master/FreeSansBoldOblique18pt7b.h
+    - components/vision_master/FreeSansBoldOblique24pt7b.h
+    - components/vision_master/FreeSansOblique9pt7b.h
+    - components/vision_master/FreeSansOblique12pt7b.h
+    - components/vision_master/FreeSansOblique18pt7b.h
+    - components/vision_master/FreeSansOblique24pt7b.h
+    - components/vision_master/FreeSerif9pt7b.h
+    - components/vision_master/FreeSerif12pt7b.h
+    - components/vision_master/FreeSerif18pt7b.h
+    - components/vision_master/FreeSerif24pt7b.h
+    - components/vision_master/FreeSerifBold9pt7b.h
+    - components/vision_master/FreeSerifBold12pt7b.h
+    - components/vision_master/FreeSerifBold18pt7b.h
+    - components/vision_master/FreeSerifBold24pt7b.h
+    - components/vision_master/FreeSerifBoldItalic9pt7b.h
+    - components/vision_master/FreeSerifBoldItalic12pt7b.h
+    - components/vision_master/FreeSerifBoldItalic18pt7b.h
+    - components/vision_master/FreeSerifBoldItalic24pt7b.h
+    - components/vision_master/FreeSerifItalic9pt7b.h
+    - components/vision_master/FreeSerifItalic12pt7b.h
+    - components/vision_master/FreeSerifItalic18pt7b.h
+    - components/vision_master/FreeSerifItalic24pt7b.h
+    - components/vision_master/kongtext5pt7b.h
+    - components/vision_master/Org_01.h
+    - components/vision_master/Picopixel.h
+    - components/vision_master/TomThumb.h
+    - components/vision_master/Tiny3x3a2pt7b.h
 
   on_boot:
     priority: -10000
