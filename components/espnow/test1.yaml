@@ -1,13 +1,14 @@
 # These substitutions allow the end user to override certain values
 substitutions:
-  name: "lum-iot-test"
+  name: "lum-iot-test1"
   friendly_name: "Project Template"
 
 esp32:
   board: esp32dev
   framework:
     type: esp-idf
-    # version: 5.1.5
+    # version: 5.2.1
+    # platform_version: 6.6.0
 
 esphome:
   name: "${name}"
@@ -28,10 +29,7 @@ logger:
   level: verbose
 
 espnow:
-  auto_add_peer: false
-  peers:
-    - FF:FF:FF:FF:FF:FF
-    # - kGf7Ii0t
+  auto_add_peer: true
   on_receive:
     - logger.log:
         format: "Received: '%s' from '%s' command: %d RSSI: %d"
@@ -43,33 +41,15 @@ espnow:
             packet.rssi,
           ]
 
+  # this works only when esp_idf v5.1.5+ is being used.
   on_broadcast:
     - command: 123
       then:
         - logger.log:
-            format: "Broadcast Received from: '%s' RSSI: %d: %s"
+            format: "Broadcast from: '%s' RSSI: %d: %s"
             args:
               [
                 packet.get_peer_code().c_str(),
                 packet.rssi,
                 packet.get_payload(),
               ]
-
-interval:
-  - interval: 30sec
-    startup_delay: 20sec
-    then:
-      - espnow.peer.new:
-          peer: kGf7Ii0t
-  - interval: 5sec
-    then:
-      - espnow.send:
-          peer: kGf7Ii0t
-          payload: "tesing the test"
-
-binary_sensor:
-  - platform: gpio
-    pin: GPIO39
-    name: Button
-    on_click:
-      - espnow.peer.del: kGf7Ii0t
