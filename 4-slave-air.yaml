@@ -2,6 +2,8 @@ esphome:
   name: 4-slave-air
   platformio_options:
     platform: https://github.com/lucaskatayama/platform-espressif32.git#feat/seeed_xiao_esp32c6.json
+    build_flags: 
+      -DI2C_NUM_1=I2C_NUM_0
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
