@@ -1,5 +1,5 @@
 esphome:
-  name: esp32-battery
+  name: 0-voltage-measurement
   platformio_options:
     platform: https://github.com/lucaskatayama/platform-espressif32.git#feat/seeed_xiao_esp32c6.json
 

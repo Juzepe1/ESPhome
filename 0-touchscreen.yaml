@@ -1,5 +1,5 @@
 esphome:
-  name: home-display
+  name: 0-touchscreen
   friendly_name: Home Display
   platformio_options:
     build_flags: '-DBOARD_HAS_PSRAM'

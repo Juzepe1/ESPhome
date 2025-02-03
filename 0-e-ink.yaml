@@ -1,5 +1,5 @@
 esphome:
-  name: esp32-vision-master
+  name: 0-e-ink
 
   on_boot:
     priority: -1000

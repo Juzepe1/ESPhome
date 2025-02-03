@@ -1,5 +1,5 @@
 esphome:
-  name: esp32-hub-e-ink
+  name: 1-hub-e-ink
   platformio_options:
     platform: https://github.com/lucaskatayama/platform-espressif32.git#feat/seeed_xiao_esp32c6.json
   includes:
