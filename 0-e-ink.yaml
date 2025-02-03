@@ -41,6 +41,14 @@ esphome:
 
   includes:
     - components/XBitMaps/sprites.h
+    - components/vision_master_fonts/FreeMonoBold12pt7b.h
+    - components/vision_master_fonts/FreeMonoBold9pt7b.h
+    - components/vision_master_fonts/FreeMono9pt7b.h
+    - components/vision_master_fonts/FreeMono7pt7b.h
+    - components/vision_master_fonts/FreeSans7pt7b.h
+    - components/vision_master_fonts/Picopixel.h
+    - components/vision_master_fonts/kongtext5pt7b.h
+
 spi:
 
 esp32:
