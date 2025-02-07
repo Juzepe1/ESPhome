@@ -2,8 +2,7 @@ esphome:
   name: 2-slave-spectral
   platformio_options:
     platform: https://github.com/lucaskatayama/platform-espressif32.git#feat/seeed_xiao_esp32c6.json
-    build_flags: 
-      -DI2C_NUM_1=I2C_NUM_0
+    build_flags: -DI2C_NUM_1=I2C_NUM_0
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
@@ -18,6 +17,7 @@ esphome:
           id(spectral_sensor).setup_atime(id(atime));
           id(spectral_sensor).setup_astep(id(astep));
           id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
+          id(spectral_sensor).setup_glass_attenuation_factor(id(glass_attenuation_factor));
       - delay: 500ms
       - lambda: |-
           id(espnow_component)->add_peer(id(hub_address));
@@ -140,6 +140,11 @@ globals:
   #   AS7343_GAIN_1024X,  11
   #   AS7343_GAIN_2048X,  12
   # };
+
+  - id: glass_attenuation_factor
+    type: float
+    initial_value: '1.0'
+    restore_value: 'yes'
 
 sensor:
   - platform: as7343
@@ -317,6 +322,13 @@ espnow:
                           }
                           id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(value_int));
                         }
+                        else if(strcmp(topic, "gaf") == 0){
+                        if (id(flash)) {
+                          ESP_LOGI("main", "Writing glass_attenuation_factor to flash");
+                          id(glass_attenuation_factor) = value_int;
+                        }
+                        id(spectral_sensor).setup_glass_attenuation_factor(value_int);
+                        }
                         else{ESP_LOGW("main", "Value is none");}
                     }
                     else{ESP_LOGW("main", "Value is none");}
@@ -474,6 +486,11 @@ script:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("gain", id(spectral_sensor).get_gain());
+            - delay: 500ms
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("gaf", id(spectral_sensor).get_glass_attenuation_factor());
             - delay: 500ms
       - lambda: |-
           ESP_LOGI("main", "Calibration data sent");

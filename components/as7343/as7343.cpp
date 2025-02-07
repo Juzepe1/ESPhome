@@ -461,6 +461,11 @@ namespace esphome
       return gainx / 2;
     }
 
+    float AS7343Component::get_glass_attenuation_factor()
+    {
+      return this->glass_attenuation_factor_;
+    }
+
     bool AS7343Component::setup_gain(AS7343Gain gain)
     {
       ESP_LOGD(TAG, "Setup gain %u", (uint8_t)gain);
@@ -477,6 +482,13 @@ namespace esphome
     {
       ESP_LOGD(TAG, "Setup astep %u", astep);
       return this->write_byte_16((uint8_t)AS7343Registers::ASTEP_LSB, swap_bytes(astep));
+    }
+
+    bool AS7343Component::setup_glass_attenuation_factor(float factor)
+    {
+      ESP_LOGD(TAG, "Setup glass attenuation factor %f", factor);
+      this->glass_attenuation_factor_ = factor;
+      return true;
     }
 
     bool AS7343Component::change_gain(AS7343Gain gain)

@@ -49,10 +49,12 @@ class AS7343Component : public PollingComponent, public i2c::I2CDevice {
   AS7343Gain get_gain();
   uint8_t get_atime();
   uint16_t get_astep();
+  float get_glass_attenuation_factor();
 
   bool setup_gain(AS7343Gain gain);
   bool setup_atime(uint8_t atime);
   bool setup_astep(uint16_t astep);
+  bool setup_glass_attenuation_factor(float factor);
 
   bool change_gain(AS7343Gain gain);
 
