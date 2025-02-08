@@ -1054,7 +1054,7 @@ espnow:
             
             if(topic != nullptr){
                 if(value != nullptr){
-                    int value_int = atoi(value);
+                    long long value_int = atoll(value);
                     //float value_float = atof(value);
 
                     bool savedPeer = false;
