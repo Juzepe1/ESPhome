@@ -2,8 +2,7 @@ esphome:
   name: 4-slave-air
   platformio_options:
     platform: https://github.com/lucaskatayama/platform-espressif32.git#feat/seeed_xiao_esp32c6.json
-    build_flags: 
-      -DI2C_NUM_1=I2C_NUM_0
+    build_flags: -DI2C_NUM_1=I2C_NUM_0
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
@@ -186,6 +185,12 @@ binary_sensor:
                 }
             else {ESP_LOGD("main", "Button was pressed for less than 3 seconds.");}
 
+output:
+  - platform: gpio
+    pin: GPIO15
+    id: built_in_led
+    inverted: true
+
 espnow:
   id: espnow_component
   auto_add_peer: true
@@ -279,6 +284,7 @@ external_components:
 script:
   - id: espnow_communication
     then:
+      - output.turn_on: built_in_led
       - script.execute: beReadyToReceiveMessage
       - logger.log: 'Updating sensor data'
       - component.update: bmp280_sensor
@@ -324,6 +330,7 @@ script:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("ccs_tvoc", id(ccs811_tvoc).state);
+      - output.turn_off: built_in_led
   - id: sendCalibrationData
     then:
       - repeat:

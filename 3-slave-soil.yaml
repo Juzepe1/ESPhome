@@ -386,6 +386,12 @@ binary_sensor:
                 }
             else {ESP_LOGD("main", "Button was pressed for less than 3 seconds.");}
 
+output:
+  - platform: gpio
+    pin: GPIO15
+    id: built_in_led
+    inverted: true
+
 espnow:
   id: espnow_component
   auto_add_peer: true
@@ -483,6 +489,7 @@ espnow:
 script:
   - id: espnow_communication
     then:
+      - output.turn_on: built_in_led
       - script.execute: beReadyToReceiveMessage
       - logger.log: 'Updating sensor data'
       - component.update: modbus_device
@@ -539,6 +546,7 @@ script:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("tds", id(tds).state);
+      - output.turn_off: built_in_led
   - id: beReadyToReceiveMessage
     then:
       - espnow.broadcast:
