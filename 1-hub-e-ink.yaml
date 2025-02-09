@@ -360,6 +360,16 @@ sensor:
       sorting_weight: 21
 
   - platform: template
+    name: 'Battery Percentage ${spectral_sensor_device_id}'
+    id: battery_${spectral_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: '%'
+    web_server:
+      sorting_group_id: sg_readings_${spectral_sensor_device_id}
+      sorting_weight: 22
+
+  - platform: template
     name: 'Humidity ${soil_sensor_device_id}'
     id: 'humidity_${soil_sensor_device_id}'
     update_interval: never
@@ -458,6 +468,13 @@ sensor:
       sorting_weight: 9
 
   - platform: template
+    name: 'Battery Percentage ${soil_sensor_device_id}'
+    id: battery_${soil_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: '%'
+
+  - platform: template
     name: 'BMP Temperature ${air_sensor_device_id}'
     id: bmp_temp_${air_sensor_device_id}
     update_interval: never
@@ -524,6 +541,13 @@ sensor:
     web_server:
       sorting_group_id: sg_readings_${air_sensor_device_id}
       sorting_weight: 6
+
+  - platform: template
+    name: 'Battery Percentage ${air_sensor_device_id}'
+    id: battery_${air_sensor_device_id}
+    update_interval: never
+    accuracy_decimals: 0
+    unit_of_measurement: '%'
 
   - platform: template
     name: 'Last BMP Temperature ${air_sensor_device_id}'
@@ -1161,7 +1185,9 @@ espnow:
                           id(gain_${spectral_sensor_device_id}).publish_state(value_int);
                         } else if (strcmp(topic, "gaf") == 0) {
                           id(glass_attenuation_${spectral_sensor_device_id}).publish_state(value_int);       
-                        }              
+                        } else if (strcmp(topic, "battery") == 0) {
+                          id(battery_${spectral_sensor_device_id}).publish_state(value_int);
+                        }
                     }
                     else if(sensor_id == ${soil_sensor_device_id}){
                         if (strcmp(topic, "humidity") == 0) {
@@ -1223,6 +1249,8 @@ espnow:
                           id(k_f_low_${soil_sensor_device_id}).publish_state(value_int);
                         } else if(strcmp(topic, "k_offset") == 0){
                           id(k_offset_${soil_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "battery") == 0){
+                          id(battery_${soil_sensor_device_id}).publish_state(value_int);
                         }
                     }
                     else if(sensor_id == ${air_sensor_device_id}){
@@ -1244,6 +1272,8 @@ espnow:
                           id(press_index_${air_sensor_device_id}).publish_state(value_int);
                         } else if(strcmp(topic, "iir_index") == 0){
                           id(iir_index_${air_sensor_device_id}).publish_state(value_int);
+                        } else if(strcmp(topic, "battery") == 0){
+                          id(battery_${air_sensor_device_id}).publish_state(value_int);
                         }
                     }
                     else{

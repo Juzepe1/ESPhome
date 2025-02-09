@@ -65,6 +65,12 @@ external_components:
       ref: d23346165e1baefd337ed805d3a211e5bead53af
     refresh: 1min
     components: [espnow]
+  - source:
+      type: git
+      url: https://github.com/lboue/esphome
+      ref: adc_oneshot
+    components: [adc]
+    refresh: 0s
 
 i2c:
   sda: GPIO22
@@ -213,6 +219,32 @@ sensor:
       name: 'Lux2'
       id: 'lux2'
     update_interval: never
+  - platform: adc
+    name: Battery
+    id: battery
+    pin: GPIO0
+    update_interval: never
+    unit_of_measurement: '%'
+    accuracy_decimals: 0
+    filters:
+      - multiply: 2.0 # R1 = 220k, R2 = 220k, Vout = R2/(R1+R2) * Vin
+      - calibrate_linear:
+          method: exact
+          datapoints:
+            - 0.00 -> 0.0
+            - 3.30 -> 1.0
+            - 3.39 -> 10.0
+            - 3.75 -> 50.0
+            - 4.11 -> 90.0
+            - 4.20 -> 100.0
+      - lambda: |-
+          if (x < 0.0) {
+              return 0.0;
+          } else if (x > 100.0) {
+              return 100.0;
+          } else {
+              return x;
+          }
 
 binary_sensor:
   - platform: gpio
@@ -353,6 +385,7 @@ script:
       - script.execute: beReadyToReceiveMessage
       - logger.log: 'Updating sensor data'
       - component.update: spectral_sensor
+      - component.update: battery
       - delay: 3s
       - logger.log: 'Sensor data updated'
 
@@ -466,6 +499,11 @@ script:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("lux2", id(lux2).state*1000000);
+            - delay: 500ms
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("battery", id(battery).state);
       - output.turn_off: built_in_led
   - id: beReadyToReceiveMessage
     then:
