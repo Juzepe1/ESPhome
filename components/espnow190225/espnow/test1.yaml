@@ -1,0 +1,50 @@
+# These substitutions allow the end user to override certain values
+substitutions:
+  name: "lum-iot-test1"
+  friendly_name: "Project Template"
+
+esp32:
+  board: m5stack-atom
+  framework:
+    type: esp-idf
+    version: 5.2.1
+    platform_version: 6.6.0
+
+esphome:
+  name: "${name}"
+
+# To be able to get logs from the device via serial and api.
+logger:
+  level: debug
+
+# wifi:
+#   fast_connect: true
+#   networks:
+#     - ssid: !secret wifi_ssid
+#       password: !secret wifi_password
+
+espnow:
+  auto_add_peer: true
+  wifi_channel: 1
+  predefined_peers:
+    - mac_address: E8:6B:EA:23:CD:98
+      wifi_channel: 2
+  on_receive:
+    - logger.log:
+        format: "Received from: %s = '%s' cmd: %d RSSI: %d"
+        args:
+          [
+            packet.get_payload(),
+            packet.get_peer_code().c_str(),
+            packet.get_command(),
+            packet.rssi,
+          ]
+
+interval:
+  - interval: 30sec
+    startup_delay: 20sec
+    then:
+      - espnow.send:
+          mac_address: E8:6B:EA:23:CD:98
+          payload: "Test  1."
+          command: 222

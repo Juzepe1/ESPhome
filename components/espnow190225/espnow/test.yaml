@@ -1,0 +1,75 @@
+# These substitutions allow the end user to override certain values
+substitutions:
+  name: "lum-iot-test"
+  friendly_name: "Project Template"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    # version: 5.1.5
+
+esphome:
+  name: "${name}"
+  # Friendly names are used where appropriate in Home Assistant
+  friendly_name: "${friendly_name}"
+  # Automatically add the mac address to the name
+  # so you can use a single firmware for all devices
+  name_add_mac_suffix: false
+
+  # This will allow for (future) project identification,
+  # configuration and updates.
+  project:
+    name: LumenSoft.espnow-test
+    version: "1.0"
+
+# To be able to get logs from the device via serial and api.
+logger:
+  level: verbose
+
+espnow:
+  auto_add_peer: false
+  peers:
+    - FF:FF:FF:FF:FF:FF
+    # - kGf7Ii0t
+  on_receive:
+    - logger.log:
+        format: "Received: '%s' from '%s' command: %d RSSI: %d"
+        args:
+          [
+            packet.get_payload(),
+            packet.get_peer_code().c_str(),
+            packet.get_command(),
+            packet.rssi,
+          ]
+
+  on_broadcast:
+    - command: 123
+      then:
+        - logger.log:
+            format: "Broadcast Received from: '%s' RSSI: %d: %s"
+            args:
+              [
+                packet.get_peer_code().c_str(),
+                packet.rssi,
+                packet.get_payload(),
+              ]
+
+interval:
+  - interval: 30sec
+    startup_delay: 20sec
+    then:
+      - espnow.peer.new:
+          peer: kGf7Ii0t
+  - interval: 5sec
+    then:
+      - espnow.send:
+          peer: kGf7Ii0t
+          payload: "tesing the test"
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO39
+    name: Button
+    on_click:
+      - espnow.peer.del: kGf7Ii0t
