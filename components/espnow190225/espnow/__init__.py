@@ -215,15 +215,15 @@ async def register_protocol(var, config):
 
 
 def _final_validate(config):
-    full_config = fv.full_config.get()
-    if CONF_WIFI_CHANNEL in config and CONF_WIFI in full_config:
-        raise cv.Invalid(
-            f"When you have {CONF_WIFI} configured, You can not set the {CONF_WIFI_CHANNEL} variable."
-        )
-    if CONF_WIFI_CHANNEL not in config and CONF_WIFI not in full_config:
-        raise cv.Invalid(
-            f"When you don't use the {CONF_WIFI} component, You need to set the {CONF_WIFI_CHANNEL} variable."
-        )
+    # full_config = fv.full_config.get()
+    # if CONF_WIFI_CHANNEL in config and CONF_WIFI in full_config:
+    #     raise cv.Invalid(
+    #         f"When you have {CONF_WIFI} configured, You can not set the {CONF_WIFI_CHANNEL} variable."
+    #     )
+    # if CONF_WIFI_CHANNEL not in config and CONF_WIFI not in full_config:
+    #     raise cv.Invalid(
+    #         f"When you don't use the {CONF_WIFI} component, You need to set the {CONF_WIFI_CHANNEL} variable."
+    #     )
     return config
 
 

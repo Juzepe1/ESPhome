@@ -114,7 +114,7 @@ bool ESPNowComponent::validate_channel_(uint8_t channel) {
 }
 
 void ESPNowComponent::setup() {
-#ifndef USE_WIFI
+#ifdef USE_WIFI
   esp_event_loop_create_default();
 
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -189,19 +189,20 @@ void ESPNowComponent::loop() {
     xTaskCreate(espnow_task, "espnow_task", 4096, this, tskIDLE_PRIORITY + 1, nullptr);
     this->task_running_ = true;
   }
-#ifdef USE_WIFI
-  int32_t new_channel = wifi::global_wifi_component->get_wifi_channel();
-  if (new_channel != this->wifi_channel_) {
-    this->defer([this, new_channel]() { this->set_wifi_channel(new_channel); });
-  }
-#endif
+// #ifdef USE_WIFI
+//   int32_t new_channel = wifi::global_wifi_component->get_wifi_channel();
+//   if (new_channel != this->wifi_channel_) {
+//     this->defer([this, new_channel]() { this->set_wifi_channel(new_channel); });
+//   }
+// #endif
 }
 
 bool ESPNowComponent::can_proceed() {
 #ifdef USE_WIFI
-  if (wifi::global_wifi_component != nullptr)
-    return wifi::global_wifi_component->is_connected();
-  return false;
+  // if (wifi::global_wifi_component != nullptr)
+  //   return wifi::global_wifi_component->is_connected();
+  // return false;
+  return true;
 #else
   return true;
 #endif
