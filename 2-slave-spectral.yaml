@@ -615,6 +615,7 @@ script:
             case 2:
               ESP_LOGD("main", "Starting webserver with captive portal");
               id(espnow_communication).stop();
+              id(built_in_led).turn_off();
               id(deep_sleep_1).prevent_deep_sleep();
               id(wifi_component).enable();
               id(wifi_component).start_ap();
