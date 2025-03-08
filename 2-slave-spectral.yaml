@@ -161,16 +161,7 @@ globals:
     type: int
     initial_value: '3'
     restore_value: 'yes'
-
-  - id: esp_sensor_mode
-    type: uint8_t
-    initial_value: '0'
-    restore_value: 'yes'
-    # 0 - ESP-NOW without deepsleep - calibration mode
-    # 1 - ESP-NOW with deepsleep
-    # 2 - Webserver mode with captive portal
-
-  #     enum AS7343Gain : uint8_t {
+  # Gain values:
   #   AS7343_GAIN_0_5X,   0
   #   AS7343_GAIN_1X,     1
   #   AS7343_GAIN_2X,     2
@@ -184,12 +175,24 @@ globals:
   #   AS7343_GAIN_512X,   10
   #   AS7343_GAIN_1024X,  11
   #   AS7343_GAIN_2048X,  12
-  # };
 
   - id: glass_attenuation_factor
     type: float
     initial_value: '1.0'
     restore_value: 'yes'
+
+  - id: esp_sensor_mode
+    type: uint8_t
+    initial_value: '0'
+    restore_value: 'yes'
+    # 0 - ESP-NOW without deepsleep - calibration mode
+    # 1 - ESP-NOW with deepsleep
+    # 2 - Webserver mode with captive portal
+
+  - id: esp_now_message_delay
+    type: int
+    initial_value: '50'
+    restore_value: 'no'
 
 sensor:
   - platform: as7343
@@ -322,6 +325,7 @@ output:
 espnow:
   id: espnow_component
   auto_add_peer: true
+  conformation_timeout: 100ms
   wifi_channel: !secret espnow_channel
   predefined_peers:
     - FF:FF:FF:FF:FF:FF
@@ -422,116 +426,116 @@ script:
       - logger.log: 'Sensor data updated'
 
       - repeat:
-          count: 3
+          count: 1
           then:
             - lambda: |-
                 ESP_LOGI("main", "Sending data to hub");
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("f1", id(f1).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("f2", id(f2).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("fz", id(fz).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("f3", id(f3).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("f4", id(f4).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("fy", id(fy).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("f5", id(f5).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("fxl", id(fxl).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("f6", id(f6).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("f7", id(f7).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("f8", id(f8).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("nir", id(nir).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("clear", id(clear).state*100000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("irradiance", id(irradiance).state*1000000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("irradiance_photopic", id(irradiance_photopic).state*1000000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("pffd", id(pffd).state*1000000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("saturation", id(saturation).state*1000000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("color_temperature", id(color_temperature).state*1000000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("par", id(par).state*1000000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("lux", id(lux).state*1000000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("lux2", id(lux2).state*1000000);
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
@@ -545,31 +549,31 @@ script:
       - delay: 500ms
   - id: sendCalibrationData
     then:
-      - component.update: spectral_sensor
-      - delay: 3s
+      - script.execute: espnow_communication
+      - script.wait: espnow_communication
       - repeat:
-          count: 3
+          count: 1
           then:
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("atime", id(spectral_sensor).get_atime());
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("astep", id(spectral_sensor).get_astep());
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("gain", id(spectral_sensor).get_gain());
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
                   return format_espnow_data_new("gaf", id(spectral_sensor).get_glass_attenuation_factor());
-            - delay: 500ms
+            - delay: !lambda 'return id(esp_now_message_delay);'
       - lambda: |-
           ESP_LOGI("main", "Calibration data sent");
           id(get_calibration) = false;
