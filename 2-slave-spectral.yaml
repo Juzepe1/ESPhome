@@ -6,6 +6,7 @@ esphome:
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+  friendly_name: Slave Spectral Sensor
 
   on_boot:
     priority: -10000
@@ -21,6 +22,8 @@ esphome:
           id(spectral_sensor).setup_astep(id(astep));
           id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
           id(spectral_sensor).setup_glass_attenuation_factor(id(glass_attenuation_factor));
+          // Set deep sleep duration
+          id(deep_sleep_duration_number).publish_state(id(deep_sleep_duration)/1000);
       - delay: 500ms
       - lambda: |-
           id(espnow_component)->add_peer(id(hub_address));
@@ -66,6 +69,19 @@ web_server:
   local: true
   version: 3
   id: web_server_component
+  sorting_groups:
+    - id: sg_data
+      name: 'Spectral Sensor Data'
+      sorting_weight: 10
+
+    - id: sg_settings
+      name: 'Spectral Sensor Settings'
+      sorting_weight: 11
+
+    - id: sg_device_settings
+      name: 'Device Settings'
+      sorting_weight: 12
+  log: false
 
 captive_portal:
   mode: always_active
@@ -194,72 +210,140 @@ globals:
     initial_value: '50'
     restore_value: 'no'
 
+  - id: deep_sleep_duration
+    type: uint32_t
+    initial_value: '60'
+    restore_value: 'yes'
+
 sensor:
   - platform: as7343
     id: 'spectral_sensor'
     f1:
       name: '405nm'
       id: 'f1'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 2
     f2:
       name: '425nm'
       id: 'f2'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 3
     fz:
       name: '450nm'
       id: 'fz'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 4
     f3:
       name: '475nm'
       id: 'f3'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 5
     f4:
       name: '515nm'
       id: 'f4'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 6
     fy:
       name: '555nm'
       id: 'fy'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 7
     f5:
       name: '550nm'
       id: 'f5'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 8
     fxl:
       name: '600nm'
       id: 'fxl'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 9
     f6:
       name: '640nm'
       id: 'f6'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 10
     f7:
       name: '690nm'
       id: 'f7'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 11
     f8:
       name: '745nm'
       id: 'f8'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 12
     nir:
       name: 'NIR'
       id: 'nir'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 13
     clear:
       name: 'Clear'
       id: 'clear'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 14
     irradiance:
       name: 'Irradiance'
       id: 'irradiance'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 15
     irradiance_photopic:
-      name: 'Irradiance_photopic'
+      name: 'Irradiance Photopic'
       id: 'irradiance_photopic'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 16
     ppfd:
-      name: 'Pffd'
-      id: 'pffd'
+      name: 'PPFD (Photosynthetic Photon Flux Density)'
+      id: 'ppfd'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 17
     saturation:
       name: 'Saturation'
       id: 'saturation'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 18
     color_temperature:
       name: 'Color Temperature'
       id: 'color_temperature'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 19
     par:
-      name: 'PAR'
+      name: 'PAR (Photosynthetic Active Radiation)'
       id: 'par'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 20
     lux:
-      name: 'Lux'
+      name: 'Illuminance'
       id: 'lux'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 21
     lux2:
-      name: 'Lux2'
+      name: 'Illuminance 2'
       id: 'lux2'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 22
     update_interval: never
   - platform: adc
     name: Battery
@@ -287,6 +371,76 @@ sensor:
           } else {
               return x;
           }
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 23
+
+number:
+  - platform: template
+    name: 'ATime'
+    id: atime_number
+    min_value: 0.0
+    max_value: 255
+    step: 1.0
+    optimistic: true
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 2
+
+  - platform: template
+    name: 'AStep'
+    id: astep_number
+    min_value: 0.0
+    max_value: 65534
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 3
+
+  - platform: template
+    name: 'Gain'
+    id: gain_number
+    min_value: 0.0
+    max_value: 12.0
+    step: 1.0
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 4
+
+  - platform: template
+    name: 'Glass Attenuation Factor'
+    id: glass_attenuation_number
+    min_value: 0.0
+    max_value: 100.0
+    step: 0.1
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 5
+
+  - platform: template
+    name: 'Deep Sleep Duration'
+    id: deep_sleep_duration_number
+    min_value: 1
+    max_value: 3600
+    step: 1
+    unit_of_measurement: 's'
+    optimistic: true
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_device_settings
+      sorting_weight: 1
+    on_value:
+      then:
+        - lambda: |-
+            id(deep_sleep_duration) = x*1000; // Convert seconds to milliseconds
+            id(deep_sleep_1).set_sleep_duration(id(deep_sleep_duration));
+            ESP_LOGI("main", "Deep sleep duration set to %f seconds", x);
 
 binary_sensor:
   - platform: gpio
@@ -295,6 +449,7 @@ binary_sensor:
       allow_other_uses: true
     name: 'Long Press Button'
     id: long_press_button
+    internal: true
     on_press:
       then:
         - lambda: |-
@@ -509,7 +664,7 @@ script:
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
                 payload: !lambda |-
-                  return format_espnow_data_new("pffd", id(pffd).state*1000000);
+                  return format_espnow_data_new("ppfd", id(ppfd).state*1000000);
             - delay: !lambda 'return id(esp_now_message_delay);'
             - espnow.send:
                 mac_address: !lambda 'return id(hub_address);'
@@ -628,12 +783,46 @@ script:
             default:
               break;
           }
+
 button:
   - platform: template
     name: 'Update sensor data'
     on_press:
       - component.update: spectral_sensor
       - component.update: battery
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 1
+
+  - platform: template
+    name: 'Update calibration data'
+    on_press:
+      - lambda: |-
+          id(atime_number).publish_state(id(spectral_sensor).get_atime());
+          id(astep_number).publish_state(id(spectral_sensor).get_astep());
+          id(gain_number).publish_state(id(spectral_sensor).get_gain());
+          id(glass_attenuation_number).publish_state(id(spectral_sensor).get_glass_attenuation_factor());
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 1
+
+  - platform: template
+    name: 'Set calibration data'
+    on_press:
+      then:
+        - lambda: |-
+            id(atime) = id(atime_number).state;
+            id(astep) = id(astep_number).state;
+            id(gain) = id(gain_number).state;
+            id(glass_attenuation_factor) = id(glass_attenuation_number).state;
+
+            id(spectral_sensor).setup_atime(id(atime));
+            id(spectral_sensor).setup_astep(id(astep));
+            id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
+            id(spectral_sensor).setup_glass_attenuation_factor(id(glass_attenuation_factor));
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 6
 
   # - platform: factory_reset
   #   name: Restart with Factory Default Settings
