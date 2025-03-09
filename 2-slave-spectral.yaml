@@ -6,7 +6,7 @@ esphome:
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
-  friendly_name: Slave Spectral Sensor
+  friendly_name: Spectral Sensor
 
   on_boot:
     priority: -10000
@@ -86,6 +86,9 @@ web_server:
 captive_portal:
   mode: always_active
   id: captive_portal_component
+
+api:
+  password: !secret API_password
 
 logger:
   baud_rate: 115200
