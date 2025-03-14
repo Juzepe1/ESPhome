@@ -36,6 +36,7 @@ esphome:
             - lambda: |-
                 ESP_LOGI("main", "Woke up from deep sleep");
                 id(handleShowMode).execute();
+      - script.execute: handleModeChange
 
 esp32:
   board: seeed_xiao_esp32c6
@@ -349,6 +350,7 @@ sensor:
     update_interval: never
     unit_of_measurement: '%'
     accuracy_decimals: 0
+    icon: 'mdi:battery-charging-high'
     filters:
       - multiply: 2.0 # R1 = 220k, R2 = 220k, Vout = R2/(R1+R2) * Vin
       - calibrate_linear:
@@ -375,6 +377,7 @@ sensor:
 number:
   - platform: template
     name: 'ATime'
+    icon: 'mdi:clock-outline'
     id: atime_number
     min_value: 0.0
     max_value: 255
@@ -386,6 +389,7 @@ number:
 
   - platform: template
     name: 'AStep'
+    icon: 'mdi:stairs'
     id: astep_number
     min_value: 0.0
     max_value: 65534
@@ -398,6 +402,7 @@ number:
 
   - platform: template
     name: 'Gain'
+    icon: 'mdi:alpha-x'
     id: gain_number
     min_value: 0.0
     max_value: 12.0
@@ -410,6 +415,7 @@ number:
 
   - platform: template
     name: 'Glass Attenuation Factor'
+    icon: 'mdi:glass-tulip'
     id: glass_attenuation_number
     min_value: 0.0
     max_value: 100.0
@@ -423,6 +429,7 @@ number:
   - platform: template
     name: 'Deep Sleep Duration'
     id: deep_sleep_duration_number
+    icon: 'mdi:bed-clock'
     min_value: 1
     max_value: 3600
     step: 1
@@ -839,6 +846,7 @@ script:
 button:
   - platform: template
     name: 'Update sensor data'
+    icon: 'mdi:update'
     on_press:
       - component.update: spectral_sensor
       - component.update: battery
@@ -847,7 +855,8 @@ button:
       sorting_weight: 1
 
   - platform: template
-    name: 'Update calibration data'
+    name: 'Get calibration data'
+    icon: 'mdi:download'
     on_press:
       - lambda: |-
           id(atime_number).publish_state(id(spectral_sensor).get_atime());
@@ -859,7 +868,8 @@ button:
       sorting_weight: 1
 
   - platform: template
-    name: 'Set calibration data'
+    name: 'Publish calibration data'
+    icon: 'mdi:publish'
     on_press:
       then:
         - lambda: |-
