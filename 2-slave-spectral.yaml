@@ -16,12 +16,10 @@ esphome:
           ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
           ESP_LOGI("main", "ESP Sensor Mode: %d", id(esp_sensor_mode));
           ESP_LOGI("main", "Wake up reason: %d", esp_sleep_get_wakeup_cause());
+      - script.execute: changeAS7343Settings
       - lambda: |-
-          // Set calibration data to spectral sensor
-          id(spectral_sensor).setup_atime(id(atime));
-          id(spectral_sensor).setup_astep(id(astep));
-          id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
-          id(spectral_sensor).setup_glass_attenuation_factor(id(glass_attenuation_factor));
+          // Print update AS7343 settings
+          id(spectral_sensor).dump_config();
           // Set deep sleep duration
           id(deep_sleep_duration_number).publish_state(id(deep_sleep_duration)/1000);
       - delay: 500ms
@@ -570,7 +568,7 @@ espnow:
                             ESP_LOGI("main", "Writing atime to flash");
                             id(astep) = value_int;
                           }
-                          id(spectral_sensor).setup_astep(value_int);
+                          id(spectral_sensor).change_astep(value_int);
                               
                         }
                         else if(strcmp(topic, "astep") == 0){
@@ -579,21 +577,21 @@ espnow:
                             ESP_LOGI("main", "Writing astep to flash");
                             id(astep) = value_int;
                           }
-                          id(spectral_sensor).setup_astep(value_int);
+                          id(spectral_sensor).change_astep(value_int);
                         }
                         else if(strcmp(topic, "gain") == 0){ 
                           if (id(flash)) {
                             ESP_LOGI("main", "Writing gain to flash");
                             id(gain) = value_int;
                           }
-                          id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(value_int));
+                          id(spectral_sensor).change_gain(static_cast<esphome::as7343::AS7343Gain>(value_int));
                         }
                         else if(strcmp(topic, "gaf") == 0){
                         if (id(flash)) {
                           ESP_LOGI("main", "Writing glass_attenuation_factor to flash");
                           id(glass_attenuation_factor) = value_int;
                         }
-                        id(spectral_sensor).setup_glass_attenuation_factor(value_int);
+                        id(spectral_sensor).change_glass_attenuation_factor(value_int);
                         }
                         else{ESP_LOGW("main", "Value is none");}
                     }
@@ -842,6 +840,13 @@ script:
             default:
               break;
           }
+  - id: changeAS7343Settings
+    then:
+      - lambda: |-
+          id(spectral_sensor).change_atime(id(atime));
+          id(spectral_sensor).change_astep(id(astep));
+          id(spectral_sensor).change_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
+          id(spectral_sensor).change_glass_attenuation_factor(id(glass_attenuation_factor));
 
 button:
   - platform: template
@@ -877,11 +882,7 @@ button:
             id(astep) = id(astep_number).state;
             id(gain) = id(gain_number).state;
             id(glass_attenuation_factor) = id(glass_attenuation_number).state;
-
-            id(spectral_sensor).setup_atime(id(atime));
-            id(spectral_sensor).setup_astep(id(astep));
-            id(spectral_sensor).setup_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
-            id(spectral_sensor).setup_glass_attenuation_factor(id(glass_attenuation_factor));
+        - script.execute: changeAS7343Settings
     web_server:
       sorting_group_id: sg_settings
       sorting_weight: 6

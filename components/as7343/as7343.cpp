@@ -141,7 +141,7 @@ namespace esphome
         ESP_LOGE(TAG, "Communication with AS7343 failed!");
       }
       LOG_UPDATE_INTERVAL(this);
-      ESP_LOGCONFIG(TAG, "  Gain: %.1f", get_gain_multiplier(get_gain()));
+      ESP_LOGCONFIG(TAG, "  Gain: %.1fX", get_gain_multiplier(get_gain()));
       ESP_LOGCONFIG(TAG, "  ATIME: %u", get_atime());
       ESP_LOGCONFIG(TAG, "  ASTEP: %u", get_astep());
       ESP_LOGCONFIG(TAG, "  Glass attenuation factor: %f", this->glass_attenuation_factor_);
@@ -472,15 +472,39 @@ namespace esphome
       return this->write_byte((uint8_t)AS7343Registers::CFG1, gain);
     }
 
+    bool AS7343Component::change_gain(AS7343Gain gain)
+    {
+      ESP_LOGD(TAG, "Changing gain from %u to %u", (uint8_t)this->gain_, (uint8_t)gain);
+      this->gain_ = gain;
+      this->enable_spectral_measurement(false);
+      return this->write_byte((uint8_t)AS7343Registers::CFG1, gain);
+    }
+
     bool AS7343Component::setup_atime(uint8_t atime)
     {
       ESP_LOGD(TAG, "Setup atime %u", atime);
       return this->write_byte((uint8_t)AS7343Registers::ATIME, atime);
     }
 
+    bool AS7343Component::change_atime(uint8_t atime)
+    {
+      ESP_LOGD(TAG, "Changing atime from %u to %u", this->atime_, atime);
+      this->atime_ = atime;
+      this->enable_spectral_measurement(false);
+      return this->write_byte((uint8_t)AS7343Registers::ATIME, atime);
+    }
+
     bool AS7343Component::setup_astep(uint16_t astep)
     {
       ESP_LOGD(TAG, "Setup astep %u", astep);
+      return this->write_byte_16((uint8_t)AS7343Registers::ASTEP_LSB, swap_bytes(astep));
+    }
+
+    bool AS7343Component::change_astep(uint16_t astep)
+    {
+      ESP_LOGD(TAG, "Changing astep from %u to %u", this->astep_, astep);
+      this->astep_ = astep;
+      this->enable_spectral_measurement(false);
       return this->write_byte_16((uint8_t)AS7343Registers::ASTEP_LSB, swap_bytes(astep));
     }
 
@@ -491,11 +515,12 @@ namespace esphome
       return true;
     }
 
-    bool AS7343Component::change_gain(AS7343Gain gain)
+    bool AS7343Component::change_glass_attenuation_factor(float factor)
     {
-      this->gain_ = gain;
+      ESP_LOGD(TAG, "Changing glass attenuation factor from %f to %f", this->glass_attenuation_factor_, factor);
+      this->glass_attenuation_factor_ = factor;
       this->enable_spectral_measurement(false);
-      return this->write_byte((uint8_t)AS7343Registers::CFG1, gain);
+      return true;
     }
 
     void AS7343Component::calculate_basic_counts()
