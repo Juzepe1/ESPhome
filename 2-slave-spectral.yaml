@@ -16,12 +16,14 @@ esphome:
           ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
           ESP_LOGI("main", "ESP Sensor Mode: %d", id(esp_sensor_mode));
           ESP_LOGI("main", "Wake up reason: %d", esp_sleep_get_wakeup_cause());
+          ESP_LOGI("main", "Deep sleep duration: %lu milliseconds", id(deep_sleep_duration));
+
+          // Set deep sleep duration
+          id(deep_sleep_duration_number).publish_state(id(deep_sleep_duration)/1000);
       - script.execute: changeAS7343Settings
       - lambda: |-
           // Print update AS7343 settings
           id(spectral_sensor).dump_config();
-          // Set deep sleep duration
-          id(deep_sleep_duration_number).publish_state(id(deep_sleep_duration)/1000);
       - delay: 500ms
       - lambda: |-
           id(espnow_component)->add_peer(id(hub_address));
@@ -50,6 +52,7 @@ wifi:
   enable_on_boot: false
   id: wifi_component
   power_save_mode: none
+  passive_scan: true
   ap:
     ssid: 'Slave Spectral Sensor'
     password: !secret ap_password
@@ -208,7 +211,7 @@ globals:
 
   - id: deep_sleep_duration
     type: uint32_t
-    initial_value: '60'
+    initial_value: '60000'
     restore_value: 'yes'
 
 sensor:
@@ -442,7 +445,7 @@ number:
         - lambda: |-
             id(deep_sleep_duration) = x*1000; // Convert seconds to milliseconds
             id(deep_sleep_1).set_sleep_duration(id(deep_sleep_duration));
-            ESP_LOGI("main", "Deep sleep duration set to %f seconds", x);
+            ESP_LOGI("main", "Deep sleep duration set to %lu milliseconds", id(deep_sleep_duration));
 
 binary_sensor:
   - platform: gpio
@@ -886,6 +889,14 @@ button:
     web_server:
       sorting_group_id: sg_settings
       sorting_weight: 6
+
+  - platform: template
+    name: 'Change AS7343 Settings automatically'
+    icon: 'mdi:settings'
+    on_press:
+      then:
+        - lambda: |-
+            id(spectral_sensor).spectral_post_process_(true);
 
   # - platform: factory_reset
   #   name: Restart with Factory Default Settings

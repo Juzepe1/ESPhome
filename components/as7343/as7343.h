@@ -86,6 +86,8 @@ namespace esphome
       bool clear_register_bit(uint8_t address, uint8_t bit_position);
       uint16_t swap_bytes(uint16_t data);
 
+      bool spectral_post_process_(bool fire_at_will = true);
+
     protected:
       //
       // Internal state machine, used to split all the actions into
@@ -159,7 +161,6 @@ namespace esphome
       void direct_config_3_chain_();
       void setup_tint_(float tint);
 
-      bool spectral_post_process_(bool fire_at_will = true);
       void get_optimized_gain_(uint16_t maximum_adc, uint16_t highest_adc, uint8_t lower_gain_limit,
                                uint8_t upper_gain_limit, uint8_t &out_gain, bool &out_saturation);
 

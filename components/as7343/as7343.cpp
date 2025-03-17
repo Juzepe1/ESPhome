@@ -1148,46 +1148,55 @@ namespace esphome
     bool AS7343Component::spectral_post_process_(bool fire_at_will)
     {
       bool need_to_repeat = false;
-      // uint16_t highest_value, maximum_adc;
-      // bool is_saturation{false};
-      // uint8_t current_gain, new_gain;
+      uint16_t highest_value, maximum_adc;
+      bool is_saturation{false};
+      uint8_t current_gain, new_gain;
 
-      // uint16_t max_adc = this->get_maximum_spectral_adc_();
-      // uint16_t highest_adc = this->get_highest_value(this->channel_readings_);
+      uint16_t max_adc = this->get_maximum_spectral_adc_();
 
-      // current_gain = this->readings_gain_;
-      // new_gain = current_gain;
-      // this->get_optimized_gain_(max_adc, highest_adc, AS7343Gain::AS7343_GAIN_0_5X, AS7343Gain::AS7343_GAIN_128X,
-      // new_gain,
-      //                           is_saturation);
-      // if (new_gain != current_gain) {
-      //   if (fire_at_will) {
-      //     // need to repeat the measurement
-      //     this->set_gain((AS7343Gain) new_gain);
-      //     this->setup_gain((AS7343Gain) new_gain);
-      //   }
-      //   need_to_repeat = true;
-      // } else if (is_saturation) {
-      //   // digital saturation
-      //   // but can't change gain? try change time ?
-      //   ESP_LOGW(TAG, "Spectral post process: OPTIMIZE saturation detected");
-      // }
-      // if (!is_saturation) {
-      //   // no saturation
-      //   for (uint8_t i = 0; i < AS7343_NUM_CHANNELS; i++) {
-      //     // todo - update reading with gain factor first, then compare
-      //     if (this->channel_readings_[i] >= max_adc) {  // check both values - before and after gain factor application
-      //       this->channel_readings_[i] = ADC_SATURATED_VALUE;
-      //       is_saturation = true;
-      //     }
-      //   }
-      //   if (is_saturation) {
-      //     ESP_LOGW(TAG, "Spectral post process: CHANNEL saturation detected");
-      //   }
-      // }
-      /// what to do with saturation and !need_to_repeat ?
-      // ESP_LOGW(TAG, "Spectral post process: gain %u, saturation %u, need to repeat %u", new_gain, is_saturation,
-      //          need_to_repeat);
+      uint16_t highest_adc = this->get_highest_value(this->readings_.raw_counts);
+
+      current_gain = this->get_gain();
+      new_gain = current_gain;
+      this->get_optimized_gain_(max_adc, highest_adc, AS7343Gain::AS7343_GAIN_0_5X, AS7343Gain::AS7343_GAIN_128X,
+                                new_gain,
+                                is_saturation);
+      if (new_gain != current_gain)
+      {
+        if (fire_at_will)
+        {
+          // need to repeat the measurement
+          this->set_gain((AS7343Gain)new_gain);
+          this->setup_gain((AS7343Gain)new_gain);
+        }
+        need_to_repeat = true;
+      }
+      else if (is_saturation)
+      {
+        // digital saturation
+        // but can't change gain? try change time ?
+        ESP_LOGW(TAG, "Spectral post process: OPTIMIZE saturation detected");
+      }
+      if (!is_saturation)
+      {
+        // no saturation
+        for (uint8_t i = 0; i < AS7343_NUM_CHANNELS; i++)
+        {
+          // todo - update reading with gain factor first, then compare
+          if (this->readings_.raw_counts[i] >= max_adc)
+          { // check both values - before and after gain factor application
+            this->readings_.raw_counts[i] = ADC_SATURATED_VALUE;
+            is_saturation = true;
+          }
+        }
+        if (is_saturation)
+        {
+          ESP_LOGW(TAG, "Spectral post process: CHANNEL saturation detected");
+        }
+      }
+      // what to do with saturation and !need_to_repeat ?
+      ESP_LOGW(TAG, "Spectral post process: gain %u, saturation %u, need to repeat %u", new_gain, is_saturation,
+               need_to_repeat);
       return need_to_repeat;
     }
 
