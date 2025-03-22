@@ -59,10 +59,10 @@ namespace esphome
       bool setup_astep(uint16_t astep);
       bool setup_glass_attenuation_factor(float factor);
 
-      bool change_gain(AS7343Gain gain);
-      bool change_atime(uint8_t atime);
-      bool change_astep(uint16_t astep);
-      bool change_glass_attenuation_factor(float factor);
+      void change_gain(AS7343Gain gain);
+      void change_atime(uint8_t atime);
+      void change_astep(uint16_t astep);
+      void change_glass_attenuation_factor(float factor);
 
       float get_gain_multiplier(AS7343Gain gain);
 
@@ -86,7 +86,7 @@ namespace esphome
       bool clear_register_bit(uint8_t address, uint8_t bit_position);
       uint16_t swap_bytes(uint16_t data);
 
-      bool spectral_post_process_(bool fire_at_will = true);
+      void update_with_post_process();
 
     protected:
       //
@@ -163,6 +163,8 @@ namespace esphome
 
       void get_optimized_gain_(uint16_t maximum_adc, uint16_t highest_adc, uint8_t lower_gain_limit,
                                uint8_t upper_gain_limit, uint8_t &out_gain, bool &out_saturation);
+
+      bool spectral_post_process_(bool fire_at_will = true);
 
       uint16_t get_maximum_spectral_adc_();
       uint16_t get_maximum_spectral_adc_(uint16_t atime, uint16_t astep);

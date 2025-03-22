@@ -472,12 +472,11 @@ namespace esphome
       return this->write_byte((uint8_t)AS7343Registers::CFG1, gain);
     }
 
-    bool AS7343Component::change_gain(AS7343Gain gain)
+    void AS7343Component::change_gain(AS7343Gain gain)
     {
       ESP_LOGD(TAG, "Changing gain from %u to %u", (uint8_t)this->gain_, (uint8_t)gain);
-      this->gain_ = gain;
-      this->enable_spectral_measurement(false);
-      return this->write_byte((uint8_t)AS7343Registers::CFG1, gain);
+      this->set_gain(gain);
+      this->setup_gain(gain);
     }
 
     bool AS7343Component::setup_atime(uint8_t atime)
@@ -486,12 +485,11 @@ namespace esphome
       return this->write_byte((uint8_t)AS7343Registers::ATIME, atime);
     }
 
-    bool AS7343Component::change_atime(uint8_t atime)
+    void AS7343Component::change_atime(uint8_t atime)
     {
       ESP_LOGD(TAG, "Changing atime from %u to %u", this->atime_, atime);
-      this->atime_ = atime;
-      this->enable_spectral_measurement(false);
-      return this->write_byte((uint8_t)AS7343Registers::ATIME, atime);
+      this->set_atime(atime);
+      this->setup_atime(atime);
     }
 
     bool AS7343Component::setup_astep(uint16_t astep)
@@ -500,12 +498,11 @@ namespace esphome
       return this->write_byte_16((uint8_t)AS7343Registers::ASTEP_LSB, swap_bytes(astep));
     }
 
-    bool AS7343Component::change_astep(uint16_t astep)
+    void AS7343Component::change_astep(uint16_t astep)
     {
       ESP_LOGD(TAG, "Changing astep from %u to %u", this->astep_, astep);
-      this->astep_ = astep;
-      this->enable_spectral_measurement(false);
-      return this->write_byte_16((uint8_t)AS7343Registers::ASTEP_LSB, swap_bytes(astep));
+      this->set_astep(astep);
+      this->setup_astep(astep);
     }
 
     bool AS7343Component::setup_glass_attenuation_factor(float factor)
@@ -515,12 +512,11 @@ namespace esphome
       return true;
     }
 
-    bool AS7343Component::change_glass_attenuation_factor(float factor)
+    void AS7343Component::change_glass_attenuation_factor(float factor)
     {
       ESP_LOGD(TAG, "Changing glass attenuation factor from %f to %f", this->glass_attenuation_factor_, factor);
-      this->glass_attenuation_factor_ = factor;
-      this->enable_spectral_measurement(false);
-      return true;
+      this->set_glass_attenuation_factor(factor);
+      this->setup_glass_attenuation_factor(factor);
     }
 
     void AS7343Component::calculate_basic_counts()
@@ -1166,8 +1162,7 @@ namespace esphome
         if (fire_at_will)
         {
           // need to repeat the measurement
-          this->set_gain((AS7343Gain)new_gain);
-          this->setup_gain((AS7343Gain)new_gain);
+          this->change_gain((AS7343Gain)new_gain);
         }
         need_to_repeat = true;
       }
@@ -1273,5 +1268,38 @@ namespace esphome
       }
     }
 
+    void AS7343Component::update_with_post_process()
+    {
+      this->update();
+      unsigned long timeout = millis() + 30000; // 30 second timeout
+
+      // Wait for the first data collection to complete
+      while (this->state_ != State::DATA_COLLECTED && millis() < timeout)
+      {
+        // Allow time for the loop() method to run and process data
+        this->loop();
+      }
+
+      bool optimization_needed = true;
+
+      while (optimization_needed && millis() < timeout)
+      {
+        optimization_needed = this->spectral_post_process_(true); // Returns: need to repeat
+
+        if (optimization_needed)
+        {
+          ESP_LOGD(TAG, "Gain optimization needed, collecting new data");
+
+          this->state_ = State::IDLE;
+          this->update();
+
+          // Wait for this update to complete
+          while (this->state_ != State::DATA_COLLECTED && millis() < timeout)
+          {
+            this->loop();
+          }
+        }
+      }
+    }
   } // namespace as7343
 } // namespace esphome

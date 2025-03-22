@@ -93,7 +93,7 @@ api:
 
 logger:
   baud_rate: 115200
-  level: DEBUG
+  level: VERBOSE
   hardware_uart: USB_SERIAL_JTAG
 
 deep_sleep:
@@ -386,7 +386,7 @@ number:
     optimistic: true
     web_server:
       sorting_group_id: sg_settings
-      sorting_weight: 2
+      sorting_weight: 3
 
   - platform: template
     name: 'AStep'
@@ -399,7 +399,7 @@ number:
     entity_category: config
     web_server:
       sorting_group_id: sg_settings
-      sorting_weight: 3
+      sorting_weight: 4
 
   - platform: template
     name: 'Gain'
@@ -412,7 +412,7 @@ number:
     entity_category: config
     web_server:
       sorting_group_id: sg_settings
-      sorting_weight: 4
+      sorting_weight: 5
 
   - platform: template
     name: 'Glass Attenuation Factor'
@@ -425,7 +425,7 @@ number:
     entity_category: config
     web_server:
       sorting_group_id: sg_settings
-      sorting_weight: 5
+      sorting_weight: 6
 
   - platform: template
     name: 'Deep Sleep Duration'
@@ -613,7 +613,7 @@ script:
       - output.turn_on: built_in_led
       - script.execute: beReadyToReceiveMessage
       - logger.log: 'Updating sensor data'
-      - component.update: spectral_sensor
+      - script.execute: updateAS7343Data
       - component.update: battery
       - delay: 3s
       - logger.log: 'Sensor data updated'
@@ -850,13 +850,27 @@ script:
           id(spectral_sensor).change_astep(id(astep));
           id(spectral_sensor).change_gain(static_cast<esphome::as7343::AS7343Gain>(id(gain)));
           id(spectral_sensor).change_glass_attenuation_factor(id(glass_attenuation_factor));
+  - id: updateAS7343Data
+    then:
+      - lambda: |-
+          if(id(agc_switch).state) {
+            ESP_LOGI("main", "Updating sensor data with post process");
+            id(spectral_sensor).update_with_post_process();
+            // Check if gained is changed
+            if(id(spectral_sensor).get_gain() != id(gain)) {
+              id(gain) = id(spectral_sensor).get_gain();
+            }
+          } else {
+            ESP_LOGI("main", "Updating sensor data");
+            id(spectral_sensor).update();
+          }
 
 button:
   - platform: template
     name: 'Update sensor data'
     icon: 'mdi:update'
     on_press:
-      - component.update: spectral_sensor
+      - script.execute: updateAS7343Data
       - component.update: battery
     web_server:
       sorting_group_id: sg_data
@@ -873,7 +887,7 @@ button:
           id(glass_attenuation_number).publish_state(id(spectral_sensor).get_glass_attenuation_factor());
     web_server:
       sorting_group_id: sg_settings
-      sorting_weight: 1
+      sorting_weight: 2
 
   - platform: template
     name: 'Publish calibration data'
@@ -888,15 +902,18 @@ button:
         - script.execute: changeAS7343Settings
     web_server:
       sorting_group_id: sg_settings
-      sorting_weight: 6
-
-  - platform: template
-    name: 'Change AS7343 Settings automatically'
-    icon: 'mdi:settings'
-    on_press:
-      then:
-        - lambda: |-
-            id(spectral_sensor).spectral_post_process_(true);
+      sorting_weight: 7
 
   # - platform: factory_reset
   #   name: Restart with Factory Default Settings
+
+switch:
+  - platform: template
+    name: 'Automatic Gain Control'
+    id: agc_switch
+    icon: 'mdi:refresh-auto'
+    restore_mode: RESTORE_DEFAULT_OFF
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 1
+    optimistic: true
