@@ -1,0 +1,294 @@
+external_components:
+  - source: components/espnow190225
+    components:
+      - espnow
+    refresh: 1min
+  - source:
+      type: git
+      url: https://github.com/lboue/esphome
+      ref: adc_oneshot
+    components: [adc]
+    refresh: 1min
+  - source: github://pr#8160
+    components: [wifi, captive_portal, web_server]
+
+deep_sleep:
+  id: deep_sleep_1
+  run_duration: 80s # Time for the ESP32 to run before entering sleep mode
+  sleep_duration: 60s # Change this to your desired sleep time
+  wakeup_pin:
+    number: GPIO1
+    allow_other_uses: true
+  wakeup_pin_mode: IGNORE
+
+api:
+  password: !secret API_password
+
+wifi:
+  enable_on_boot: false
+  id: wifi_component
+  power_save_mode: none
+  passive_scan: true
+  ap:
+    ssid: ${ssid_name}
+    password: !secret ap_password
+    ap_timeout: 0s
+    channel: !secret espnow_channel
+  on_connect:
+    - lambda: |-
+        ESP_LOGD("main", "Trying to start captive portal");
+        if (!id(captive_portal_component).is_active()) {
+          ESP_LOGD("main", "Starting captive portal");
+          id(captive_portal_component).start("/captive_portal");
+        }
+
+captive_portal:
+  mode: always_active
+  id: captive_portal_component
+
+light:
+  - platform: rgb
+    name: 'Button RGB LED'
+    id: button_rgb_led
+    red: button_red_led
+    green: button_green_led
+    blue: button_blue_led
+    internal: true
+    on_turn_on:
+      - delay: 5s
+      - light.turn_off: button_rgb_led
+    effects:
+      - pulse:
+          name: 'Fast Pulse'
+          transition_length: 0.5s
+          update_interval: 0.5s
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO1
+      allow_other_uses: true
+    name: 'Long Press Button'
+    id: long_press_button
+    internal: true
+    on_click:
+      - min_length: 10ms
+        max_length: 999ms
+        then:
+          - script.execute: handleShowMode
+      - min_length: 3000ms
+        max_length: 10000ms
+        then:
+          lambda: |-
+            if (id(esp_sensor_mode) == 0) {
+              id(long_press_action) = true;
+              id(button_rgb_led).turn_on().set_brightness(1.0).set_effect("Fast Pulse").set_transition_length(10).set_rgb(1, 0.79215686274, 0.22745098039).perform();
+            }
+            else if (id(esp_sensor_mode) == 2) {
+              id(button_rgb_led).turn_on().set_brightness(1.0).set_effect("Fast Pulse").set_transition_length(10).set_rgb(0, 0.35, 1).perform();
+              // TO DO: Disconnect from WiFi
+            }
+    on_double_click:
+      min_length: 50ms
+      max_length: 350ms
+      then:
+        lambda: |-
+          id(esp_sensor_mode) = (id(esp_sensor_mode) + 1) % 3;
+          id(handleModeChange).execute();
+
+script:
+  - id: beReadyToReceiveMessage
+    then:
+      - espnow.send:
+          mac_address: !lambda 'return id(hub_address);'
+          payload: 'hub;beReadyToReceiveMessage'
+      - delay: !lambda 'return id(esp_now_message_delay);'
+  - id: handleModeChangeEspNowDeepSleep
+    then:
+      - script.execute: espnow_communication
+      - script.wait: espnow_communication
+      - if:
+          condition:
+            lambda: 'return esp_sleep_get_wakeup_cause()==7;'
+          then:
+            - delay: 10s # Give a little time if user wants to change the mode
+      - if:
+          condition:
+            lambda: 'return id(esp_sensor_mode) == 1;'
+          then:
+            - deep_sleep.enter: deep_sleep_1
+  - id: handleModeChange
+    then:
+      - lambda: |-
+          id(button_rgb_led).turn_off().set_transition_length(10).perform();
+          id(handleShowMode).execute();
+          switch(id(esp_sensor_mode)) {
+            case 0:
+              ESP_LOGD("main", "Starting ESP-NOW");
+              id(captive_portal_component).end();
+              id(wifi_component).stop_ap();
+              id(wifi_component).disable();
+              id(espnow_component)->setup();
+              break;
+            case 1:
+              ESP_LOGD("main", "Starting ESP-NOW with deep sleep");
+              id(handleModeChangeEspNowDeepSleep).execute();
+              break;
+            case 2:
+              ESP_LOGD("main", "Starting webserver with captive portal");
+              id(espnow_communication).stop();
+              id(built_in_led).turn_off();
+              id(deep_sleep_1).prevent_deep_sleep();
+              id(wifi_component).enable();
+              id(wifi_component).start_ap();
+              id(captive_portal_component).start("/captive_portal");
+              break;
+            default:
+              break;
+          }
+  - id: handleShowMode
+    then:
+      - lambda: |-
+          ESP_LOGI("main", "ESP Sensor Mode: %d", id(esp_sensor_mode));
+          ESP_LOGI("main", "Wake up reason: %d", esp_sleep_get_wakeup_cause());
+          switch(id(esp_sensor_mode)) {
+            case 0:
+              id(button_rgb_led).turn_on().set_brightness(1.0).set_transition_length(10).set_rgb(1, 0.79215686274, 0.22745098039).perform(); // Yellow
+              break;
+            case 1:
+              id(button_rgb_led).turn_on().set_brightness(1.0).set_transition_length(10).set_rgb(0.09019607843 , 0.74509803921, 0.34117647058).perform(); // Green
+              break;
+            case 2:
+              id(button_rgb_led).turn_on().set_brightness(1.0).set_transition_length(10).set_rgb(0, 0.35, 1).perform(); // Blue
+              break;
+            default:
+              break;
+          }
+
+globals:
+  - id: long_press_action
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: pinged
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: paring
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: hub_address
+    type: uint64_t
+    initial_value: '0xFFFFFFFFFFFF'
+    restore_value: yes
+
+  - id: get_calibration
+    type: bool
+    initial_value: 'false'
+
+  - id: request_cal
+    type: bool
+    initial_value: 'false'
+
+  - id: esp_sensor_mode
+    type: uint8_t
+    initial_value: '0'
+    restore_value: 'yes'
+    # 0 - ESP-NOW without deepsleep - calibration mode
+    # 1 - ESP-NOW with deepsleep
+    # 2 - Webserver mode with captive portal
+
+  - id: esp_now_message_delay
+    type: int
+    initial_value: '50'
+    restore_value: 'no'
+
+number:
+  - platform: template
+    name: 'Deep Sleep Duration'
+    id: deep_sleep_duration_number
+    icon: 'mdi:bed-clock'
+    min_value: 1
+    max_value: 3600
+    step: 1
+    unit_of_measurement: 's'
+    optimistic: true
+    update_interval: never
+    restore_value: true
+    initial_value: 60
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_device_settings
+      sorting_weight: 1
+    set_action:
+      then:
+        - lambda: |-
+            id(deep_sleep_1).set_sleep_duration(x*1000);
+            ESP_LOGI("main", "Deep sleep duration set to %f seconds", x);
+
+output:
+  - platform: gpio
+    pin: GPIO15
+    id: built_in_led
+    inverted: true
+
+  - platform: ledc
+    pin: GPIO19
+    id: button_red_led
+
+  - platform: ledc
+    pin: GPIO20
+    id: button_green_led
+
+  - platform: ledc
+    pin: GPIO18
+    id: button_blue_led
+
+sensor:
+  - platform: adc
+    name: Battery
+    id: battery
+    pin: GPIO0
+    update_interval: never
+    unit_of_measurement: '%'
+    accuracy_decimals: 0
+    icon: 'mdi:battery-charging-high'
+    filters:
+      - multiply: 2.0 # R1 = 220k, R2 = 220k, Vout = R2/(R1+R2) * Vin
+      - calibrate_linear:
+          method: exact
+          datapoints:
+            - 0.00 -> 0.0
+            - 3.30 -> 1.0
+            - 3.39 -> 10.0
+            - 3.75 -> 50.0
+            - 4.11 -> 90.0
+            - 4.20 -> 100.0
+      - lambda: |-
+          if (x < 0.0) {
+              return 0.0;
+          } else if (x > 100.0) {
+              return 100.0;
+          } else {
+              return x;
+          }
+    web_server:
+      sorting_group_id: ${battery_group_id}
+      sorting_weight: ${battery_sorting_weight}
+
+button:
+  - platform: restart
+    name: 'Restart device'
+    web_server:
+      sorting_group_id: sg_device_settings
+      sorting_weight: 2
+
+  - platform: factory_reset
+    name: 'Factory reset'
+    web_server:
+      sorting_group_id: sg_device_settings
+      sorting_weight: 3
