@@ -6,32 +6,32 @@ esphome:
   includes:
     - components/espnow_send_custom_data/espnow_send_custom_data.h
     - components/espnow_send_custom_data/espnow_send_custom_data.cpp
+  friendly_name: Air Quality Sensor
+
   on_boot:
     priority: -10000
     then:
       - lambda: |-
+          ESP_LOGI("main", "Starting ESP-NOW");
           ESP_LOGI("main", "Hub address: 0x%12llx", id(hub_address));
+          ESP_LOGI("main", "ESP Sensor Mode: %d", id(esp_sensor_mode));
+          ESP_LOGI("main", "Wake up reason: %d", esp_sleep_get_wakeup_cause());
+          ESP_LOGI("main", "Deep sleep duration: %f seconds", id(deep_sleep_duration_number).state);
       - delay: 500ms
       - lambda: |-
           id(espnow_component)->add_peer(id(hub_address));
-      - script.execute:
-          id: changeTemperatureOversampling
-          oversampling_index_local: !lambda 'return id(temperature_oversampling_index);'
-      - script.execute:
-          id: changePressureOversampling
-          oversampling_index_local: !lambda 'return id(pressure_oversampling_index);'
-      - script.execute:
-          id: changeIIRFilter
-          iir_filter_index_local: !lambda 'return id(iir_filter_index);'
-      - component.update: bmp280_sensor
-      - delay: 500ms
+
+          // Update sensor data
+          id(changeSensorSettings).execute();
+      - deep_sleep.prevent: deep_sleep_1
       - if:
           condition:
-            lambda: 'return id(deep_sleep_button).state;'
+            lambda: 'return esp_sleep_get_wakeup_cause()==7;'
           then:
-            - deep_sleep.prevent: deep_sleep_1
-          else:
-            - script.execute: espnow_communication
+            - lambda: |-
+                ESP_LOGI("main", "Woke up from deep sleep");
+                id(handleShowMode).execute();
+      - script.execute: handleModeChange
 
 esp32:
   board: seeed_xiao_esp32c6
@@ -43,72 +43,36 @@ esp32:
     sdkconfig_options:
       CONFIG_ESPTOOLPY_FLASHSIZE_4MB: y
 
+packages:
+  essentialCode: !include
+    file: packages/EssentialCodeSlave.yaml
+    vars:
+      ssid_name: 'AirQualitySensor'
+      battery_group_id: 'sg_data'
+      battery_sorting_weight: 8
+
+web_server:
+  local: true
+  version: 3
+  log: false
+  id: web_server_component
+  sorting_groups:
+    - id: sg_data
+      name: 'Air Quality Sensor Data'
+      sorting_weight: 10
+
+    - id: sg_settings
+      name: 'Air Quality Sensor Settings'
+      sorting_weight: 11
+
+    - id: sg_device_settings
+      name: 'Device Settings'
+      sorting_weight: 12
+
 logger:
   baud_rate: 115200
   level: DEBUG
   hardware_uart: USB_SERIAL_JTAG
-
-deep_sleep:
-  id: deep_sleep_1
-  run_duration: 80s # Time for the ESP32 to run before entering sleep mode
-  sleep_duration: 60s # Change this to your desired sleep time
-  wakeup_pin:
-    number: GPIO1
-    allow_other_uses: true
-  wakeup_pin_mode: IGNORE
-
-globals:
-  - id: long_press_timer
-    type: unsigned long
-    restore_value: no
-    initial_value: '0'
-
-  - id: long_press_action
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
-  - id: pinged
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
-  - id: paring
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
-  - id: hub_address
-    type: uint64_t
-    initial_value: '0xFFFFFFFFFFFF'
-    restore_value: yes
-
-  - id: get_calibration
-    type: bool
-    initial_value: 'false'
-
-  - id: request_cal
-    type: bool
-    initial_value: 'false'
-
-  - id: temperature_oversampling_index
-    type: int
-    initial_value: '4' # Default to BMP280_OVERSAMPLING_16X
-    restore_value: yes
-
-  - id: pressure_oversampling_index
-    type: int
-    initial_value: '4' # Default to BMP280_OVERSAMPLING_16X
-    restore_value: yes
-
-  - id: iir_filter_index
-    type: int
-    initial_value: '0' # Default to BMP280_IIR_FILTER_OFF
-    restore_value: yes
-
-  - id: flash
-    type: bool
-    initial_value: 'false'
 
 i2c:
   sda: GPIO22
@@ -121,10 +85,18 @@ sensor:
     id: bmp280_sensor
     temperature:
       name: 'Temperature (BMP280)'
+      icon: 'mdi:thermometer'
       id: bmp280_temp
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 2
     pressure:
       name: 'Pressure'
       id: bmp280_press
+      icon: 'mdi:gauge'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 3
     address: 0x76
     update_interval: 1s
   - platform: htu21d
@@ -132,9 +104,17 @@ sensor:
     temperature:
       name: 'Temperature (Si7021)'
       id: si7021_temp
+      icon: 'mdi:thermometer'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 4
     humidity:
       name: 'Humidity'
       id: si7021_hum
+      icon: 'mdi:water-percent'
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 5
     address: 0x40
     update_interval: 1s
   - platform: ccs811
@@ -142,85 +122,99 @@ sensor:
     eco2:
       name: 'CCS811 eCO2 Value'
       id: ccs811_eco2
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 6
     tvoc:
       name: 'CCS811 Total Volatile Organic Compound'
       id: ccs811_tvoc
+      web_server:
+        sorting_group_id: sg_data
+        sorting_weight: 7
     temperature: bmp280_temp
     humidity: si7021_hum
     address: 0x5A
     update_interval: 10s
 
-  - platform: adc
-    name: Battery
-    id: battery
-    pin: GPIO0
+number:
+  - platform: template
+    name: 'Temperature Oversampling'
+    id: temperature_oversampling_number
+    icon: 'mdi:alpha-x'
+    min_value: 0
+    max_value: 4
+    step: 1
+    optimistic: true
     update_interval: never
-    unit_of_measurement: '%'
-    accuracy_decimals: 0
-    filters:
-      - multiply: 2.0 # R1 = 220k, R2 = 220k, Vout = R2/(R1+R2) * Vin
-      - calibrate_linear:
-          method: exact
-          datapoints:
-            - 0.00 -> 0.0
-            - 3.30 -> 1.0
-            - 3.39 -> 10.0
-            - 3.75 -> 50.0
-            - 4.11 -> 90.0
-            - 4.20 -> 100.0
-      - lambda: |-
-          if (x < 0.0) {
-              return 0.0;
-          } else if (x > 100.0) {
-              return 100.0;
-          } else {
-              return x;
-          }
-
-binary_sensor:
-  - platform: gpio
-    pin:
-      number: GPIO1
-      allow_other_uses: true
-    name: 'Button'
-    id: 'deep_sleep_button'
-    on_state:
+    restore_value: true
+    initial_value: 4
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 1
+    set_action:
       then:
-        - if:
-            condition:
-              lambda: 'return !x;'
-            then:
-              - logger.log: 'Button pressed'
-              - deep_sleep.enter: deep_sleep_1
-  - platform: gpio
-    pin:
-      number: GPIO19
-      mode: INPUT_PULLUP
-      inverted: true
-    name: 'Long Press Button'
-    id: long_press_button
+        - script.execute:
+            id: changeTemperatureOversampling
+            oversampling_index_local: !lambda 'return x;'
+
+  - platform: template
+    name: 'Pressure Oversampling'
+    id: pressure_oversampling_number
+    icon: 'mdi:alpha-x'
+    min_value: 0
+    max_value: 4
+    step: 1
+    optimistic: true
+    update_interval: never
+    restore_value: true
+    initial_value: 4
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 2
+    set_action:
+      then:
+        - script.execute:
+            id: changePressureOversampling
+            oversampling_index_local: !lambda 'return x;'
+
+  - platform: template
+    name: 'IIR Filter'
+    id: iir_filter_number
+    icon: 'mdi:filter'
+    min_value: 0
+    max_value: 4
+    step: 1
+    optimistic: true
+    update_interval: never
+    restore_value: true
+    initial_value: 0
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 3
+    set_action:
+      then:
+        - script.execute:
+            id: changeIIRFilter
+            iir_filter_index_local: !lambda 'return x;'
+
+button:
+  - platform: template
+    name: 'Update sensor data'
+    icon: 'mdi:update'
     on_press:
-      then:
-        - lambda: |-
-            id(long_press_timer) = millis();
-    on_release:
-      then:
-        - lambda: |-
-            if (millis() - id(long_press_timer) > 3000) {
-                ESP_LOGD("main", "Button was pressed for longer than 3 seconds.");
-                id(long_press_action) = true;
-                }
-            else {ESP_LOGD("main", "Button was pressed for less than 3 seconds.");}
-
-output:
-  - platform: gpio
-    pin: GPIO15
-    id: built_in_led
-    inverted: true
+      - component.update: battery
+      - script.execute: updateAirSensorData
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 1
 
 espnow:
   id: espnow_component
   auto_add_peer: true
+  conformation_timeout: 100ms
   wifi_channel: !secret espnow_channel
   predefined_peers:
     - FF:FF:FF:FF:FF:FF
@@ -264,32 +258,16 @@ espnow:
 
                         int value_int = atoi(value);
 
-                        if(strcmp(topic, "flash") == 0){
-                          if(value_int == 1){id(flash) = true;}
-                        }
-                        else if(strcmp(topic, "temp_index") == 0){
-                          
-                          if (id(flash)) {
-                            ESP_LOGI("main", "Writing temp_index to flash");
-                            id(temperature_oversampling_index) = value_int;
-                          }
-                          id(changeTemperatureOversampling)->execute(value_int);
+                        if(strcmp(topic, "temp_index") == 0){
+                          id(temperature_oversampling_number).make_call().set_value(value_int).perform();
                         }
                         else if(strcmp(topic, "press_index") == 0){
-                          if (id(flash)) {
-                            ESP_LOGI("main", "Writing press_index to flash");
-                            id(pressure_oversampling_index) = value_int;
-                          }
-                          id(changePressureOversampling)->execute(value_int);
+                          id(pressure_oversampling_number).make_call().set_value(value_int).perform();
                         }
                         else if(strcmp(topic, "iir_index") == 0){
-                          if (id(flash)) {
-                            ESP_LOGI("main", "Writing iir_index to flash");
-                            id(iir_filter_index) = value_int;
-                          }
-                          id(changeIIRFilter)->execute(value_int);
+                          id(iir_filter_number).make_call().set_value(value_int).perform();
                         }
-                        else{ESP_LOGW("main", "Value is none");}
+                        else{ESP_LOGW("main", "Unknown topic: %s", topic);}
                     }
                     else{ESP_LOGW("main", "Value is none");}
                 }
@@ -300,105 +278,7 @@ espnow:
           else{ESP_LOGW("main", "Invalid packet");}
       - script.execute: handleOnRecieve
 
-external_components:
-  - source:
-      type: git
-      url: https://github.com/nielsnl68/esphome
-      ref: d23346165e1baefd337ed805d3a211e5bead53af
-    refresh: 1min
-    components: [espnow]
-  - source:
-      type: git
-      url: https://github.com/lboue/esphome
-      ref: adc_oneshot
-    components: [adc]
-    refresh: 0s
-
 script:
-  - id: espnow_communication
-    then:
-      - output.turn_on: built_in_led
-      - script.execute: beReadyToReceiveMessage
-      - logger.log: 'Updating sensor data'
-      - component.update: bmp280_sensor
-      - component.update: si7021_sensor
-      - component.update: battery
-      - wait_until:
-          condition:
-            lambda: |-
-              return (!isnan(id(ccs811_eco2).state) && !isnan(id(ccs811_tvoc).state));
-          timeout: 40s
-      - delay: 3s
-      - logger.log: 'Sensor data updated'
-      - repeat:
-          count: 3
-          then:
-            - logger.log: 'Sending data to hub'
-            - delay: 500ms
-            - espnow.send:
-                mac_address: !lambda 'return id(hub_address);'
-                payload: !lambda |-
-                  return format_espnow_data_new("bmp_temp", id(bmp280_temp).state*100000);
-            - delay: 500ms
-            - espnow.send:
-                mac_address: !lambda 'return id(hub_address);'
-                payload: !lambda |-
-                  return format_espnow_data_new("bmp_press", id(bmp280_press).state*100000);
-            - delay: 500ms
-            - espnow.send:
-                mac_address: !lambda 'return id(hub_address);'
-                payload: !lambda |-
-                  return format_espnow_data_new("si_temp", id(si7021_temp).state*100000);
-            - delay: 500ms
-            - espnow.send:
-                mac_address: !lambda 'return id(hub_address);'
-                payload: !lambda |-
-                  return format_espnow_data_new("si_hum", id(si7021_hum).state*100000);
-            - delay: 500ms
-            - espnow.send:
-                mac_address: !lambda 'return id(hub_address);'
-                payload: !lambda |-
-                  return format_espnow_data_new("ccs_eco2", id(ccs811_eco2).state);
-            - delay: 500ms
-            - espnow.send:
-                mac_address: !lambda 'return id(hub_address);'
-                payload: !lambda |-
-                  return format_espnow_data_new("ccs_tvoc", id(ccs811_tvoc).state);
-            - delay: 500ms
-            - espnow.send:
-                mac_address: !lambda 'return id(hub_address);'
-                payload: !lambda |-
-                  return format_espnow_data_new("battery", id(battery).state);
-      - output.turn_off: built_in_led
-  - id: sendCalibrationData
-    then:
-      - repeat:
-          count: 3
-          then:
-            - espnow.send:
-                mac_address: !lambda 'return id(hub_address);'
-                payload: !lambda |-
-                  return format_espnow_data_new("temp_index", id(temperature_oversampling_index));
-            - delay: 500ms
-            - espnow.send:
-                mac_address: !lambda 'return id(hub_address);'
-                payload: !lambda |-
-                  return format_espnow_data_new("press_index", id(pressure_oversampling_index));
-            - delay: 500ms
-            - espnow.send:
-                mac_address: !lambda 'return id(hub_address);'
-                payload: !lambda |-
-                  return format_espnow_data_new("iir_index", id(iir_filter_index));
-            - delay: 500ms
-      - lambda: |-
-          ESP_LOGI("main", "Calibration data sent");
-          id(get_calibration) = false;
-  - id: beReadyToReceiveMessage
-    then:
-      - espnow.send:
-          mac_address: !lambda 'return id(hub_address);'
-          payload: 'hub;beReadyToReceiveMessage'
-      - delay: 500ms
   - id: handleOnRecieve
     then:
       - if:
@@ -421,6 +301,87 @@ script:
             - script.execute: sendCalibrationData
             - lambda: |-
                 id(get_calibration) = false;
+  - id: espnow_communication
+    then:
+      - output.turn_on: built_in_led
+      - script.execute: beReadyToReceiveMessage
+      - logger.log: 'Updating sensor data'
+      - script.execute: updateAirSensorData
+      - component.update: battery
+      - delay: 3s
+      - logger.log: 'Sensor data updated'
+      - repeat:
+          count: 1
+          then:
+            - logger.log: 'Sending data to hub'
+            - delay: !lambda 'return id(esp_now_message_delay);'
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("bmp_temp", id(bmp280_temp).state*100000);
+            - delay: !lambda 'return id(esp_now_message_delay);'
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("bmp_press", id(bmp280_press).state*100000);
+            - delay: !lambda 'return id(esp_now_message_delay);'
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("si_temp", id(si7021_temp).state*100000);
+            - delay: !lambda 'return id(esp_now_message_delay);'
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("si_hum", id(si7021_hum).state*100000);
+            - delay: !lambda 'return id(esp_now_message_delay);'
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("ccs_eco2", id(ccs811_eco2).state);
+            - delay: !lambda 'return id(esp_now_message_delay);'
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("ccs_tvoc", id(ccs811_tvoc).state);
+            - delay: !lambda 'return id(esp_now_message_delay);'
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("battery", id(battery).state);
+      - output.turn_off: built_in_led
+  - id: updateAirSensorData
+    then:
+      - component.update: bmp280_sensor
+      - component.update: si7021_sensor
+      - wait_until:
+          condition:
+            lambda: |-
+              return (!isnan(id(ccs811_eco2).state) && !isnan(id(ccs811_tvoc).state));
+          timeout: 40s
+  - id: sendCalibrationData
+    then:
+      - repeat:
+          count: 1
+          then:
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("temp_index", id(temperature_oversampling_number).state);
+            - delay: !lambda 'return id(esp_now_message_delay);'
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("press_index", id(pressure_oversampling_number).state);
+            - delay: !lambda 'return id(esp_now_message_delay);'
+            - espnow.send:
+                mac_address: !lambda 'return id(hub_address);'
+                payload: !lambda |-
+                  return format_espnow_data_new("iir_index", id(iir_filter_number).state);
+            - delay: !lambda 'return id(esp_now_message_delay);'
+      - lambda: |-
+          ESP_LOGI("main", "Calibration data sent");
+          id(get_calibration) = false;
   - id: changeTemperatureOversampling
     parameters:
       oversampling_index_local: int
@@ -436,6 +397,7 @@ script:
 
           if (oversampling_index_local >= 0 && oversampling_index_local < oversampling_options.size()) {
             id(bmp280_sensor).set_temperature_oversampling(oversampling_options[oversampling_index_local]);
+            id(temperature_oversampling_number).publish_state(oversampling_index_local);
             ESP_LOGI("configuration", "Temperature oversampling set to %dX", 1 << oversampling_index_local);
           } else {
             ESP_LOGW("configuration", "Invalid oversampling index: %d", oversampling_index_local);
@@ -455,6 +417,7 @@ script:
 
           if (oversampling_index_local >= 0 && oversampling_index_local < oversampling_options.size()) {
             id(bmp280_sensor).set_pressure_oversampling(oversampling_options[oversampling_index_local]);
+            id(pressure_oversampling_number).publish_state(oversampling_index_local);
             ESP_LOGI("configuration", "Pressure oversampling set to %dX", 1 << oversampling_index_local);
           } else {
             ESP_LOGW("configuration", "Invalid oversampling index: %d", oversampling_index_local);
@@ -474,6 +437,7 @@ script:
 
           if (iir_filter_index_local >= 0 && iir_filter_index_local < iir_filter_options.size()) {
             id(bmp280_sensor).set_iir_filter(iir_filter_options[iir_filter_index_local]);
+            id(iir_filter_number).publish_state(iir_filter_index_local);
             if (iir_filter_index_local == 0) {
               ESP_LOGI("configuration", "IIR filter set to OFF");
             } else {
@@ -482,3 +446,9 @@ script:
           } else {
             ESP_LOGW("configuration", "Invalid IIR filter index: %d", iir_filter_index_local);
           }
+  - id: changeSensorSettings
+    then:
+      - lambda: |-
+          id(temperature_oversampling_number).make_call().set_value(id(temperature_oversampling_number).state).perform();
+          id(pressure_oversampling_number).make_call().set_value(id(pressure_oversampling_number).state).perform();
+          id(iir_filter_number).make_call().set_value(id(iir_filter_number).state).perform();
