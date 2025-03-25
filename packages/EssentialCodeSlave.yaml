@@ -9,8 +9,11 @@ external_components:
       ref: adc_oneshot
     components: [adc]
     refresh: 1min
-  - source: github://pr#8160
-    components: [wifi, captive_portal, web_server]
+  - source: components/web_server-captive_portal
+    components:
+      - web_server
+      - captive_portal
+      - wifi
 
 deep_sleep:
   id: deep_sleep_1
