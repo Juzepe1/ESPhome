@@ -31,7 +31,6 @@ wifi:
   enable_on_boot: false
   id: wifi_component
   power_save_mode: none
-  passive_scan: true
   ap:
     ssid: ${ssid_name}
     password: !secret ap_password
