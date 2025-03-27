@@ -57,6 +57,7 @@ web_server:
   local: true
   version: 3
   log: false
+  js_include: 'components/web_server-captive_portal/hide-sections-toggle.js'
   id: web_server_component
   sorting_groups:
     - id: sg_data
