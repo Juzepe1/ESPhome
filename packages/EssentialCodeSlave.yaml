@@ -95,7 +95,7 @@ binary_sensor:
       max_length: 350ms
       then:
         lambda: |-
-          id(esp_sensor_mode) = (id(esp_sensor_mode) + 1) % 3;
+          id(esp_sensor_mode) = (id(esp_sensor_mode) + 1) % 4;
           id(handleModeChange).execute();
 
 script:
@@ -119,6 +119,16 @@ script:
             lambda: 'return id(esp_sensor_mode) == 1;'
           then:
             - deep_sleep.enter: deep_sleep_1
+  - id: handleModeChangeDeepSleep
+    then:
+      - delay: 10s
+      - if:
+          condition:
+            lambda: 'return id(esp_sensor_mode) == 3;'
+          then:
+            - deep_sleep.enter:
+                id: deep_sleep_1
+                sleep_duration: 30days
   - id: handleModeChange
     then:
       - lambda: |-
@@ -127,9 +137,7 @@ script:
           switch(id(esp_sensor_mode)) {
             case 0:
               ESP_LOGD("main", "Starting ESP-NOW");
-              id(captive_portal_component).end();
-              id(wifi_component).stop_ap();
-              id(wifi_component).disable();
+              
               id(espnow_component)->setup();
               break;
             case 1:
@@ -144,6 +152,13 @@ script:
               id(wifi_component).enable();
               id(wifi_component).start_ap();
               id(captive_portal_component).start("/captive_portal");
+              break;
+            case 3:
+              ESP_LOGD("main", "Starting deep sleep mode");
+              id(captive_portal_component).end();
+              id(wifi_component).stop_ap();
+              id(wifi_component).disable();
+              id(handleModeChangeDeepSleep).execute();
               break;
             default:
               break;
@@ -162,6 +177,9 @@ script:
               break;
             case 2:
               id(button_rgb_led).turn_on().set_brightness(1.0).set_transition_length(10).set_rgb(0, 0.35, 1).perform(); // Blue
+              break;
+            case 3:
+              id(button_rgb_led).turn_on().set_brightness(1.0).set_transition_length(10).set_rgb(1, 0, 0).perform(); // Red
               break;
             default:
               break;
@@ -203,6 +221,7 @@ globals:
     # 0 - ESP-NOW without deepsleep - calibration mode
     # 1 - ESP-NOW with deepsleep
     # 2 - Webserver mode with captive portal
+    # 3 - Deep sleep mode
 
   - id: esp_now_message_delay
     type: int
